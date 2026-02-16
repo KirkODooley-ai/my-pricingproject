@@ -1,0 +1,198 @@
+/* Modern ERP Design System (Deep Navy, Slate, White) */
+:root {
+  /* Brand Palette */
+  --primary-color: #0f172a;
+  /* Slate 900 (Deep Navy) */
+  --primary-hover: #1e293b;
+  /* Slate 800 */
+  --accent-color: #2563eb;
+  /* Blue 600 (Action Blue) */
+  --accent-hover: #1d4ed8;
+  /* Blue 700 */
+
+  /* Neutral Palette */
+  --text-main: #334155;
+  /* Slate 700 */
+  --text-light: #64748b;
+  /* Slate 500 */
+  --bg-body: #f1f5f9;
+  /* Slate 100 */
+  --bg-surface: #ffffff;
+  /* White */
+  --border-color: #e2e8f0;
+  /* Slate 200 */
+
+  /* Semantic Colors */
+  --success: #10b981;
+  /* Emerald 500 */
+  --warning: #f59e0b;
+  /* Amber 500 */
+  --danger: #ef4444;
+  /* Red 500 */
+
+  /* Dimensions & Spacing */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+
+  /* Typography */
+  --font-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-base);
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Global Component Standards --- */
+
+/* 1. Buttons */
+button,
+.btn {
+  font-family: var(--font-base);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+
+/* 2. Inputs & Selects */
+input,
+select,
+textarea,
+.input-field {
+  font-family: var(--font-base);
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  width: 100%;
+  /* Default to fluid width usually */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+select {
+  /* Remove default browser arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Custom Arrow */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23334155%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.65em auto;
+  padding-right: 2.5rem;
+  /* Space for the arrow */
+}
+
+/* Ensure options inside stay visible */
+select option {
+  padding: 0.5rem;
+  font-family: var(--font-base);
+}
+
+
+
+select:hover {
+  border-color: #cbd5e1;
+  /* Slate 300 */
+  cursor: pointer;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* 3. Data Tables (ERP Style) */
+table,
+.pricing-table {
+  width: 100%;
+  border-collapse: separate;
+  /* Allows border-radius on table */
+  border-spacing: 0;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* For rounded corners */
+  border: 1px solid var(--border-color);
+}
+
+th {
+  background-color: #f8fafc;
+  /* Slate 50 header */
+  color: var(--text-light);
+  /* Muted header text */
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid var(--border-color);
+  text-align: left;
+}
+
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+/* Zebra Striping */
+tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+  /* Very light slate */
+}
+
+/* Hover Effect */
+tbody tr:hover {
+  background-color: #eff6ff;
+  /* Light blue tint on hover */
+}
+
+/* Remove bottom border on last row */
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* --- Utility Classes --- */
+.card {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.heading-lg {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  /* Slate 800 */
+}

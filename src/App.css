@@ -1,0 +1,112 @@
+/* Apple-Style Layout with Dark Blue Theme */
+.app-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: var(--font-base);
+    color: var(--text-main);
+}
+
+/* Sidebar Styling - Dark Blue Scheme */
+.sidebar {
+    background-color: var(--primary-color);
+    border-right: 1px solid #1e293b;
+    padding: 1.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    color: #cbd5e1;
+}
+
+.sidebar-header {
+    padding: 0 0.75rem 1.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.app-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--bg-surface);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.app-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+/* Navigation Links */
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #f1f5f9;
+}
+
+.nav-link.active {
+    background-color: var(--accent-color);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Main Content Area */
+.main-content {
+    background-color: var(--bg-body);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2rem 3rem;
+    position: relative;
+    width: 100%;
+}
+
+/* Scrollbar Polish */
+.sidebar::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.main-content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.main-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 5px;
+    border: 2px solid #f8fafc;
+}
+
+/* Utility */
+.pricing-table-container {
+    background-color: var(--bg-surface);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}

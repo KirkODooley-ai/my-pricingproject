@@ -1,0 +1,131 @@
+/* Layout Helpers for Scrolling */
+.pricing-table-container {
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    border: 1px solid var(--border-color);
+}
+
+.table-wrapper {
+    height: 72vh;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+}
+
+/* Unique Action Buttons */
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--danger);
+    /* Red 500 */
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.action-btn:hover {
+    color: #b91c1c;
+    /* Red 700 */
+    text-decoration: underline;
+}
+
+/* Map Add Button to Primary Button Style */
+.add-btn {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.add-btn:hover {
+    background-color: var(--accent-hover);
+}
+
+/* [NEW] Scrollable Wrapper for the Table */
+.table-wrapper {
+    /* [FIX] Set explicit viewport-based height for the scroll area */
+    /* This ensures a large scrollable area that fits on most screens without cutting off */
+    height: 72vh;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-top: 1px solid #e5e7eb;
+    background-color: white;
+}
+
+.pricing-table {
+    width: 100%;
+    border-collapse: separate;
+    /* Required for sticky headers */
+    border-spacing: 0;
+    text-align: left;
+}
+
+.pricing-table th,
+.pricing-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pricing-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: var(--text-color);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    position: sticky;
+    /* Sticky Header */
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pricing-table tr:hover {
+    background-color: #f9fafb;
+}
+
+.input-field {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 120px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.action-btn:hover {
+    text-decoration: underline;
+}
+
+.add-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.add-btn:hover {
+    background-color: var(--secondary-color);
+}

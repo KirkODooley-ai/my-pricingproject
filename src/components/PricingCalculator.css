@@ -1,0 +1,77 @@
+.calculator-container {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.stat-card {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-card.projected {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.stat-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+    color: #1f2937;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.metric-value {
+    font-weight: 600;
+}
+
+.metric-row.highlight {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #d1d5db;
+    font-size: 1rem;
+}
+
+.delta-positive {
+    color: #16a34a;
+}
+
+.delta-negative {
+    color: #dc2626;
+}

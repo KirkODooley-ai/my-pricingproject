@@ -182,7 +182,19 @@ function App() {
   useEffect(() => saveData('salesTransactions', salesTransactions), [salesTransactions, isHydrated])
 
   // [FIX] Missing Auto-Save for Pricing Strategy
-  useEffect(() => saveData('pricingStrategy', pricingStrategy), [pricingStrategy, isHydrated])
+  // Only save if we have meaningful data (not just the default state)
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    // Check if it's just the default
+    const isDefault = Object.keys(pricingStrategy.tierMultipliers['Dealer']).length === 0 &&
+      Object.keys(pricingStrategy.tierMultipliers['Commercial']).length === 0 &&
+      pricingStrategy.listMultipliers['Default'] === 1.5;
+
+    if (!isDefault) {
+      saveData('pricingStrategy', pricingStrategy)
+    }
+  }, [pricingStrategy, isHydrated])
 
   useEffect(() => saveData('customerAliases', customerAliases), [customerAliases, isHydrated])
   useEffect(() => saveData('productVariants', productVariants), [productVariants, isHydrated]) // [NEW] Auto-Save Variants

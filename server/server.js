@@ -9,16 +9,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001; // [FIX] Use Railway's dynamic port
 
 // DB Connection
-import { query } from './db.js';
+import { query, killZombieConnections } from './db.js';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 const ENTITIES = ['products', 'categories', 'customers', 'salesTransactions', 'pricingStrategy', 'customerAliases', 'productVariants'];
 
+// [NEW] Health Check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV || 'development' });
+});
 
 // GET ALL DATA
 app.get('/api/data', async (req, res) => {
@@ -352,7 +356,96 @@ app.post('/api/reset', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Local Database Server running at http://localhost:${PORT}`);
-    console.log(`Connected to PostgreSQL on port ${process.env.PGPORT || 3006}`);
+// [NEW] Paginated Sales Endpoint
+app.get('/api/sales', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = (page - 1) * limit;
+        const category = req.query.category;
+        const search = req.query.search;
+
+        let queryText = `
+            SELECT 
+                st.id, st.amount, st.cogs, st.transaction_date as "date",
+                COALESCE(c.name, st.customer_name_snapshot) as "customerName",
+                COALESCE(cat.name, st.category_name_snapshot) as "category", 
+                st.customer_name_snapshot as "rawCustomer",
+                st.category_name_snapshot as "rawCategory"
+            FROM sales_transactions st
+            LEFT JOIN customers c ON st.customer_id = c.id
+            LEFT JOIN categories cat ON st.category_id = cat.id
+        `;
+
+        const params = [];
+        const conditions = [];
+
+        if (category && category !== 'All') {
+            conditions.push(`(cat.name = $${params.length + 1} OR st.category_name_snapshot = $${params.length + 1})`);
+            params.push(category);
+        }
+
+        if (search) {
+            conditions.push(`(
+                LOWER(COALESCE(c.name, st.customer_name_snapshot)) LIKE $${params.length + 1} OR
+                LOWER(st.customer_name_snapshot) LIKE $${params.length + 1}
+            )`);
+            params.push(`%${search.toLowerCase()}%`);
+        }
+
+        if (conditions.length > 0) {
+            queryText += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        // Count Total
+        const countRes = await query(`SELECT COUNT(*) FROM (${queryText}) as sub`, params);
+        const total = parseInt(countRes.rows[0].count);
+
+        // Fetch Page
+        queryText += ` ORDER BY st.transaction_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+
+        const dataRes = await query(queryText, params);
+
+        res.json({
+            data: dataRes.rows,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+
+    } catch (e) {
+        console.error("Sales API Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// [NEW] Serve Static Files (Production)
+if (process.env.NODE_ENV === 'production') {
+    const distPath = path.join(__dirname, '../dist');
+    app.use(express.static(distPath));
+
+    // Handle React Routing
+    app.get('*', (req, res) => {
+        // Exclude API routes from React routing
+        if (req.path.startsWith('/api')) {
+            return res.status(404).json({ error: 'API Endpoint Not Found' });
+        }
+        res.sendFile(path.join(distPath, 'index.html'));
+    });
+}
+
+const HOST = '0.0.0.0'; // [FIX] Required for Railway/Render
+
+app.listen(PORT, HOST, async () => {
+    console.log(`API Server running at http://${HOST}:${PORT}`);
+    if (process.env.DATABASE_URL) {
+        console.log(`Connected to Cloud Database (Neon)`);
+        await killZombieConnections();
+    } else {
+        console.log(`Connected to Local PostgreSQL on port ${process.env.PGPORT || 3006}`);
+    }
 });

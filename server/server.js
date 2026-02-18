@@ -429,7 +429,8 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(distPath));
 
     // Handle React Routing
-    app.get('*', (req, res) => {
+    // [FIX] Express 5.x requires regex or specific syntax for wildcards. '*' is no longer valid.
+    app.get(/.*/, (req, res) => {
         // Exclude API routes from React routing
         if (req.path.startsWith('/api')) {
             return res.status(404).json({ error: 'API Endpoint Not Found' });
@@ -444,7 +445,12 @@ app.listen(PORT, HOST, async () => {
     console.log(`API Server running at http://${HOST}:${PORT}`);
     if (process.env.DATABASE_URL) {
         console.log(`Connected to Cloud Database (Neon)`);
-        await killZombieConnections();
+        // [FIX] Wrap in try/catch to prevent server crash on startup connectivity issues
+        try {
+            await killZombieConnections();
+        } catch (e) {
+            console.warn("⚠ Failed to cleanup zombie connections on startup:", e.message);
+        }
     } else {
         console.log(`Connected to Local PostgreSQL on port ${process.env.PGPORT || 3006}`);
     }

@@ -8,12 +8,11 @@ types.setTypeParser(1700, (val) => parseFloat(val));
 
 // Database Configuration
 // Database Configuration
-// Database Configuration
 const dbConfig = process.env.DATABASE_URL
     ? {
         connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }, // Required for Neon
-        port: 5432 // [FIX] Explicitly force standard Postgres port to override any local defaults/env vars
+        ssl: { rejectUnauthorized: false },
+        port: 5432
     }
     : {
         user: process.env.PGUSER || 'postgres',

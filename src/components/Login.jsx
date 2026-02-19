@@ -59,14 +59,6 @@ const Login = () => {
                         Sign In
                     </button>
                 </form>
-
-                <div style={{ marginTop: '1.5rem', fontSize: '0.85rem', color: '#6b7280', textAlign: 'center' }}>
-                    <p>Default Accounts:</p>
-                    <p>admin / password123</p>
-                    <p>analyst / password123</p>
-                    <p>manager_bc / password123</p>
-                    <p>manager_sask / password123</p>
-                </div>
             </div>
         </div>
     );

@@ -110,5 +110,22 @@ export const api = {
         } catch (e) {
             console.error(e);
         }
+    },
+
+    async fetchUsers() {
+        const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
+        if (res.status === 403) throw new Error('Access denied');
+        if (!res.ok) throw new Error('Failed to load users');
+        return res.json();
+    },
+
+    async createUser(data) {
+        const res = await fetch(`${API_URL}/users`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || 'Failed to create user');
     }
 };

@@ -13,6 +13,7 @@ import MarginAlerts from './components/MarginAlerts' // [NEW] Phase 15
 import Dashboard from './components/Dashboard'
 import Login from './components/Login' // [NEW]
 import ProposalsManager from './components/ProposalsManager' // [NEW]
+import UserManagement from './components/UserManagement'
 import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
@@ -549,6 +550,12 @@ function App() {
           {user.role === 'admin' && (
             <>
               <div
+                className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
+                onClick={() => setActiveTab('users')}
+              >
+                Users
+              </div>
+              <div
                 className={`nav-link ${activeTab === 'proposals' ? 'active' : ''}`}
                 onClick={() => setActiveTab('proposals')}
               >
@@ -690,6 +697,8 @@ function App() {
             onClearData={handleClearData}
           />
         )}
+
+        {activeTab === 'users' && user.role === 'admin' && <UserManagement />}
 
         {activeTab === 'proposals' && <ProposalsManager />}
 

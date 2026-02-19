@@ -509,6 +509,42 @@ app.post('/api/settings', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+
+// [NEW] Users API (Admin only)
+app.get('/api/users', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can list users' });
+        const result = await query(
+            'SELECT id, username, role, region, created_at as "createdAt" FROM users ORDER BY username'
+        );
+        res.json(result.rows);
+    } catch (e) {
+        console.error("Users GET Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/users', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can create users' });
+        const { username, password, role, region } = req.body;
+        if (!username || !password || !role) {
+            return res.status(400).json({ error: 'Username, password, and role are required' });
+        }
+        const password_hash = await bcrypt.hash(password, 10);
+        await query(
+            'INSERT INTO users (username, password_hash, role, region) VALUES ($1, $2, $3, $4)',
+            [username.trim(), password_hash, role, region || null]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        if (e.code === '23505') return res.status(400).json({ error: 'Username already exists' });
+        if (e.code === '23514') return res.status(400).json({ error: 'Invalid role or region value' });
+        console.error("Users POST Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // [NEW] Serve Static Files (Production) - MOVED TO BOTTOM
 // [NEW] Serve Static Files (ALWAYS for debugging/production) - MOVED TO BOTTOM
 const distPath = path.resolve(__dirname, '..', 'dist'); // [FIX] Explicit path segments

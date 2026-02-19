@@ -30,5 +30,17 @@ export const api = {
 
     async reset() {
         await fetch(`${API_URL}/reset`, { method: 'POST' });
+    },
+
+    async saveSetting(key, value) {
+        try {
+            await fetch(`${API_URL}/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, value })
+            });
+        } catch (e) {
+            console.error(e);
+        }
     }
 };

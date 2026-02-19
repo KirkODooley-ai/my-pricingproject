@@ -37,6 +37,15 @@ function App() {
         if (data.pricingStrategy) setPricingStrategy(data.pricingStrategy)
         if (data.customerAliases) setCustomerAliases(data.customerAliases)
         if (data.productVariants) setProductVariants(data.productVariants) // [NEW] Phase 18 variants
+
+        // [NEW] Load Settings
+        if (data.settings) {
+          const settingsMap = data.settings.reduce((acc, item) => {
+            acc[item.key] = item.value.value; // Unpack JSONB wrapper
+            return acc;
+          }, {});
+          setGlobalSettings(prev => ({ ...prev, ...settingsMap }));
+        }
       }
       setIsHydrated(true)
     }
@@ -52,6 +61,13 @@ function App() {
 
   // [NEW] Decoupled Sales Data Store
   const [salesTransactions, setSalesTransactions] = useState([])
+
+  // [NEW] Global Settings Store
+  const [globalSettings, setGlobalSettings] = useState({
+    global_multiplier: 1.5 // Default Fallback
+  })
+
+  // ... (Customer Aliases state stays same)
 
   // ... (Customer Aliases state stays same)
 
@@ -198,6 +214,24 @@ function App() {
 
   useEffect(() => saveData('customerAliases', customerAliases), [customerAliases, isHydrated])
   useEffect(() => saveData('productVariants', productVariants), [productVariants, isHydrated]) // [NEW] Auto-Save Variants
+
+  // [NEW] Sync Global Settings to Pricing Strategy
+  useEffect(() => {
+    if (!isHydrated) return;
+    const globalMult = globalSettings.global_multiplier;
+
+    // If Strategy Default differs from Global Setting, update Strategy to match
+    if (pricingStrategy.listMultipliers['Default'] !== globalMult) {
+      console.log(`Syncing Default Multiplier to ${globalMult}`);
+      setPricingStrategy(prev => ({
+        ...prev,
+        listMultipliers: {
+          ...prev.listMultipliers,
+          'Default': globalMult
+        }
+      }));
+    }
+  }, [globalSettings.global_multiplier, isHydrated]); // Depend on the setting change
 
   // --- Sync Category Revenue (Updated Source) ---
   // Now sums from `salesTransactions` instead of `customers[].categorySpend`
@@ -414,6 +448,13 @@ function App() {
     }))
   }
 
+  // [NEW] Update Global Setting
+  const handleUpdateSetting = (key, value) => {
+    setGlobalSettings(prev => ({ ...prev, [key]: value }));
+    // Persist immediately
+    api.saveSetting(key, value);
+  }
+
   // [NEW] Reordering Logic (Category Swap)
   const handleSwapCategories = (id1, id2) => {
     setCategories(prev => {
@@ -523,6 +564,15 @@ function App() {
           >
             Import Data
           </div>
+          <div style={{ marginTop: 'auto', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+            <div
+              className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+              style={{ color: '#4b5563' }}
+            >
+              ⚙ Admin Settings
+            </div>
+          </div>
         </nav>
       </aside>
 
@@ -607,6 +657,46 @@ function App() {
             onClearData={handleClearData}
           />
         )}
+
+        {activeTab === 'settings' && (
+          <div style={{ padding: '2rem', maxWidth: '600px' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Admin Settings</h2>
+
+            <div className="card" style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Global Pricing Configuration</h3>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700, color: '#6b7280', marginBottom: '0.5rem' }}>
+                  Global Markup Multiplier (Default)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1.0"
+                    value={globalSettings.global_multiplier || 1.5}
+                    onChange={(e) => handleUpdateSetting('global_multiplier', parseFloat(e.target.value))}
+                    style={{
+                      padding: '0.5rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      width: '120px',
+                      fontSize: '1rem'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>
+                    (Base List Price = Cost × {globalSettings.global_multiplier || 1.5})
+                  </span>
+                </div>
+                <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#ef4444' }}>
+                  ⚠ Changing this affects all products using the "Default" multiplier immediately.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+
 
         {activeTab === 'strategy' && ( // [NEW] Pricing Strategy Tab
           <PricingStrategyManager

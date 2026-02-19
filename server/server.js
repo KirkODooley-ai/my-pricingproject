@@ -17,7 +17,7 @@ import { query, killZombieConnections } from './db.js';
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const ENTITIES = ['products', 'categories', 'customers', 'salesTransactions', 'pricingStrategy', 'customerAliases', 'productVariants'];
+const ENTITIES = ['products', 'categories', 'customers', 'salesTransactions', 'pricingStrategy', 'customerAliases', 'productVariants', 'settings'];
 
 // [NEW] Health Check
 app.get('/api/health', (req, res) => {
@@ -111,8 +111,16 @@ app.get('/api/data', async (req, res) => {
             `);
             result.productVariants = varRes.rows;
         } catch (e) {
-            console.warn("Product variants table might not exist yet:", e.message);
             result.productVariants = [];
+        }
+
+        // 8. Settings
+        try {
+            const settingsRes = await query('SELECT key, value FROM settings');
+            result.settings = settingsRes.rows;
+        } catch (e) {
+            console.warn("Settings table optional:", e.message);
+            result.settings = [];
         }
 
         res.json(result);
@@ -438,6 +446,38 @@ if (process.env.NODE_ENV === 'production') {
         res.sendFile(path.join(distPath, 'index.html'));
     });
 }
+
+// [NEW] Settings API
+app.get('/api/settings', async (req, res) => {
+    try {
+        const result = await query('SELECT key, value FROM settings');
+        res.json(result.rows);
+    } catch (e) {
+        console.error("Settings Fetch Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/settings', async (req, res) => {
+    try {
+        const { key, value } = req.body;
+        if (!key || value === undefined) {
+            return res.status(400).json({ error: 'Missing key or value' });
+        }
+
+        await query(`
+            INSERT INTO settings (key, value, updated_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (key) DO UPDATE 
+            SET value = EXCLUDED.value, updated_at = NOW()
+        `, [key, { value }]); // Store value wrapped in object for extensibility
+
+        res.json({ success: true, key, value });
+    } catch (e) {
+        console.error("Settings Update Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
 
 const HOST = '0.0.0.0'; // [FIX] Required for Railway/Render
 

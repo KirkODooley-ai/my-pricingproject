@@ -447,13 +447,13 @@ app.get('/api/sales', async (req, res) => {
         const params = [];
         const conditions = [];
         if (category && category !== 'All') {
-            conditions.push(`(cat.name = $${params.length + 1} OR st.category_name_snapshot = $${params.length + 1})`);
+            conditions.push(`(cat.name = ${params.length + 1} OR st.category_name_snapshot = ${params.length + 1})`);
             params.push(category);
         }
         if (search) {
             conditions.push(`(
-                LOWER(COALESCE(c.name, st.customer_name_snapshot)) LIKE $${params.length + 1} OR
-                LOWER(st.customer_name_snapshot) LIKE $${params.length + 1}
+                LOWER(COALESCE(c.name, st.customer_name_snapshot)) LIKE ${params.length + 1} OR
+                LOWER(st.customer_name_snapshot) LIKE ${params.length + 1}
             )`);
             params.push(`%${search.toLowerCase()}%`);
         }
@@ -464,7 +464,7 @@ app.get('/api/sales', async (req, res) => {
         const countRes = await query(`SELECT COUNT(*) FROM (${queryText}) as sub`, params);
         const total = parseInt(countRes.rows[0].count);
         // Fetch Page
-        queryText += ` ORDER BY st.transaction_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        queryText += ` ORDER BY st.transaction_date DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
         params.push(limit, offset);
         const dataRes = await query(queryText, params);
         res.json({

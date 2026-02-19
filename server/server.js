@@ -1,53 +1,38 @@
-
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = process.env.PORT || 3001; // [FIX] Use Railway's dynamic port
-
 // DB Connection
 import { query, killZombieConnections } from './db.js';
-
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-
 const ENTITIES = ['products', 'categories', 'customers', 'salesTransactions', 'pricingStrategy', 'customerAliases', 'productVariants', 'settings', 'users', 'proposals'];
-
 // [NEW] Auth Dependencies
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
 // [NEW] Auth Middleware
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
     if (token == null) return res.sendStatus(401);
-
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) return res.sendStatus(403);
         req.user = user;
         next();
     });
 };
-
-
-
 // [NEW] Login Route
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const result = await query('SELECT * FROM users WHERE username = $1', [username]);
         if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
-
         const user = result.rows[0];
         if (await bcrypt.compare(password, user.password_hash)) {
             // Create Token
@@ -65,16 +50,13 @@ app.post('/api/auth/login', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
 // GET ALL DATA (Protected)
 app.get('/api/data', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
         const isAdmin = user.role === 'admin';
         const isManager = user.role === 'manager';
-
         const result = {};
-
         // 1. Products
         // RBAC: Managers cannot see Costs or Imported Margin
         const productFields = isManager
@@ -90,23 +72,19 @@ app.get('/api/data', authenticateToken, async (req, res) => {
                p.bag_cost as "bagCost", p.sell_unit as "sellUnit",
                p.imported_margin as "importedMargin",
                c.name as category`;
-
         const productsRes = await query(`
             SELECT ${productFields}
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id
         `);
         result.products = productsRes.rows;
-
         // 2. Categories
         // RBAC: Managers cannot see material_cost
         const catFields = isManager
             ? `id, name, revenue`
             : `id, name, revenue, material_cost as "materialCost"`;
-
         const catRes = await query(`SELECT ${catFields} FROM categories ORDER BY id`);
         result.categories = catRes.rows;
-
         // 3. Customers
         const custRes = await query(`
             SELECT 
@@ -116,7 +94,6 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             ORDER BY name
         `);
         result.customers = custRes.rows;
-
         // 4. Sales Transactions
         // RBAC: Managers only see their Region (Territory)
         let salesQuery = `
@@ -132,32 +109,26 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             LEFT JOIN customers c ON st.customer_id = c.id
             LEFT JOIN categories cat ON st.category_id = cat.id
         `;
-
         let salesParams = [];
         if (isManager && user.region) {
             salesQuery += ` WHERE c.territory = $1`;
             salesParams.push(user.region);
         }
-
         const salesRes = await query(salesQuery, salesParams);
         result.salesTransactions = salesRes.rows;
-
         // 5. Pricing Strategy
         const stratRes = await query('SELECT * FROM pricing_strategies WHERE is_active = TRUE ORDER BY id DESC LIMIT 1');
         result.pricingStrategy = stratRes.rows[0]?.strategy_data || null;
-
         // 6. Customer Aliases
         const aliasRes = await query(`
             SELECT ca.alias_name, c.name as canonical_name 
             FROM customer_aliases ca
             JOIN customers c ON ca.customer_id = c.id
         `);
-
         result.customerAliases = {};
         aliasRes.rows.forEach(row => {
             result.customerAliases[row.alias_name] = row.canonical_name;
         });
-
         // 7. Product Variants
         try {
             const varRes = await query(`
@@ -169,7 +140,6 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         } catch (e) {
             result.productVariants = [];
         }
-
         // 8. Settings
         try {
             const settingsRes = await query('SELECT key, value FROM settings');
@@ -177,7 +147,6 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         } catch (e) {
             result.settings = [];
         }
-
         // 9. Proposals (Admins Only)
         if (isAdmin) {
             const proposalsRes = await query(`
@@ -188,20 +157,17 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             `);
             result.proposals = proposalsRes.rows;
         }
-
         res.json(result);
     } catch (error) {
         console.error('Load Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
-
 // SAVE DATA
 // [NEW] Proposal Submission (Analyst)
 app.post('/api/proposals', authenticateToken, async (req, res) => {
     try {
         if (req.user.role !== 'analyst') return res.status(403).json({ error: 'Only analysts can submit proposals' });
-
         const { type, data } = req.body;
         await query(
             'INSERT INTO proposals (user_id, type, data, status) VALUES ($1, $2, $3, $4)',
@@ -212,18 +178,14 @@ app.post('/api/proposals', authenticateToken, async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-
 // [NEW] Proposal Approval (Admin)
 app.post('/api/proposals/:id/approve', authenticateToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can approve proposals' });
-
         const { id } = req.params;
         const result = await query('SELECT * FROM proposals WHERE id = $1', [id]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Proposal not found' });
-
         const proposal = result.rows[0];
-
         // Execute the change
         if (proposal.type === 'pricingStrategy') {
             await query(
@@ -231,7 +193,6 @@ app.post('/api/proposals/:id/approve', authenticateToken, async (req, res) => {
                 [proposal.data.strategy]
             );
         }
-
         // Mark as approved (Set status to 'approved')
         await query("UPDATE proposals SET status = 'approved' WHERE id = $1", [id]);
         res.json({ success: true });
@@ -239,33 +200,25 @@ app.post('/api/proposals/:id/approve', authenticateToken, async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-
 app.post('/api/save/:type', authenticateToken, async (req, res) => {
     const { type } = req.params;
     const user = req.user;
-
     // RBAC: Manager cannot save global strategy
     if (user.role === 'manager' && type === 'pricingStrategy') {
         return res.status(403).json({ error: 'Managers cannot edit pricing strategy.' });
     }
-
     // RBAC: Analyst cannot save directly
     if (user.role === 'analyst' && type === 'pricingStrategy') {
         return res.status(403).json({ error: 'Analysts must submit proposals.' });
     }
-
     const data = req.body;
-
     // Basic validation
     if (!ENTITIES.includes(type)) {
         return res.status(400).json({ error: 'Invalid entity type' });
     }
-
     const client = await import('./db.js').then(m => m.getClient());
-
     try {
         await client.query('BEGIN');
-
         if (type === 'products') {
             for (const item of data) {
                 // Determine Category ID from Name if needed, or use existing ID.
@@ -274,7 +227,6 @@ app.post('/api/save/:type', authenticateToken, async (req, res) => {
                     const catRes = await client.query('SELECT id FROM categories WHERE name = $1', [item.category]);
                     if (catRes.rows.length > 0) catId = catRes.rows[0].id;
                 }
-
                 await client.query(`
                     INSERT INTO products (id, item_code, name, description, category_id, vendor, cost, price, unit_cost, unit_price, bag_units, bag_cost, sell_unit, imported_margin)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -357,13 +309,11 @@ app.post('/api/save/:type', authenticateToken, async (req, res) => {
                     const cRes = await client.query('SELECT id FROM customers WHERE name = $1', [item.customerName]);
                     if (cRes.rows.length > 0) custId = cRes.rows[0].id;
                 }
-
                 let catId = item.categoryId || item.category_id;
                 if (!catId && item.category) {
                     const catRes = await client.query('SELECT id FROM categories WHERE name = $1', [item.category]);
                     if (catRes.rows.length > 0) catId = catRes.rows[0].id;
                 }
-
                 await client.query(`
                     INSERT INTO sales_transactions (id, customer_id, customer_name_snapshot, category_id, category_name_snapshot, amount, cogs, transaction_date)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -402,7 +352,6 @@ app.post('/api/save/:type', authenticateToken, async (req, res) => {
         else if (type === 'pricingStrategy') {
             // [FIX] Upsert Logic: Check for active strategy (Latest by ID), Update if exists, else Insert.
             const check = await client.query('SELECT id FROM pricing_strategies WHERE is_active = TRUE ORDER BY id DESC LIMIT 1');
-
             if (check.rows.length > 0) {
                 // Update existing - removed updated_at column
                 await client.query(
@@ -439,11 +388,9 @@ app.post('/api/save/:type', authenticateToken, async (req, res) => {
                 }
             }
         }
-
         await client.query('COMMIT');
         console.log(`Saved ${type} to Database.`);
         res.json({ success: true });
-
     } catch (error) {
         await client.query('ROLLBACK');
         console.error(`Save Error (${type}):`, error);
@@ -452,7 +399,6 @@ app.post('/api/save/:type', authenticateToken, async (req, res) => {
         client.release();
     }
 });
-
 // RESET DATA
 // RESET DATA with BACKUP
 app.post('/api/reset', async (req, res) => {
@@ -461,7 +407,6 @@ app.post('/api/reset', async (req, res) => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backupRoot = path.join(DATA_DIR, 'backups', 'RESET_SAFETY', timestamp);
         await fs.ensureDir(backupRoot);
-
         for (const entity of ENTITIES) {
             const filePath = getFilePath(entity);
             if (await fs.pathExists(filePath)) {
@@ -469,20 +414,17 @@ app.post('/api/reset', async (req, res) => {
             }
         }
         console.log(`Safety Backup for Reset created at: ${backupRoot}`);
-
         // 2. Clear Data (Preserve Backups folder)
         // We only delete entity files, not the whole dir which contains backups
         for (const entity of ENTITIES) {
             await fs.remove(getFilePath(entity));
         }
-
         res.json({ success: true });
     } catch (error) {
         console.error("Reset Error:", error);
         res.status(500).json({ error: 'Failed to reset data' });
     }
 });
-
 // [NEW] Paginated Sales Endpoint
 app.get('/api/sales', async (req, res) => {
     try {
@@ -491,7 +433,6 @@ app.get('/api/sales', async (req, res) => {
         const offset = (page - 1) * limit;
         const category = req.query.category;
         const search = req.query.search;
-
         let queryText = `
             SELECT 
                 st.id, st.amount, st.cogs, st.transaction_date as "date",
@@ -503,15 +444,12 @@ app.get('/api/sales', async (req, res) => {
             LEFT JOIN customers c ON st.customer_id = c.id
             LEFT JOIN categories cat ON st.category_id = cat.id
         `;
-
         const params = [];
         const conditions = [];
-
         if (category && category !== 'All') {
-            conditions.push(`(cat.name = $${params.length + 1} OR st.category_name_snapshot = $${params.length + 1})`);
+            conditions.push([(cat.name = $${params.length + 1} OR st.category_name_snapshot = $${params.length + 1})](cci:1://file:///c:/Users/kirk.odooley/.gemini/antigravity/playground/prime-ionosphere/pricing-software/src/App.jsx:22:0-801:1));
             params.push(category);
         }
-
         if (search) {
             conditions.push(`(
                 LOWER(COALESCE(c.name, st.customer_name_snapshot)) LIKE $${params.length + 1} OR
@@ -519,21 +457,16 @@ app.get('/api/sales', async (req, res) => {
             )`);
             params.push(`%${search.toLowerCase()}%`);
         }
-
         if (conditions.length > 0) {
             queryText += ' WHERE ' + conditions.join(' AND ');
         }
-
         // Count Total
         const countRes = await query(`SELECT COUNT(*) FROM (${queryText}) as sub`, params);
         const total = parseInt(countRes.rows[0].count);
-
         // Fetch Page
         queryText += ` ORDER BY st.transaction_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
-
         const dataRes = await query(queryText, params);
-
         res.json({
             data: dataRes.rows,
             pagination: {
@@ -543,44 +476,11 @@ app.get('/api/sales', async (req, res) => {
                 totalPages: Math.ceil(total / limit)
             }
         });
-
     } catch (e) {
         console.error("Sales API Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
-
-// [NEW] Serve Static Files (Production)
-// [NEW] Serve Static Files (Production)
-if (process.env.NODE_ENV === 'production') {
-    const distPath = path.resolve(__dirname, '../dist');
-    console.log(`[Production] Serving static files from: ${distPath}`);
-
-    if (fs.existsSync(distPath)) {
-        app.use(express.static(distPath));
-
-        // Handle React Routing
-        app.get('*', (req, res) => {
-            // Exclude API routes from React routing
-            if (req.path.startsWith('/api')) {
-                return res.status(404).json({ error: 'API Endpoint Not Found' });
-            }
-
-            const indexPath = path.join(distPath, 'index.html');
-            if (fs.existsSync(indexPath)) {
-                res.sendFile(indexPath);
-            } else {
-                console.error(`[Error] index.html not found at ${indexPath}`);
-                res.status(500).send('Application Build Not Found (index.html missing)');
-            }
-        });
-    } else {
-        console.error(`[Error] Dist folder not found at ${distPath}. Did 'npm run build' run?`);
-    }
-} else {
-    console.log('[Dev] Not serving static files (dev mode). Use Vite dev server.');
-}
-
 // [NEW] Settings API
 app.get('/api/settings', async (req, res) => {
     try {
@@ -591,36 +491,30 @@ app.get('/api/settings', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-
 app.post('/api/settings', async (req, res) => {
     try {
         const { key, value } = req.body;
         if (!key || value === undefined) {
             return res.status(400).json({ error: 'Missing key or value' });
         }
-
         await query(`
             INSERT INTO settings (key, value, updated_at)
             VALUES ($1, $2, NOW())
             ON CONFLICT (key) DO UPDATE 
             SET value = EXCLUDED.value, updated_at = NOW()
         `, [key, { value }]); // Store value wrapped in object for extensibility
-
         res.json({ success: true, key, value });
     } catch (e) {
         console.error("Settings Update Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
-
 // [NEW] Serve Static Files (Production) - MOVED TO BOTTOM
 if (process.env.NODE_ENV === 'production') {
     const distPath = path.resolve(__dirname, '../dist');
     console.log(`[Production] Serving static files from: ${distPath}`);
-
     if (fs.existsSync(distPath)) {
         app.use(express.static(distPath));
-
         // Handle React Routing
         // [FIX] Express 5.x: Use Regex for catch-all to avoid "Missing parameter name" error
         app.get(/.*/, (req, res) => {
@@ -628,7 +522,6 @@ if (process.env.NODE_ENV === 'production') {
             if (req.path.startsWith('/api')) {
                 return res.status(404).json({ error: 'API Endpoint Not Found' });
             }
-
             const indexPath = path.join(distPath, 'index.html');
             if (fs.existsSync(indexPath)) {
                 res.sendFile(indexPath);
@@ -643,9 +536,7 @@ if (process.env.NODE_ENV === 'production') {
 } else {
     console.log('[Dev] Not serving static files (dev mode). Use Vite dev server.');
 }
-
 const HOST = '0.0.0.0'; // [FIX] Required for Railway/Render
-
 app.listen(PORT, HOST, async () => {
     console.log(`API Server running at http://${HOST}:${PORT}`);
     if (process.env.DATABASE_URL) {

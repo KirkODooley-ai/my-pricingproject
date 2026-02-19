@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier } from '../utils/pricingEngine'
 import './PricingTable.css'
 
-const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransactions, customers, products = [], productVariants = [] }) => {
+const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransactions, customers, products = [], productVariants = [], onSave }) => {
 
     // --- UI State ---
     const [activeTab, setActiveTab] = useState('markup') // 'markup' | 'discounts'
@@ -112,30 +112,41 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                     <h2 className="heading-lg">Pricing Strategy</h2>
                     <p style={{ color: 'var(--text-light)', marginTop: '0.25rem' }}>Configure global markups and customer tier discounts.</p>
                 </div>
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    {/* [NEW] Save Button */}
                     <button
-                        className={`btn ${activeTab === 'markup' ? 'btn-primary' : 'btn-ghost'}`}
-                        style={{
-                            backgroundColor: activeTab === 'markup' ? 'var(--accent-color)' : 'transparent',
-                            color: activeTab === 'markup' ? '#fff' : 'var(--text-light)',
-                            fontWeight: activeTab === 'markup' ? 600 : 500
-                        }}
-                        onClick={() => setActiveTab('markup')}
+                        className="btn btn-primary"
+                        onClick={onSave}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#10b981', borderColor: '#059669', color: 'white' }}
                     >
-                        1. Base Markup
+                        <span>💾</span> Save Changes
                     </button>
-                    <button
-                        className={`btn ${activeTab === 'discounts' ? 'btn-primary' : 'btn-ghost'}`}
-                        style={{
-                            backgroundColor: activeTab === 'discounts' ? 'var(--accent-color)' : 'transparent',
-                            color: activeTab === 'discounts' ? '#fff' : 'var(--text-light)',
-                            fontWeight: activeTab === 'discounts' ? 600 : 500
-                        }}
-                        onClick={() => setActiveTab('discounts')}
-                    >
-                        2. Tier Discounts
-                    </button>
+
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            className={`btn ${activeTab === 'markup' ? 'btn-primary' : 'btn-ghost'}`}
+                            style={{
+                                backgroundColor: activeTab === 'markup' ? 'var(--accent-color)' : 'transparent',
+                                color: activeTab === 'markup' ? '#fff' : 'var(--text-light)',
+                                fontWeight: activeTab === 'markup' ? 600 : 500
+                            }}
+                            onClick={() => setActiveTab('markup')}
+                        >
+                            1. Base Markup
+                        </button>
+                        <button
+                            className={`btn ${activeTab === 'discounts' ? 'btn-primary' : 'btn-ghost'}`}
+                            style={{
+                                backgroundColor: activeTab === 'discounts' ? 'var(--accent-color)' : 'transparent',
+                                color: activeTab === 'discounts' ? '#fff' : 'var(--text-light)',
+                                fontWeight: activeTab === 'discounts' ? 600 : 500
+                            }}
+                            onClick={() => setActiveTab('discounts')}
+                        >
+                            2. Tier Discounts
+                        </button>
+                    </div>
                 </div>
             </div>
 

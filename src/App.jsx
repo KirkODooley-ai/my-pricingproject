@@ -709,6 +709,11 @@ function App() {
             // [NEW] Phase 18: Variants
             products={products}
             productVariants={productVariants}
+            // [NEW] Manual Save Hook
+            onSave={() => {
+              api.save('pricingStrategy', pricingStrategy);
+              alert("Pricing Strategy Saved Successfully!");
+            }}
           />
         )}
 

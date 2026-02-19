@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import { AuthProvider } from './contexts/AuthContext';
-// ... any other imports like ErrorBoundary ...
+import ErrorBoundary from './components/ErrorBoundary'; // Make sure this path is correct
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -11,5 +11,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <App />
       </AuthProvider>
     </ErrorBoundary>
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);

@@ -447,7 +447,7 @@ app.get('/api/sales', async (req, res) => {
         const params = [];
         const conditions = [];
         if (category && category !== 'All') {
-            conditions.push([(cat.name = $${params.length + 1} OR st.category_name_snapshot = $${params.length + 1})](cci:1://file:///c:/Users/kirk.odooley/.gemini/antigravity/playground/prime-ionosphere/pricing-software/src/App.jsx:22:0-801:1));
+            conditions.push(`(cat.name = $${params.length + 1} OR st.category_name_snapshot = $${params.length + 1})`);
             params.push(category);
         }
         if (search) {

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"node server/server.js\" \"vite\"",
     "build": "vite build",
-    "start": "node index.js",
+    "start": "node server/server.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

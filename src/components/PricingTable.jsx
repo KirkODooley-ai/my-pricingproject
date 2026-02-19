@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, DEFAULT_CATEGORIES } from '../utils/pricingEngine'
+import { useAuth } from '../contexts/AuthContext' // [NEW]
 import './PricingTable.css'
 
 const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {} }) => {
+    const { user } = useAuth(); // [NEW]
+    const isManager = user?.role === 'manager';
     const [editingId, setEditingId] = useState(null)
     const [activeCategory, setActiveCategory] = useState('All') // Filter: Category
     const [searchTerm, setSearchTerm] = useState('') // Filter: Text Search
@@ -274,9 +277,11 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         </select>
                     </div>
 
-                    <button className="add-btn" onClick={() => setShowAddForm(!showAddForm)} style={{ height: 'fit-content', alignSelf: 'flex-end', marginBottom: '2px' }}>
-                        {showAddForm ? 'Cancel' : '+ Product'}
-                    </button>
+                    {!isManager && (
+                        <button className="add-btn" onClick={() => setShowAddForm(!showAddForm)} style={{ height: 'fit-content', alignSelf: 'flex-end', marginBottom: '2px' }}>
+                            {showAddForm ? 'Cancel' : '+ Product'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -664,8 +669,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                             <th style={{ width: '10%' }}>Vendor</th>
                             <th style={{ width: '10%' }}>Code</th>
                             <th style={{ width: '20%' }}>Name</th>
-                            <th style={{ width: '8%', textAlign: 'right' }}>Base Cost</th>
-                            <th style={{ width: '8%', textAlign: 'right' }}>Unit Cost</th>
+                            {!isManager && <th style={{ width: '8%', textAlign: 'right' }}>Base Cost</th>}
+                            {!isManager && <th style={{ width: '8%', textAlign: 'right' }}>Unit Cost</th>}
                             <th style={{ width: '8%', textAlign: 'right' }}>Current Price</th>
                             <th style={{ width: '8%', textAlign: 'center' }}>Margin (Curr)</th>
 
@@ -673,12 +678,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                             {previewTier.tier && (
                                 <>
                                     <th style={{ width: '9%', textAlign: 'right', color: '#2563eb', backgroundColor: '#eff6ff', borderLeft: '2px solid #ddd' }}>Strat List</th>
-                                    <th style={{ width: '9%', textAlign: 'right', color: '#059669', backgroundColor: '#ecfdf5' }}>Net ({previewTier.tier})</th>
-                                    <th style={{ width: '7%', textAlign: 'right', color: '#059669', backgroundColor: '#ecfdf5' }}>Strat Margin</th>
+                                    {!isManager && <th style={{ width: '9%', textAlign: 'right', color: '#059669', backgroundColor: '#ecfdf5' }}>Net ({previewTier.tier})</th>}
+                                    {!isManager && <th style={{ width: '7%', textAlign: 'right', color: '#059669', backgroundColor: '#ecfdf5' }}>Strat Margin</th>}
                                 </>
                             )}
 
-                            <th style={{ width: '10%', textAlign: 'center' }}>Actions</th>
+                            {!isManager && <th style={{ width: '10%', textAlign: 'center' }}>Actions</th>}
                         </tr>
                     </thead>
                     <tbody>

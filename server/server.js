@@ -17,46 +17,94 @@ import { query, killZombieConnections } from './db.js';
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const ENTITIES = ['products', 'categories', 'customers', 'salesTransactions', 'pricingStrategy', 'customerAliases', 'productVariants', 'settings'];
+const ENTITIES = ['products', 'categories', 'customers', 'salesTransactions', 'pricingStrategy', 'customerAliases', 'productVariants', 'settings', 'users', 'proposals'];
 
-// [NEW] Health Check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV || 'development' });
+// [NEW] Auth Dependencies
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// [NEW] Auth Middleware
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+};
+
+
+
+// [NEW] Login Route
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const result = await query('SELECT * FROM users WHERE username = $1', [username]);
+        if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+
+        const user = result.rows[0];
+        if (await bcrypt.compare(password, user.password_hash)) {
+            // Create Token
+            const token = jwt.sign(
+                { id: user.id, username: user.username, role: user.role, region: user.region },
+                JWT_SECRET,
+                { expiresIn: '8h' }
+            );
+            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region } });
+        } else {
+            res.status(401).json({ error: 'Invalid credentials' });
+        }
+    } catch (e) {
+        console.error("Login Error:", e);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
-// GET ALL DATA
-app.get('/api/data', async (req, res) => {
+// GET ALL DATA (Protected)
+app.get('/api/data', authenticateToken, async (req, res) => {
     try {
+        const user = req.user;
+        const isAdmin = user.role === 'admin';
+        const isManager = user.role === 'manager';
+
         const result = {};
 
         // 1. Products
-        // Map snake_case -> camelCase for frontend
+        // RBAC: Managers cannot see Costs or Imported Margin
+        const productFields = isManager
+            ? `p.id, p.name, p.description, p.vendor, 
+               p.price, p.item_code as "itemCode", p.category_id as "categoryId", 
+               p.sub_category as "subCategory", p.unit_price as "unitPrice", 
+               p.bag_units as "bagUnits", p.sell_unit as "sellUnit", 
+               c.name as category`
+            : `p.id, p.name, p.description, p.vendor, p.cost, p.price,
+               p.item_code as "itemCode", p.category_id as "categoryId",
+               p.sub_category as "subCategory", p.unit_cost as "unitCost",
+               p.unit_price as "unitPrice", p.bag_units as "bagUnits",
+               p.bag_cost as "bagCost", p.sell_unit as "sellUnit",
+               p.imported_margin as "importedMargin",
+               c.name as category`;
+
         const productsRes = await query(`
-            SELECT 
-                p.id, p.name, p.description, p.vendor, p.cost, p.price,
-                p.item_code as "itemCode",
-                p.category_id as "categoryId",
-                p.sub_category as "subCategory",
-                p.unit_cost as "unitCost",
-                p.unit_price as "unitPrice",
-                p.bag_units as "bagUnits",
-                p.bag_cost as "bagCost",
-                p.sell_unit as "sellUnit",
-                p.imported_margin as "importedMargin",
-                c.name as category 
+            SELECT ${productFields}
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id
         `);
         result.products = productsRes.rows;
 
         // 2. Categories
-        const catRes = await query(`
-            SELECT 
-                id, name, revenue, 
-                material_cost as "materialCost"
-            FROM categories 
-            ORDER BY id
-        `);
+        // RBAC: Managers cannot see material_cost
+        const catFields = isManager
+            ? `id, name, revenue`
+            : `id, name, revenue, material_cost as "materialCost"`;
+
+        const catRes = await query(`SELECT ${catFields} FROM categories ORDER BY id`);
         result.categories = catRes.rows;
 
         // 3. Customers
@@ -70,27 +118,35 @@ app.get('/api/data', async (req, res) => {
         result.customers = custRes.rows;
 
         // 4. Sales Transactions
-        // Frontend expects 'customerName' and 'category'. Map SQL columns.
-        const salesRes = await query(`
+        // RBAC: Managers only see their Region (Territory)
+        let salesQuery = `
             SELECT 
                 st.id, st.amount, st.cogs,
                 st.customer_id as "customerId",
                 st.category_id as "categoryId",
                 st.transaction_date as "date",
                 COALESCE(c.name, st.customer_name_snapshot) as "customerName",
-                COALESCE(cat.name, st.category_name_snapshot) as category
+                COALESCE(cat.name, st.category_name_snapshot) as category,
+                c.territory -- Needed for filtering
             FROM sales_transactions st
             LEFT JOIN customers c ON st.customer_id = c.id
             LEFT JOIN categories cat ON st.category_id = cat.id
-        `);
+        `;
+
+        let salesParams = [];
+        if (isManager && user.region) {
+            salesQuery += ` WHERE c.territory = $1`;
+            salesParams.push(user.region);
+        }
+
+        const salesRes = await query(salesQuery, salesParams);
         result.salesTransactions = salesRes.rows;
 
-        // 5. Pricing Strategy (Assuming single row)
-        // [FIX] Always get the LATEST one (Highest ID) since updated_at column might be missing
+        // 5. Pricing Strategy
         const stratRes = await query('SELECT * FROM pricing_strategies WHERE is_active = TRUE ORDER BY id DESC LIMIT 1');
         result.pricingStrategy = stratRes.rows[0]?.strategy_data || null;
 
-        // 6. Customer Aliases (Convert table rows back to Key-Value object for frontend compatibility)
+        // 6. Customer Aliases
         const aliasRes = await query(`
             SELECT ca.alias_name, c.name as canonical_name 
             FROM customer_aliases ca
@@ -119,22 +175,85 @@ app.get('/api/data', async (req, res) => {
             const settingsRes = await query('SELECT key, value FROM settings');
             result.settings = settingsRes.rows;
         } catch (e) {
-            console.warn("Settings table optional:", e.message);
             result.settings = [];
+        }
+
+        // 9. Proposals (Admins Only)
+        if (isAdmin) {
+            const proposalsRes = await query(`
+                SELECT p.id, p.type, p.data, p.status, p.created_at, u.username 
+                FROM proposals p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.status = 'pending'
+            `);
+            result.proposals = proposalsRes.rows;
         }
 
         res.json(result);
     } catch (error) {
         console.error('Load Error:', error);
-        res.status(500).json({ error: 'Failed to load data from DB' });
+        res.status(500).json({ error: error.message });
     }
 });
 
 // SAVE DATA
-// SAVE DATA with BACKUP
-// SAVE DATA (Upsert Logic)
-app.post('/api/save/:type', async (req, res) => {
+// [NEW] Proposal Submission (Analyst)
+app.post('/api/proposals', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'analyst') return res.status(403).json({ error: 'Only analysts can submit proposals' });
+
+        const { type, data } = req.body;
+        await query(
+            'INSERT INTO proposals (user_id, type, data, status) VALUES ($1, $2, $3, $4)',
+            [req.user.id, type, { strategy: data }, 'pending']
+        );
+        res.json({ success: true, message: 'Proposal submitted for approval.' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// [NEW] Proposal Approval (Admin)
+app.post('/api/proposals/:id/approve', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can approve proposals' });
+
+        const { id } = req.params;
+        const result = await query('SELECT * FROM proposals WHERE id = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Proposal not found' });
+
+        const proposal = result.rows[0];
+
+        // Execute the change
+        if (proposal.type === 'pricingStrategy') {
+            await query(
+                'INSERT INTO pricing_strategies (strategy_data, is_active) VALUES ($1, TRUE)',
+                [proposal.data.strategy]
+            );
+        }
+
+        // Mark as approved (Set status to 'approved')
+        await query("UPDATE proposals SET status = 'approved' WHERE id = $1", [id]);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/save/:type', authenticateToken, async (req, res) => {
     const { type } = req.params;
+    const user = req.user;
+
+    // RBAC: Manager cannot save global strategy
+    if (user.role === 'manager' && type === 'pricingStrategy') {
+        return res.status(403).json({ error: 'Managers cannot edit pricing strategy.' });
+    }
+
+    // RBAC: Analyst cannot save directly
+    if (user.role === 'analyst' && type === 'pricingStrategy') {
+        return res.status(403).json({ error: 'Analysts must submit proposals.' });
+    }
+
     const data = req.body;
 
     // Basic validation

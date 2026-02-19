@@ -95,4 +95,5 @@ export const query = async (text, params, retries = 3) => {
 };
 
 export const getClient = () => pool.connect();
+export { pool };
 export default pool;

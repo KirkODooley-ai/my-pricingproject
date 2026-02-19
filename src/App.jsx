@@ -11,6 +11,9 @@ import SalesAnalysis from './components/SalesAnalysis'
 import PricingStrategyManager from './components/PricingStrategyManager' // [NEW] Phase 14
 import MarginAlerts from './components/MarginAlerts' // [NEW] Phase 15
 import Dashboard from './components/Dashboard'
+import Login from './components/Login' // [NEW]
+import ProposalsManager from './components/ProposalsManager' // [NEW]
+import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
 
@@ -18,6 +21,13 @@ import { DEFAULT_CATEGORIES } from './utils/pricingEngine'
 import './App.css'
 
 function App() {
+  const { user, logout } = useAuth();
+
+  // Redirect to Login if not authenticated
+  if (!user) {
+    return <Login />;
+  }
+
   // --- Lazy Initialization (Load immediately) ---
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -534,6 +544,24 @@ function App() {
           >
             Categories
           </div>
+
+          {/* Admin Only Tabs */}
+          {user.role === 'admin' && (
+            <>
+              <div
+                className={`nav-link ${activeTab === 'proposals' ? 'active' : ''}`}
+                onClick={() => setActiveTab('proposals')}
+              >
+                Proposals
+              </div>
+              <div
+                className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('settings')}
+              >
+                Admin Settings
+              </div>
+            </>
+          )}
           <div
             className={`nav-link ${activeTab === 'customers' ? 'active' : ''}`}
             onClick={() => setActiveTab('customers')}
@@ -565,13 +593,18 @@ function App() {
             Import Data
           </div>
           <div style={{ marginTop: 'auto', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
-            <div
-              className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-              style={{ color: '#4b5563' }}
-            >
-              ⚙ Admin Settings
+            <div style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>
+              Logged in as <br />
+              <strong style={{ color: '#111827' }}>{user.username}</strong> <br />
+              <span style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{user.role} {user.region ? `(${user.region})` : ''}</span>
             </div>
+            <button
+              onClick={logout}
+              className="nav-link"
+              style={{ color: '#ef4444', marginTop: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              Logout
+            </button>
           </div>
         </nav>
       </aside>
@@ -658,7 +691,9 @@ function App() {
           />
         )}
 
-        {activeTab === 'settings' && (
+        {activeTab === 'proposals' && <ProposalsManager />}
+
+        {activeTab === 'settings' && user.role === 'admin' && (
           <div style={{ padding: '2rem', maxWidth: '600px' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Admin Settings</h2>
 

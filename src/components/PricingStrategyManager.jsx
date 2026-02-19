@@ -1,8 +1,12 @@
 import React, { useState } from 'react'
 import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier } from '../utils/pricingEngine'
+import { useAuth } from '../contexts/AuthContext' // [NEW]
 import './PricingTable.css'
 
 const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransactions, customers, products = [], productVariants = [], onSave }) => {
+    const { user } = useAuth(); // [NEW]
+    const isManager = user?.role === 'manager';
+    const isAnalyst = user?.role === 'analyst';
 
     // --- UI State ---
     const [activeTab, setActiveTab] = useState('markup') // 'markup' | 'discounts'
@@ -36,6 +40,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
 
     // --- Handlers ---
     const handleListMultiplierChange = (group, value) => {
+        if (isManager) return; // [RBAC] Read Only
         const val = parseFloat(value)
         if (isNaN(val) || val < 0) return
         setStrategy(prev => ({
@@ -45,6 +50,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
     }
 
     const handleTierDiscountChange = (groupType, tierName, productGroup, value) => {
+        if (isManager) return; // [RBAC] Read Only
         const val = parseFloat(value)
         if (isNaN(val) || val < 0) return
         setStrategy(prev => {
@@ -114,14 +120,21 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                 </div>
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    {/* [NEW] Save Button */}
-                    <button
-                        className="btn btn-primary"
-                        onClick={onSave}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#10b981', borderColor: '#059669', color: 'white' }}
-                    >
-                        <span>💾</span> Save Changes
-                    </button>
+                    {/* [NEW] Save Button (RBAC) */}
+                    {!isManager && (
+                        <button
+                            className="btn btn-primary"
+                            onClick={onSave}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                backgroundColor: isAnalyst ? '#f59e0b' : '#10b981',
+                                borderColor: isAnalyst ? '#d97706' : '#059669',
+                                color: 'white'
+                            }}
+                        >
+                            <span>{isAnalyst ? '📝' : '💾'}</span> {isAnalyst ? 'Propose Changes' : 'Save Changes'}
+                        </button>
+                    )}
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button

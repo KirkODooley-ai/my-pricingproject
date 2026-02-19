@@ -551,19 +551,34 @@ app.get('/api/sales', async (req, res) => {
 });
 
 // [NEW] Serve Static Files (Production)
+// [NEW] Serve Static Files (Production)
 if (process.env.NODE_ENV === 'production') {
-    const distPath = path.join(__dirname, '../dist');
-    app.use(express.static(distPath));
+    const distPath = path.resolve(__dirname, '../dist');
+    console.log(`[Production] Serving static files from: ${distPath}`);
 
-    // Handle React Routing
-    // [FIX] Express 5.x requires regex or specific syntax for wildcards. '*' is no longer valid.
-    app.get(/.*/, (req, res) => {
-        // Exclude API routes from React routing
-        if (req.path.startsWith('/api')) {
-            return res.status(404).json({ error: 'API Endpoint Not Found' });
-        }
-        res.sendFile(path.join(distPath, 'index.html'));
-    });
+    if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+
+        // Handle React Routing
+        app.get('*', (req, res) => {
+            // Exclude API routes from React routing
+            if (req.path.startsWith('/api')) {
+                return res.status(404).json({ error: 'API Endpoint Not Found' });
+            }
+
+            const indexPath = path.join(distPath, 'index.html');
+            if (fs.existsSync(indexPath)) {
+                res.sendFile(indexPath);
+            } else {
+                console.error(`[Error] index.html not found at ${indexPath}`);
+                res.status(500).send('Application Build Not Found (index.html missing)');
+            }
+        });
+    } else {
+        console.error(`[Error] Dist folder not found at ${distPath}. Did 'npm run build' run?`);
+    }
+} else {
+    console.log('[Dev] Not serving static files (dev mode). Use Vite dev server.');
 }
 
 // [NEW] Settings API

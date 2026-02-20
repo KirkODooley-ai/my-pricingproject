@@ -23,6 +23,8 @@ const Login = () => {
     return (
         <div className="login-page">
             <div className="login-card">
+                <h1 className="login-brand">FORMA STEEL</h1>
+                <p className="login-tagline">Creative Solutions in Steel</p>
                 <img
                     src={logoLight}
                     alt="Forma Steel"

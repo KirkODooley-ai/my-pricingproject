@@ -21,6 +21,9 @@ import { api } from './services/api'
 import { DEFAULT_CATEGORIES } from './utils/pricingEngine'
 import './App.css'
 
+// Forma Steel branding - white logo for dark sidebar
+import logoSidebar from '../Assests and Branding/Logos/Forma-Primary-Logo-RGB-White.png'
+
 function App() {
   const { user, logout } = useAuth();
 
@@ -487,8 +490,8 @@ function App() {
   const tabStyle = (tabName) => ({
     padding: '0.75rem 1.0rem',
     cursor: 'pointer',
-    borderBottom: activeTab === tabName ? '2px solid #2563eb' : '2px solid transparent',
-    color: activeTab === tabName ? '#2563eb' : '#6b7280',
+    borderBottom: activeTab === tabName ? '2px solid var(--primary-color)' : '2px solid transparent',
+    color: activeTab === tabName ? 'var(--primary-color)' : '#6b7280',
     fontWeight: 600,
     marginBottom: '-1px',
     fontSize: '0.9rem',
@@ -505,7 +508,9 @@ function App() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1 className="app-title">Pricing Manager</h1>
+          <img src={logoSidebar} alt="Forma Steel" className="sidebar-logo" />
+          <h1 className="app-title">Pricing Strategy</h1>
+          <p className="app-subtitle">Creative Solutions in Steel</p>
         </div>
 
         <nav className="nav-section">

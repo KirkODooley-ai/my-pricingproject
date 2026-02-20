@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import './Login.css';
+
+// Logo for light background (login card)
+import logoLight from '../../Assests and Branding/Logos/Forma-Logo-Metal-Tagline.png';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -12,53 +16,55 @@ const Login = () => {
         setError('');
         const success = await login(username, password);
         if (!success) {
-            setError('Invalid credentials');
+            setError('Invalid username or password. Please try again.');
         }
     };
 
     return (
-        <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            height: '100vh', backgroundColor: '#f3f4f6'
-        }}>
-            <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
-                <h2 className="heading-lg" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Login</h2>
+        <div className="login-page">
+            <div className="login-card">
+                <img
+                    src={logoLight}
+                    alt="Forma Steel"
+                    className="login-logo"
+                />
+                <h2 className="login-title">Pricing Strategy</h2>
+                <p className="login-subtitle">Sign in to access your account</p>
 
-                {error && <div style={{
-                    backgroundColor: '#fee2e2', color: '#b91c1c', padding: '0.75rem',
-                    borderRadius: '4px', marginBottom: '1rem', fontSize: '0.9rem'
-                }}>{error}</div>}
+                {error && <div className="login-error">{error}</div>}
 
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Username</label>
+                <form onSubmit={handleSubmit} className="login-form">
+                    <div className="form-group">
+                        <label htmlFor="username">Username</label>
                         <input
+                            id="username"
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            style={{
-                                width: '100%', padding: '0.75rem', border: '1px solid #d1d5db',
-                                borderRadius: '4px'
-                            }}
+                            placeholder="Enter your username"
                             autoFocus
+                            autoComplete="username"
                         />
                     </div>
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Password</label>
+                    <div className="form-group">
+                        <label htmlFor="password">Password</label>
                         <input
+                            id="password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            style={{
-                                width: '100%', padding: '0.75rem', border: '1px solid #d1d5db',
-                                borderRadius: '4px'
-                            }}
+                            placeholder="Enter your password"
+                            autoComplete="current-password"
                         />
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                    <button type="submit" className="login-submit">
                         Sign In
                     </button>
                 </form>
+
+                <p className="login-footer">
+                    Forma Steel · Creative Solutions in Steel
+                </p>
             </div>
         </div>
     );

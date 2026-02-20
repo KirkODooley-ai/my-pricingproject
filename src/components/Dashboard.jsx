@@ -100,7 +100,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
 
             {/* Territory Analytics */}
             <div className="pricing-table-container" style={{ marginBottom: '2rem' }}>
-                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '1px solid #eee', color: '#2563eb' }}>Territory Performance</h4>
+                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '1px solid #eee', color: 'var(--primary-color)' }}>Territory Performance</h4>
                 <table className="pricing-table">
                     <thead>
                         <tr>
@@ -119,7 +119,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <div style={{ flex: 1, backgroundColor: '#e5e7eb', borderRadius: '4px', height: '8px' }}>
-                                            <div style={{ width: formatPercent(stat.countPct), backgroundColor: '#3b82f6', height: '100%', borderRadius: '4px' }}></div>
+                                            <div style={{ width: formatPercent(stat.countPct), backgroundColor: 'var(--primary-color)', height: '100%', borderRadius: '4px' }}></div>
                                         </div>
                                         <span style={{ fontSize: '0.85rem', minWidth: '45px' }}>{formatPercent(stat.countPct)}</span>
                                     </div>

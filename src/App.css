@@ -1,4 +1,4 @@
-/* Apple-Style Layout with Dark Blue Theme */
+/* Forma Steel Layout */
 .app-layout {
     display: grid;
     grid-template-columns: 260px 1fr;
@@ -9,11 +9,11 @@
     color: var(--text-main);
 }
 
-/* Sidebar Styling - Dark Blue Scheme */
+/* Sidebar - Forma Dark Blue */
 .sidebar {
-    background-color: var(--primary-color);
-    border-right: 1px solid #1e293b;
-    padding: 1.5rem 0.75rem;
+    background-color: var(--dark-blue);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.25rem 0.75rem;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -21,12 +21,20 @@
 }
 
 .sidebar-header {
-    padding: 0 0.75rem 1.5rem 0.75rem;
+    padding: 0 0.75rem 1.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-logo {
+    height: 36px;
+    width: auto;
+    display: block;
     margin-bottom: 0.5rem;
 }
 
 .app-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--bg-surface);
     margin: 0;
@@ -34,9 +42,9 @@
 }
 
 .app-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-light);
-    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 0.15rem;
     font-weight: 500;
 }
 
@@ -97,9 +105,9 @@
 }
 
 .main-content::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
+    background-color: #a8c4e8;
     border-radius: 5px;
-    border: 2px solid #f8fafc;
+    border: 2px solid var(--light-blue);
 }
 
 /* Utility */

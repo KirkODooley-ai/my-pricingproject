@@ -1,0 +1,119 @@
+/* Forma Steel Login Page */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--dark-blue) 0%, #0d2d5c 50%, var(--primary-color) 100%);
+  background-attachment: fixed;
+  font-family: var(--font-base);
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem 2.5rem 2rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.login-logo {
+  display: block;
+  margin: 0 auto 1.5rem;
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+}
+
+.login-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--dark-grey);
+  margin: 0 0 0.25rem;
+}
+
+.login-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 1.75rem;
+}
+
+.login-error {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.login-form label {
+  display: block;
+  text-align: left;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--dark-grey);
+}
+
+.login-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-form input:hover {
+  border-color: #a8c4e8;
+}
+
+.login-form input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(51, 99, 175, 0.15);
+}
+
+.login-form .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.login-submit:hover {
+  background: var(--primary-hover);
+}
+
+.login-submit:active {
+  transform: translateY(1px);
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}

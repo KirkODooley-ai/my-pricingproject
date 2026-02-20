@@ -148,9 +148,28 @@
 
 /* Utility */
 .pricing-table-container {
-    background-color: var(--bg-surface);
-    box-shadow: var(--shadow-md);
-    border: 2px solid var(--border-color);
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
+}
+
+/* Dashboard layout */
+.dashboard-container {
+    max-width: 1200px;
+}
+
+.dashboard-container h2 {
+    margin-bottom: 0.25rem;
+}
+
+.dashboard-container > .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+}
+
+.dashboard-container .stat-card {
+    min-height: 100px;
 }

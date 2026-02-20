@@ -1,8 +1,9 @@
 .calculator-container {
-    background: var(--card-bg);
-    border-radius: var(--border-radius);
+    background: #ffffff;
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
 }
 
 .controls-grid {
@@ -33,21 +34,24 @@
 }
 
 .stat-card {
-    background: var(--bg-surface);
+    background: #ffffff;
     padding: 1.5rem;
     border-radius: var(--radius-lg);
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .stat-card.projected {
-    background: rgba(51, 99, 175, 0.08);
-    border-color: var(--primary-color);
+    border-left: 4px solid var(--primary-color);
 }
 
 .stat-card h3 {
-    margin-bottom: 1rem;
-    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--dark-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .metric-row {
@@ -58,7 +62,9 @@
 }
 
 .metric-value {
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--dark-blue);
 }
 
 .metric-row.highlight {

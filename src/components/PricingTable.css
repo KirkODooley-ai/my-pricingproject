@@ -1,27 +1,43 @@
-/* Layout Helpers for Scrolling */
+/* Table container - clear card structure */
 .pricing-table-container {
-    background: var(--bg-surface);
+    background: #ffffff;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    margin-top: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+    margin-top: 1.5rem;
     display: flex;
     flex-direction: column;
     height: auto;
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
 }
 
+/* Section header inside container */
+.pricing-table-container h4 {
+    background: linear-gradient(135deg, var(--dark-blue) 0%, #0d2d5c 100%);
+    color: #ffffff;
+    padding: 1rem 1.25rem;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Scrollable table wrapper */
 .table-wrapper {
     height: 72vh;
     overflow-y: auto;
     overflow-x: auto;
-    border-top: 1px solid var(--border-color);
-    background-color: var(--bg-surface);
+    background-color: #ffffff;
 }
 
 .pricing-table th {
     position: sticky;
     top: 0;
     z-index: 10;
+}
+
+.pricing-table th,
+.pricing-table td {
+    padding: 0.875rem 1rem;
 }
 
 /* Unique Action Buttons */
@@ -83,7 +99,7 @@
     color: white;
     padding: 0.5rem 1rem;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--radius-md);
     cursor: pointer;
     margin-bottom: 1rem;
     font-weight: 500;

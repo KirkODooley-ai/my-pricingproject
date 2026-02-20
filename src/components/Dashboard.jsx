@@ -100,7 +100,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
 
             {/* Territory Analytics */}
             <div className="pricing-table-container" style={{ marginBottom: '2rem' }}>
-                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '2px solid var(--border-color)', color: 'var(--dark-blue)', fontWeight: 700 }}>Territory Performance</h4>
+                <h4>Territory Performance</h4>
                 <table className="pricing-table">
                     <thead>
                         <tr>
@@ -139,9 +139,9 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                 </table>
             </div>
 
-            {/* Top 5 Product Lines: Breakdown of top revenue-generating categories, plus combined total & %. */}
+            {/* Top 5 Product Lines */}
             <div className="pricing-table-container">
-                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '2px solid var(--border-color)', color: 'var(--dark-blue)', fontWeight: 700 }}>Top 5 Product Lines (Revenue)</h4>
+                <h4>Top 5 Product Lines (Revenue)</h4>
                 <table className="pricing-table">
                     <thead>
                         <tr>
@@ -180,10 +180,10 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                         )
                                     })}
                                     {categories.length === 0 && (
-                                        <tr><td colSpan="3" style={{ textAlign: 'center', color: '#ccc' }}>No categories defined</td></tr>
+                                        <tr><td colSpan="3" style={{ textAlign: 'center', color: 'var(--text-light)', padding: '2rem' }}>No categories defined</td></tr>
                                     )}
                                     {categories.length > 0 && (
-                                        <tr style={{ backgroundColor: 'var(--bg-surface)', borderTop: '2px solid var(--border-color)' }}>
+                                        <tr style={{ backgroundColor: '#f0f4fa', borderTop: '2px solid var(--primary-color)' }}>
                                             <td style={{ fontWeight: 'bold', color: 'var(--dark-blue)' }}>Top 5 Combined</td>
                                             <td style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--dark-blue)' }}>{formatCurrency(top5Total)}</td>
                                             <td>

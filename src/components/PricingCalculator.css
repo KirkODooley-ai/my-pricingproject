@@ -33,21 +33,21 @@
 }
 
 .stat-card {
-    background: #f9fafb;
+    background: var(--bg-surface);
     padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-color);
 }
 
 .stat-card.projected {
-    background: #eff6ff;
-    border-color: #bfdbfe;
+    background: rgba(51, 99, 175, 0.08);
+    border-color: var(--primary-color);
 }
 
 .stat-card h3 {
     margin-bottom: 1rem;
     font-size: 1.125rem;
-    color: #1f2937;
+    color: var(--dark-blue);
 }
 
 .metric-row {

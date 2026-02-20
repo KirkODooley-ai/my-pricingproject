@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     height: auto;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
 }
 
 .table-wrapper {
@@ -16,6 +16,12 @@
     overflow-x: auto;
     border-top: 1px solid var(--border-color);
     background-color: var(--bg-surface);
+}
+
+.pricing-table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 /* Unique Action Buttons */
@@ -52,52 +58,9 @@
     background-color: var(--accent-hover);
 }
 
-/* [NEW] Scrollable Wrapper for the Table */
-.table-wrapper {
-    /* [FIX] Set explicit viewport-based height for the scroll area */
-    /* This ensures a large scrollable area that fits on most screens without cutting off */
-    height: 72vh;
-    overflow-y: auto;
-    overflow-x: auto;
-    border-top: 1px solid #e5e7eb;
-    background-color: white;
-}
-
-.pricing-table {
-    width: 100%;
-    border-collapse: separate;
-    /* Required for sticky headers */
-    border-spacing: 0;
-    text-align: left;
-}
-
-.pricing-table th,
-.pricing-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.pricing-table th {
-    background-color: #f9fafb;
-    font-weight: 600;
-    color: var(--text-color);
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    position: sticky;
-    /* Sticky Header */
-    top: 0;
-    z-index: 10;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.pricing-table tr:hover {
-    background-color: #f9fafb;
-}
-
 .input-field {
     padding: 0.5rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     width: 100%;
     max-width: 120px;
@@ -127,5 +90,5 @@
 }
 
 .add-btn:hover {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-hover);
 }

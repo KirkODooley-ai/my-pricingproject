@@ -71,8 +71,8 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
     return (
         <div className="dashboard-container">
             <div style={{ marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '1.5rem', color: '#111827' }}>Executive Dashboard</h2>
-                <p style={{ color: '#6b7280' }}>
+                <h2 style={{ fontSize: '1.5rem', color: 'var(--dark-blue)', fontWeight: 700 }}>Executive Dashboard</h2>
+                <p style={{ color: 'var(--text-light)' }}>
                     High-level overview of the pricing transition impact.
                 </p>
             </div>
@@ -82,25 +82,25 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                 <div className="stat-card">
                     <h3>Current Revenue</h3>
                     <div className="metric-value">{formatCurrency(totalCurrentRevenue)}</div>
-                    <small style={{ color: '#6b7280' }}>Based on Annual Spend</small>
+                    <small style={{ color: 'var(--text-light)' }}>Based on Annual Spend</small>
                 </div>
                 <div className="stat-card projected">
                     <h3>Projected Revenue</h3>
                     <div className="metric-value">{formatCurrency(totalProjectedRevenue)}</div>
-                    <small style={{ color: '#6b7280' }}>Post-Transition</small>
+                    <small style={{ color: 'var(--text-light)' }}>Post-Transition</small>
                 </div>
                 <div className={`stat-card ${totalDelta >= 0 ? 'projected' : ''}`} style={{ borderColor: totalDelta < 0 ? '#fca5a5' : undefined, backgroundColor: totalDelta < 0 ? '#fef2f2' : undefined }}>
                     <h3>Net Impact</h3>
                     <div className="metric-value" style={{ color: totalDelta >= 0 ? '#16a34a' : '#dc2626' }}>
                         {totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}
                     </div>
-                    <small style={{ color: '#6b7280' }}>Total Delta</small>
+                    <small style={{ color: 'var(--text-light)' }}>Total Delta</small>
                 </div>
             </div>
 
             {/* Territory Analytics */}
             <div className="pricing-table-container" style={{ marginBottom: '2rem' }}>
-                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '1px solid #eee', color: 'var(--primary-color)' }}>Territory Performance</h4>
+                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '2px solid var(--border-color)', color: 'var(--dark-blue)', fontWeight: 700 }}>Territory Performance</h4>
                 <table className="pricing-table">
                     <thead>
                         <tr>
@@ -118,7 +118,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                 <td style={{ textAlign: 'center' }}>{stat.count}</td>
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ flex: 1, backgroundColor: '#e5e7eb', borderRadius: '4px', height: '8px' }}>
+                                        <div style={{ flex: 1, backgroundColor: 'var(--border-color)', borderRadius: '4px', height: '8px' }}>
                                             <div style={{ width: formatPercent(stat.countPct), backgroundColor: 'var(--primary-color)', height: '100%', borderRadius: '4px' }}></div>
                                         </div>
                                         <span style={{ fontSize: '0.85rem', minWidth: '45px' }}>{formatPercent(stat.countPct)}</span>
@@ -127,8 +127,8 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                 <td style={{ textAlign: 'right' }}>{formatCurrency(stat.sales)}</td>
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ flex: 1, backgroundColor: '#e5e7eb', borderRadius: '4px', height: '8px' }}>
-                                            <div style={{ width: formatPercent(stat.salesPct), backgroundColor: '#10b981', height: '100%', borderRadius: '4px' }}></div>
+                                        <div style={{ flex: 1, backgroundColor: 'var(--border-color)', borderRadius: '4px', height: '8px' }}>
+                                            <div style={{ width: formatPercent(stat.salesPct), backgroundColor: 'var(--primary-color)', height: '100%', borderRadius: '4px' }}></div>
                                         </div>
                                         <span style={{ fontSize: '0.85rem', minWidth: '45px' }}>{formatPercent(stat.salesPct)}</span>
                                     </div>
@@ -141,7 +141,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
 
             {/* Top 5 Product Lines: Breakdown of top revenue-generating categories, plus combined total & %. */}
             <div className="pricing-table-container">
-                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '1px solid #eee', color: '#111827' }}>Top 5 Product Lines (Revenue)</h4>
+                <h4 style={{ padding: '1rem', margin: 0, borderBottom: '2px solid var(--border-color)', color: 'var(--dark-blue)', fontWeight: 700 }}>Top 5 Product Lines (Revenue)</h4>
                 <table className="pricing-table">
                     <thead>
                         <tr>
@@ -170,8 +170,8 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                                 <td style={{ textAlign: 'right' }}>{formatCurrency(rev)}</td>
                                                 <td>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <div style={{ flex: 1, backgroundColor: '#e5e7eb', borderRadius: '4px', height: '8px' }}>
-                                                            <div style={{ width: formatPercent(share), backgroundColor: '#8b5cf6', height: '100%', borderRadius: '4px' }}></div>
+                                                        <div style={{ flex: 1, backgroundColor: 'var(--border-color)', borderRadius: '4px', height: '8px' }}>
+                                                            <div style={{ width: formatPercent(share), backgroundColor: 'var(--primary-color)', height: '100%', borderRadius: '4px' }}></div>
                                                         </div>
                                                         <span style={{ fontSize: '0.85rem', minWidth: '45px' }}>{formatPercent(share)}</span>
                                                     </div>
@@ -183,15 +183,15 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                         <tr><td colSpan="3" style={{ textAlign: 'center', color: '#ccc' }}>No categories defined</td></tr>
                                     )}
                                     {categories.length > 0 && (
-                                        <tr style={{ backgroundColor: '#f9fafb', borderTop: '2px solid #e5e7eb' }}>
-                                            <td style={{ fontWeight: 'bold', color: '#111827' }}>Top 5 Combined</td>
-                                            <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#111827' }}>{formatCurrency(top5Total)}</td>
+                                        <tr style={{ backgroundColor: 'var(--bg-surface)', borderTop: '2px solid var(--border-color)' }}>
+                                            <td style={{ fontWeight: 'bold', color: 'var(--dark-blue)' }}>Top 5 Combined</td>
+                                            <td style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--dark-blue)' }}>{formatCurrency(top5Total)}</td>
                                             <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div style={{ flex: 1, backgroundColor: '#e5e7eb', borderRadius: '4px', height: '8px' }}>
-                                                        <div style={{ width: formatPercent(top5Share), backgroundColor: '#7c3aed', height: '100%', borderRadius: '4px' }}></div>
+                                                    <div style={{ flex: 1, backgroundColor: 'var(--border-color)', borderRadius: '4px', height: '8px' }}>
+                                                        <div style={{ width: formatPercent(top5Share), backgroundColor: 'var(--dark-blue)', height: '100%', borderRadius: '4px' }}></div>
                                                     </div>
-                                                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#7c3aed', minWidth: '45px' }}>{formatPercent(top5Share)}</span>
+                                                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--dark-blue)', minWidth: '45px' }}>{formatPercent(top5Share)}</span>
                                                 </div>
                                             </td>
                                         </tr>

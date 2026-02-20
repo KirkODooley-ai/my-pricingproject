@@ -618,6 +618,11 @@ function App() {
       </aside>
 
       <main className="main-content">
+        <header className="main-header">
+          <h1 className="main-header-brand">FORMA STEEL</h1>
+          <p className="main-header-tagline">Creative Solutions in Steel · Pricing Strategy</p>
+        </header>
+        <div className="main-content-inner">
         {activeTab === 'dashboard' && (
           <Dashboard analysis={analysis} customers={customers} categories={categories} />
         )}
@@ -625,7 +630,7 @@ function App() {
         {activeTab === 'products' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Product List</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--dark-blue)' }}>Product List</h2>
             </div>
             <PricingTable
               products={products}
@@ -671,7 +676,7 @@ function App() {
         {activeTab === 'product-pricing' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Product Pricing</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--dark-blue)' }}>Product Pricing</h2>
             </div>
             <PricingCalculator
               products={products}
@@ -703,9 +708,9 @@ function App() {
 
         {activeTab === 'settings' && user.role === 'admin' && (
           <div style={{ padding: '2rem', maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Admin Settings</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', color: 'var(--dark-blue)' }}>Admin Settings</h2>
 
-            <div className="card" style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div className="card" style={{ padding: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Global Pricing Configuration</h3>
 
               <div style={{ marginBottom: '1.5rem' }}>
@@ -804,6 +809,7 @@ function App() {
             onDeleteSale={handleDeleteSale}
           />
         )}
+        </div>
       </main>
     </div>
   )

@@ -575,7 +575,7 @@ function App() {
           </div>
 
           {/* Bottom section: Users, Admin Settings, Import Data */}
-          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1rem' }}>
             {user.role === 'admin' && (
               <>
                 <div
@@ -599,16 +599,17 @@ function App() {
               Import Data
             </div>
           </div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
-            <div style={{ padding: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+          {/* Logged in user + Logout - at very bottom */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1rem', marginTop: '0' }}>
+            <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem', color: '#DCE5F2' }}>
               Logged in as <br />
               <strong style={{ color: '#fff' }}>{user.username}</strong> <br />
-              <span style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{user.role} {user.region ? `(${user.region})` : ''}</span>
+              <span style={{ textTransform: 'uppercase', fontSize: '0.7rem', opacity: 0.9 }}>{user.role} {user.region ? `(${user.region})` : ''}</span>
             </div>
             <button
               onClick={logout}
-              className="nav-link"
-              style={{ color: '#ef4444', marginTop: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+              className="nav-link nav-link-logout"
+              style={{ color: '#ef4444', marginTop: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', justifyContent: 'flex-start' }}
             >
               Logout
             </button>

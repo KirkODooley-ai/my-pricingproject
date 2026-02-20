@@ -24,7 +24,7 @@
 .control-group label {
     font-weight: 500;
     font-size: 0.875rem;
-    color: #4b5563;
+    color: #3363AF;
 }
 
 .stats-grid {
@@ -49,7 +49,7 @@
     margin-bottom: 0.75rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--dark-blue);
+    color: #3363AF;
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -64,7 +64,7 @@
 .metric-value {
     font-weight: 700;
     font-size: 1.5rem;
-    color: var(--dark-blue);
+    color: #3363AF;
 }
 
 .metric-row.highlight {

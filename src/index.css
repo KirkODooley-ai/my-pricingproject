@@ -9,14 +9,13 @@
   --dark-blue: #0A2245;
   /* Forma Dark Blue - Sidebar, headers */
   --dark-grey: #1F1F1F;
-  --light-blue: #DCE5F2;
-  /* Forma Light Blue - Backgrounds */
+  --light-blue: rgb(220, 229, 242);
+  /* Forma Light Blue - RGB: 220, 229, 242 | HEX# DCE5F2 | CMYK: 12, 6, 1, 0 */
 
   /* Neutral Palette */
-  --text-main: #1F1F1F;
-  --text-light: #5a6b7d;
-  --bg-body: #DCE5F2;
-  /* Forma Light Blue - page background per brand guidelines */
+  --text-main: #3363AF;
+  --text-light: #3363AF;
+  --bg-body: rgb(220, 229, 242);
   --bg-surface: #ffffff;
   /* Clean white for cards and tables */
   --border-color: #c5d4e8;
@@ -52,7 +51,7 @@
 body {
   font-family: var(--font-base);
   background-color: var(--bg-body);
-  color: var(--text-main);
+  color: #3363AF;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -83,7 +82,7 @@ button,
 
 .btn-ghost {
   background-color: transparent;
-  color: var(--text-main);
+  color: #3363AF;
 }
 
 .btn-ghost:hover {
@@ -100,7 +99,7 @@ textarea,
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background-color: #ffffff;
-  color: var(--text-main);
+  color: #3363AF;
   font-size: 0.9rem;
   width: 100%;
   /* Default to fluid width usually */
@@ -168,7 +167,7 @@ th {
 td {
   padding: 0.875rem 1rem;
   border-bottom: 1px solid #e8ecf2;
-  color: var(--text-main);
+  color: #3363AF;
 }
 
 /* Zebra striping - subtle for readability */
@@ -200,5 +199,5 @@ tbody tr:last-child td {
 .heading-lg {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--dark-blue);
+  color: #3363AF;
 }

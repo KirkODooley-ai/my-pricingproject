@@ -490,7 +490,7 @@ function App() {
     padding: '0.75rem 1.0rem',
     cursor: 'pointer',
     borderBottom: activeTab === tabName ? '2px solid var(--primary-color)' : '2px solid transparent',
-    color: activeTab === tabName ? 'var(--primary-color)' : '#6b7280',
+    color: activeTab === tabName ? 'var(--primary-color)' : '#3363AF',
     fontWeight: 600,
     marginBottom: '-1px',
     fontSize: '0.9rem',
@@ -630,7 +630,7 @@ function App() {
         {activeTab === 'products' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--dark-blue)' }}>Product List</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#3363AF' }}>Product List</h2>
             </div>
             <PricingTable
               products={products}
@@ -676,7 +676,7 @@ function App() {
         {activeTab === 'product-pricing' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--dark-blue)' }}>Product Pricing</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#3363AF' }}>Product Pricing</h2>
             </div>
             <PricingCalculator
               products={products}
@@ -708,13 +708,13 @@ function App() {
 
         {activeTab === 'settings' && user.role === 'admin' && (
           <div style={{ padding: '2rem', maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', color: 'var(--dark-blue)' }}>Admin Settings</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', color: '#3363AF' }}>Admin Settings</h2>
 
             <div className="card" style={{ padding: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Global Pricing Configuration</h3>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700, color: '#6b7280', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700, color: '#3363AF', marginBottom: '0.5rem' }}>
                   Global Markup Multiplier (Default)
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -732,7 +732,7 @@ function App() {
                       fontSize: '1rem'
                     }}
                   />
-                  <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#3363AF' }}>
                     (Base List Price = Cost × {globalSettings.global_multiplier || 1.5})
                   </span>
                 </div>

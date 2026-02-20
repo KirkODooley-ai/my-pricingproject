@@ -89,7 +89,7 @@ const UserManagement = () => {
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                <span style={{ color: '#3363AF', fontSize: '0.9rem' }}>
                     {users.length} user{users.length !== 1 ? 's' : ''}
                 </span>
                 <button
@@ -157,9 +157,9 @@ const UserManagement = () => {
 
             <div className="card" style={{ overflow: 'hidden', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 {loading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading users...</div>
+                    <div style={{ padding: '2rem', textAlign: 'center', color: '#3363AF' }}>Loading users...</div>
                 ) : users.length === 0 ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>No users found.</div>
+                    <div style={{ padding: '2rem', textAlign: 'center', color: '#3363AF' }}>No users found.</div>
                 ) : (
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
@@ -176,7 +176,7 @@ const UserManagement = () => {
                                     <td style={{ padding: '0.75rem 1rem' }}>{u.username}</td>
                                     <td style={{ padding: '0.75rem 1rem' }}>{formatRole(u.role)}</td>
                                     <td style={{ padding: '0.75rem 1rem' }}>{u.region || '—'}</td>
-                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#6b7280' }}>
+                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#3363AF' }}>
                                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                                     </td>
                                 </tr>

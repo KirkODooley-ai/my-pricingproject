@@ -87,7 +87,7 @@
 
 /* Main Content Area */
 .main-content {
-    background-color: var(--bg-body);
+    background-color: rgb(220, 229, 242);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0;

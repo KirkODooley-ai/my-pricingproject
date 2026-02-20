@@ -116,7 +116,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
             <div style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '1rem' }}>
                 <div>
                     <h2 className="heading-lg">Pricing Strategy</h2>
-                    <p style={{ color: 'var(--text-light)', marginTop: '0.25rem' }}>Configure global markups and customer tier discounts.</p>
+                    <p style={{ color: '#3363AF', marginTop: '0.25rem' }}>Configure global markups and customer tier discounts.</p>
                 </div>
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -141,7 +141,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                             className={`btn ${activeTab === 'markup' ? 'btn-primary' : 'btn-ghost'}`}
                             style={{
                                 backgroundColor: activeTab === 'markup' ? 'var(--accent-color)' : 'transparent',
-                                color: activeTab === 'markup' ? '#fff' : 'var(--text-light)',
+                                color: activeTab === 'markup' ? '#fff' : '#3363AF',
                                 fontWeight: activeTab === 'markup' ? 600 : 500
                             }}
                             onClick={() => setActiveTab('markup')}
@@ -152,7 +152,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                             className={`btn ${activeTab === 'discounts' ? 'btn-primary' : 'btn-ghost'}`}
                             style={{
                                 backgroundColor: activeTab === 'discounts' ? 'var(--accent-color)' : 'transparent',
-                                color: activeTab === 'discounts' ? '#fff' : 'var(--text-light)',
+                                color: activeTab === 'discounts' ? '#fff' : '#3363AF',
                                 fontWeight: activeTab === 'discounts' ? 600 : 500
                             }}
                             onClick={() => setActiveTab('discounts')}
@@ -168,7 +168,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                 <div style={{ animation: 'fadeIn 0.3s' }}>
                     <div style={{ marginBottom: '1.5rem' }}>
                         <h3 className="heading-md" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Category List Price Multipliers</h3>
-                        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>
+                        <p style={{ color: '#3363AF', fontSize: '0.9rem' }}>
                             Multiplier applied to Base Cost to determine List Price. (e.g. 1.5 = 50% Margin)
                         </p>
                     </div>
@@ -189,7 +189,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                 <tbody key={groupName}>
                                     {/* Group Header */}
                                     <tr>
-                                        <td colSpan={3} style={{ backgroundColor: '#f1f5f9', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.8rem', color: '#475569', padding: '0.75rem 1rem' }}>
+                                        <td colSpan={3} style={{ backgroundColor: '#f1f5f9', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.8rem', color: '#3363AF', padding: '0.75rem 1rem' }}>
                                             {groupName}
                                         </td>
                                     </tr>
@@ -247,7 +247,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                             onChange={(e) => handleListMultiplierChange(catName, e.target.value)}
                                                         />
                                                     </td>
-                                                    <td style={{ textAlign: 'right', color: 'var(--text-light)' }}>
+                                                    <td style={{ textAlign: 'right', color: '#3363AF' }}>
                                                         ${(100 * (strategy.listMultipliers[catName] || 1.5)).toFixed(2)}
                                                     </td>
                                                 </tr>
@@ -308,7 +308,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                                     onChange={(e) => handleListMultiplierChange(variantKey, e.target.value)}
                                                                 />
                                                             </td>
-                                                            <td style={{ textAlign: 'right', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+                                                            <td style={{ textAlign: 'right', color: '#3363AF', fontSize: '0.85rem' }}>
                                                                 ${(100 * currentVal).toFixed(2)}
                                                             </td>
                                                         </tr>
@@ -320,7 +320,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                     const subKey = `Fasteners:${type}`
                                                     return (
                                                         <tr key={subKey} style={{ backgroundColor: '#f8fafc' }}>
-                                                            <td style={{ paddingLeft: '3rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>└ {type}</td>
+                                                            <td style={{ paddingLeft: '3rem', fontSize: '0.9rem', color: '#3363AF' }}>└ {type}</td>
                                                             <td style={{ textAlign: 'right' }}>
                                                                 <input
                                                                     type="number" step="0.05"
@@ -330,7 +330,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                                     onChange={(e) => handleListMultiplierChange(subKey, e.target.value)}
                                                                 />
                                                             </td>
-                                                            <td style={{ textAlign: 'right', color: 'var(--text-light)', fontSize: '0.85rem' }}>
+                                                            <td style={{ textAlign: 'right', color: '#3363AF', fontSize: '0.85rem' }}>
                                                                 ${(100 * (strategy.listMultipliers[subKey] || strategy.listMultipliers['Fasteners'] || 1.5)).toFixed(2)}
                                                             </td>
                                                         </tr>

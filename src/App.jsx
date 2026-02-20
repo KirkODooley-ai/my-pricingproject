@@ -12,7 +12,6 @@ import PricingStrategyManager from './components/PricingStrategyManager' // [NEW
 import MarginAlerts from './components/MarginAlerts' // [NEW] Phase 15
 import Dashboard from './components/Dashboard'
 import Login from './components/Login' // [NEW]
-import ProposalsManager from './components/ProposalsManager' // [NEW]
 import UserManagement from './components/UserManagement'
 import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
@@ -521,22 +520,10 @@ function App() {
             Dashboard
           </div>
           <div
-            className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analysis')}
-          >
-            Transition Analysis
-          </div>
-          <div
             className={`nav-link ${activeTab === 'sales-data' ? 'active' : ''}`}
             onClick={() => setActiveTab('sales-data')}
           >
             Sales Data
-          </div>
-          <div
-            className={`nav-link ${activeTab === 'variance' ? 'active' : ''}`}
-            onClick={() => setActiveTab('variance')}
-          >
-            Variance Report
           </div>
           <div
             className={`nav-link ${activeTab === 'products' ? 'active' : ''}`}
@@ -545,52 +532,34 @@ function App() {
             Products
           </div>
           <div
-            className={`nav-link ${activeTab === 'categories' ? 'active' : ''}`}
-            onClick={() => setActiveTab('categories')}
-          >
-            Categories
-          </div>
-
-          {/* Admin Only Tabs */}
-          {user.role === 'admin' && (
-            <>
-              <div
-                className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
-                onClick={() => setActiveTab('users')}
-              >
-                Users
-              </div>
-              <div
-                className={`nav-link ${activeTab === 'proposals' ? 'active' : ''}`}
-                onClick={() => setActiveTab('proposals')}
-              >
-                Proposals
-              </div>
-              <div
-                className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
-                onClick={() => setActiveTab('settings')}
-              >
-                Admin Settings
-              </div>
-            </>
-          )}
-          <div
-            className={`nav-link ${activeTab === 'customers' ? 'active' : ''}`}
-            onClick={() => setActiveTab('customers')}
-          >
-            Customers
-          </div>
-          <div
             className={`nav-link ${activeTab === 'product-pricing' ? 'active' : ''}`}
             onClick={() => setActiveTab('product-pricing')}
           >
             Product Pricing
           </div>
-          <div // [NEW] Pricing Strategy
+          <div
             className={`nav-link ${activeTab === 'strategy' ? 'active' : ''}`}
             onClick={() => setActiveTab('strategy')}
           >
             Pricing Strategy
+          </div>
+          <div
+            className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analysis')}
+          >
+            Transition Analysis
+          </div>
+          <div
+            className={`nav-link ${activeTab === 'categories' ? 'active' : ''}`}
+            onClick={() => setActiveTab('categories')}
+          >
+            Categories
+          </div>
+          <div
+            className={`nav-link ${activeTab === 'customers' ? 'active' : ''}`}
+            onClick={() => setActiveTab('customers')}
+          >
+            Customers
           </div>
           <div
             className={`nav-link ${activeTab === 'alerts' ? 'active' : ''}`}
@@ -599,15 +568,41 @@ function App() {
             Margin Alerts
           </div>
           <div
-            className={`nav-link ${activeTab === 'import' ? 'active' : ''}`}
-            onClick={() => setActiveTab('import')}
+            className={`nav-link ${activeTab === 'variance' ? 'active' : ''}`}
+            onClick={() => setActiveTab('variance')}
           >
-            Import Data
+            Variance Report
           </div>
-          <div style={{ marginTop: 'auto', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
-            <div style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>
+
+          {/* Bottom section: Users, Admin Settings, Import Data */}
+          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+            {user.role === 'admin' && (
+              <>
+                <div
+                  className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('users')}
+                >
+                  Users
+                </div>
+                <div
+                  className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  Admin Settings
+                </div>
+              </>
+            )}
+            <div
+              className={`nav-link ${activeTab === 'import' ? 'active' : ''}`}
+              onClick={() => setActiveTab('import')}
+            >
+              Import Data
+            </div>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+            <div style={{ padding: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
               Logged in as <br />
-              <strong style={{ color: '#111827' }}>{user.username}</strong> <br />
+              <strong style={{ color: '#fff' }}>{user.username}</strong> <br />
               <span style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{user.role} {user.region ? `(${user.region})` : ''}</span>
             </div>
             <button
@@ -704,8 +699,6 @@ function App() {
         )}
 
         {activeTab === 'users' && user.role === 'admin' && <UserManagement />}
-
-        {activeTab === 'proposals' && <ProposalsManager />}
 
         {activeTab === 'settings' && user.role === 'admin' && (
           <div style={{ padding: '2rem', maxWidth: '600px' }}>

@@ -1,83 +1,234 @@
+/* Pricing Calculator - Professional ERP Styling */
+
 .calculator-container {
-    background: #ffffff;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-light);
 }
 
 .controls-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid #e5e7eb;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .control-group label {
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: #3363AF;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+.control-group select,
+.control-group input {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.stat-card {
-    background: #ffffff;
-    padding: 1.5rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+.control-group select:focus,
+.control-group input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(51, 99, 175, 0.12);
+  outline: none;
 }
 
-.stat-card.projected {
-    border-left: 4px solid var(--primary-color);
+/* Stats Grid Override for Calculator */
+.calculator-container .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
 }
 
-.stat-card h3 {
-    margin-bottom: 0.75rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #3363AF;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+.calculator-container .stat-card {
+  background: var(--bg-surface);
+  padding: 1.75rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.calculator-container .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.calculator-container .stat-card.projected {
+  border-left: 4px solid var(--success);
+  background: linear-gradient(135deg, var(--bg-surface) 0%, #f0fdf4 100%);
+}
+
+.calculator-container .stat-card h3 {
+  margin-bottom: 1rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .metric-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.625rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.metric-row span:first-child {
+  color: var(--text-muted);
+}
+
+.metric-row span:last-child {
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .metric-value {
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: #3363AF;
+  font-weight: 700;
+  font-size: 1.75rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-card.projected .metric-value {
+  color: var(--success);
 }
 
 .metric-row.highlight {
-    margin-top: 1rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid #d1d5db;
-    font-size: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+  font-size: var(--text-base);
 }
 
+.metric-row.highlight span:last-child {
+  font-weight: 700;
+}
+
+/* Delta Colors */
 .delta-positive {
-    color: #16a34a;
+  color: var(--success) !important;
 }
 
 .delta-negative {
-    color: #dc2626;
+  color: var(--danger) !important;
+}
+
+/* Tier Price Display */
+.tier-price-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tier-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.tier-price-row:hover {
+  background-color: #f1f5f9;
+}
+
+.tier-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tier-price {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: var(--text-lg);
+}
+
+.tier-margin {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+}
+
+/* Product Selection Display */
+.product-display {
+  padding: 1.5rem;
+  background-color: var(--bg-muted);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-light);
+}
+
+.product-name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.product-details {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.product-details span {
+  margin-right: 1.5rem;
+}
+
+/* Comparison Section */
+.comparison-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.comparison-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+/* Tier Breakdown Table */
+.tier-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tier-breakdown-table th {
+  background-color: var(--bg-muted);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.tier-breakdown-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tier-breakdown-table tr:hover {
+  background-color: var(--bg-muted);
 }

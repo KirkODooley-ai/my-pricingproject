@@ -1,4 +1,4 @@
-/* Forma Steel Login Page */
+/* Forma Steel Login Page - Professional ERP Styling */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -7,6 +7,7 @@
   background: linear-gradient(135deg, var(--dark-blue) 0%, #0d2d5c 50%, var(--primary-color) 100%);
   background-attachment: fixed;
   font-family: var(--font-base);
+  position: relative;
 }
 
 .login-page::before {
@@ -22,32 +23,32 @@
   position: relative;
   width: 100%;
   max-width: 440px;
-  padding: 2rem 2.5rem 2rem;
-  background: #ffffff;
+  padding: 2.5rem 3rem;
+  background: var(--bg-surface);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.1);
   text-align: center;
 }
 
 .login-brand {
   font-size: 2.25rem;
-  font-weight: 900;
-  color: #0A2245;
+  font-weight: 800;
+  color: var(--dark-blue);
   margin: 0 0 0.25rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
 .login-tagline {
   font-size: 0.9rem;
-  color: #3363AF;
-  margin: 0 0 1rem;
+  color: var(--primary-color);
+  margin: 0 0 1.5rem;
   font-weight: 600;
 }
 
 .login-logo {
   display: block;
-  margin: 0 auto 1rem;
-  height: 48px;
+  margin: 0 auto 1.5rem;
+  height: 52px;
   width: auto;
   object-fit: contain;
 }
@@ -55,87 +56,104 @@
 .login-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #3363AF;
+  color: var(--text-primary);
   margin: 0 0 0.25rem;
-  border-bottom: 2px solid #3363AF;
+  border-bottom: 3px solid var(--primary-color);
   padding-bottom: 0.5rem;
   display: inline-block;
 }
 
 .login-subtitle {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin-bottom: 1.5rem;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: 2rem;
 }
 
 .login-error {
-  background-color: #fef2f2;
-  color: #b91c1c;
-  padding: 0.75rem 1rem;
+  background-color: var(--danger-light);
+  color: var(--danger-dark);
+  padding: 0.875rem 1.25rem;
   border-radius: var(--radius-md);
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-left: 4px solid var(--danger);
+  text-align: left;
 }
 
 .login-form label {
   display: block;
   text-align: left;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  font-size: 0.875rem;
-  color: #0A2245;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .login-form input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: var(--text-base);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  background-color: var(--bg-surface);
 }
 
 .login-form input:hover {
-  border-color: #a8c4e8;
+  border-color: var(--border-strong);
 }
 
 .login-form input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(51, 99, 175, 0.15);
+  box-shadow: 0 0 0 3px rgba(51, 99, 175, 0.12);
+  outline: none;
 }
 
 .login-form .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .login-submit {
   display: block;
   width: 100%;
-  max-width: 200px;
-  margin: 1rem auto 0;
-  padding: 0.85rem 1.5rem;
-  background-color: #3363AF !important;
+  margin: 1.5rem auto 0;
+  padding: 0.875rem 1.5rem;
+  background-color: var(--primary-color) !important;
   color: #ffffff !important;
-  border: 2px solid #0A2245;
+  border: none;
   border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--text-base);
+  font-weight: 600;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .login-submit:hover {
-  background-color: #2a5299 !important;
-  color: #ffffff !important;
+  background-color: var(--primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 .login-submit:active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .login-footer {
-  margin-top: 1.5rem;
-  font-size: 0.8rem;
-  color: #3363AF;
+  margin-top: 2rem;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.login-footer a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
 }

@@ -513,81 +513,101 @@ function App() {
         </div>
 
         <nav className="nav-section">
+          {/* Main Navigation */}
           <div
             className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             Dashboard
           </div>
+
+          <div className="nav-group-label">Data Management</div>
           <div
             className={`nav-link ${activeTab === 'sales-data' ? 'active' : ''}`}
             onClick={() => setActiveTab('sales-data')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             Sales Data
           </div>
           <div
             className={`nav-link ${activeTab === 'products' ? 'active' : ''}`}
             onClick={() => setActiveTab('products')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
             Products
-          </div>
-          <div
-            className={`nav-link ${activeTab === 'product-pricing' ? 'active' : ''}`}
-            onClick={() => setActiveTab('product-pricing')}
-          >
-            Product Pricing
-          </div>
-          <div
-            className={`nav-link ${activeTab === 'strategy' ? 'active' : ''}`}
-            onClick={() => setActiveTab('strategy')}
-          >
-            Pricing Strategy
-          </div>
-          <div
-            className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analysis')}
-          >
-            Transition Analysis
           </div>
           <div
             className={`nav-link ${activeTab === 'categories' ? 'active' : ''}`}
             onClick={() => setActiveTab('categories')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
             Categories
           </div>
           <div
             className={`nav-link ${activeTab === 'customers' ? 'active' : ''}`}
             onClick={() => setActiveTab('customers')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             Customers
+          </div>
+
+          <div className="nav-group-label">Pricing Tools</div>
+          <div
+            className={`nav-link ${activeTab === 'product-pricing' ? 'active' : ''}`}
+            onClick={() => setActiveTab('product-pricing')}
+          >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+            Product Pricing
+          </div>
+          <div
+            className={`nav-link ${activeTab === 'strategy' ? 'active' : ''}`}
+            onClick={() => setActiveTab('strategy')}
+          >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Pricing Strategy
+          </div>
+
+          <div className="nav-group-label">Analysis</div>
+          <div
+            className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analysis')}
+          >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            Transition Analysis
           </div>
           <div
             className={`nav-link ${activeTab === 'alerts' ? 'active' : ''}`}
             onClick={() => setActiveTab('alerts')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             Margin Alerts
           </div>
           <div
             className={`nav-link ${activeTab === 'variance' ? 'active' : ''}`}
             onClick={() => setActiveTab('variance')}
           >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             Variance Report
           </div>
 
-          {/* Bottom section: Users, Admin Settings, Import Data */}
-          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1rem' }}>
+          {/* Admin Section */}
+          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem' }}>
             {user.role === 'admin' && (
               <>
+                <div className="nav-group-label">Administration</div>
                 <div
                   className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
                   onClick={() => setActiveTab('users')}
                 >
+                  <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                   Users
                 </div>
                 <div
                   className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
                   onClick={() => setActiveTab('settings')}
                 >
+                  <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   Admin Settings
                 </div>
               </>
@@ -596,21 +616,24 @@ function App() {
               className={`nav-link ${activeTab === 'import' ? 'active' : ''}`}
               onClick={() => setActiveTab('import')}
             >
+              <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               Import Data
             </div>
           </div>
-          {/* Logged in user + Logout - at very bottom */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1rem', marginTop: '0' }}>
-            <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem', color: '#DCE5F2' }}>
-              Logged in as <br />
-              <strong style={{ color: '#fff' }}>{user.username}</strong> <br />
-              <span style={{ textTransform: 'uppercase', fontSize: '0.7rem', opacity: 0.9 }}>{user.role} {user.region ? `(${user.region})` : ''}</span>
+
+          {/* User Info & Logout */}
+          <div className="sidebar-user">
+            <div className="sidebar-user-info">
+              Logged in as
+              <span className="sidebar-user-name">{user.username}</span>
+              <span className="sidebar-user-role">{user.role} {user.region ? `· ${user.region}` : ''}</span>
             </div>
             <button
               onClick={logout}
               className="nav-link nav-link-logout"
-              style={{ color: '#ef4444', marginTop: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', justifyContent: 'flex-start' }}
+              style={{ marginTop: '0.75rem', width: '100%', justifyContent: 'flex-start' }}
             >
+              <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               Logout
             </button>
           </div>
@@ -629,8 +652,9 @@ function App() {
 
         {activeTab === 'products' && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#3363AF' }}>Product List</h2>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Product List</h2>
+              <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem', fontSize: '0.9rem' }}>Manage your product catalog and pricing data</p>
             </div>
             <PricingTable
               products={products}
@@ -675,8 +699,9 @@ function App() {
 
         {activeTab === 'product-pricing' && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#3363AF' }}>Product Pricing</h2>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Product Pricing</h2>
+              <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem', fontSize: '0.9rem' }}>Calculate tier-specific pricing and margins</p>
             </div>
             <PricingCalculator
               products={products}
@@ -707,14 +732,27 @@ function App() {
         {activeTab === 'users' && user.role === 'admin' && <UserManagement />}
 
         {activeTab === 'settings' && user.role === 'admin' && (
-          <div style={{ padding: '2rem', maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', color: '#3363AF' }}>Admin Settings</h2>
+          <div style={{ maxWidth: '700px' }}>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Admin Settings</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Configure global system settings and pricing parameters.</p>
+            </div>
 
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Global Pricing Configuration</h3>
+            <div className="card">
+              <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Global Pricing Configuration</h3>
+              </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700, color: '#3363AF', marginBottom: '0.5rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  textTransform: 'uppercase', 
+                  fontSize: '0.7rem', 
+                  fontWeight: 600, 
+                  color: 'var(--text-muted)', 
+                  marginBottom: '0.5rem',
+                  letterSpacing: '0.05em'
+                }}>
                   Global Markup Multiplier (Default)
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -724,21 +762,20 @@ function App() {
                     min="1.0"
                     value={globalSettings.global_multiplier || 1.5}
                     onChange={(e) => handleUpdateSetting('global_multiplier', parseFloat(e.target.value))}
+                    className="input-field"
                     style={{
-                      padding: '0.5rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
                       width: '120px',
-                      fontSize: '1rem'
+                      fontSize: '1rem',
+                      fontWeight: 600
                     }}
                   />
-                  <span style={{ fontSize: '0.9rem', color: '#3363AF' }}>
-                    (Base List Price = Cost × {globalSettings.global_multiplier || 1.5})
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                    Base List Price = Cost × {globalSettings.global_multiplier || 1.5}
                   </span>
                 </div>
-                <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#ef4444' }}>
-                  ⚠ Changing this affects all products using the "Default" multiplier immediately.
-                </p>
+                <div className="alert alert-warning" style={{ marginTop: '1rem' }}>
+                  <strong>Warning:</strong> Changing this affects all products using the "Default" multiplier immediately.
+                </div>
               </div>
             </div>
           </div>

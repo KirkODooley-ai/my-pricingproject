@@ -1,110 +1,388 @@
-/* Table container - clear card structure */
+/* Pricing Table - Professional ERP Styling */
+
+/* Table container with elevated card styling */
 .pricing-table-container {
-    background: #ffffff;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    border: 1px solid var(--border-color);
-    overflow: hidden;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  border: 1px solid var(--border-light);
+  overflow: hidden;
 }
 
 /* Section header inside container */
 .pricing-table-container h4 {
-    background: linear-gradient(135deg, var(--dark-blue) 0%, #0d2d5c 100%);
-    color: #ffffff;
-    padding: 1rem 1.25rem;
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
+  background: linear-gradient(135deg, var(--dark-blue) 0%, #0d2d5c 100%);
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* Scrollable table wrapper */
 .table-wrapper {
-    height: 72vh;
-    overflow-y: auto;
-    overflow-x: auto;
-    background-color: #ffffff;
+  max-height: 68vh;
+  overflow-y: auto;
+  overflow-x: auto;
+  background-color: var(--bg-surface);
 }
 
+/* Sticky header styling */
 .pricing-table th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--dark-blue);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  letter-spacing: 0.05em;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .pricing-table th,
 .pricing-table td {
-    padding: 0.875rem 1rem;
+  padding: 0.875rem 1.25rem;
 }
 
-/* Unique Action Buttons */
+.pricing-table td {
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+/* Zebra striping */
+.pricing-table tbody tr:nth-child(odd) {
+  background-color: var(--bg-surface);
+}
+
+.pricing-table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.pricing-table tbody tr:hover {
+  background-color: rgba(51, 99, 175, 0.04);
+}
+
+.pricing-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Action Buttons */
 .action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--danger);
-    /* Red 500 */
-    font-weight: 600;
-    transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  padding: 0.375rem 0.625rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 }
 
-.action-btn:hover {
-    color: #b91c1c;
-    /* Red 700 */
-    text-decoration: underline;
+.action-btn.edit-btn {
+  color: var(--primary-color);
 }
 
-/* Map Add Button to Primary Button Style */
+.action-btn.edit-btn:hover {
+  background-color: rgba(51, 99, 175, 0.1);
+  text-decoration: none;
+}
+
+.action-btn.save-btn {
+  color: var(--success);
+}
+
+.action-btn.save-btn:hover {
+  background-color: var(--success-light);
+  text-decoration: none;
+}
+
+.action-btn.delete-btn {
+  color: var(--danger);
+}
+
+.action-btn.delete-btn:hover {
+  background-color: var(--danger-light);
+  text-decoration: none;
+}
+
+/* Add Button */
 .add-btn {
-    background-color: var(--accent-color);
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    margin-bottom: 1rem;
-    font-weight: 500;
-    transition: background-color 0.2s;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .add-btn:hover {
-    background-color: var(--accent-hover);
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.input-field {
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    width: 100%;
-    max-width: 120px;
+/* Input field in table */
+.pricing-table .input-field {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  width: 100%;
+  max-width: 140px;
+  font-size: var(--text-sm);
 }
 
-.action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #ef4444;
-    font-weight: bold;
+.pricing-table .input-field:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(51, 99, 175, 0.12);
 }
 
-.action-btn:hover {
-    text-decoration: underline;
+/* Group Headers in Tables */
+.group-header-row {
+  background-color: #e2e8f0 !important;
+  border-top: 2px solid #94a3b8;
 }
 
-.add-btn {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    margin-bottom: 1rem;
-    font-weight: 500;
+.group-header-row td {
+  padding: 0.875rem 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.add-btn:hover {
-    background-color: var(--primary-hover);
+.subgroup-header-row {
+  background-color: #f1f5f9 !important;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.subgroup-header-row td {
+  padding: 0.625rem 1.25rem 0.625rem 2rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Stats Row (Footer for groups) */
+.stats-row {
+  background-color: #f8fafc !important;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+.stats-row td {
+  padding: 0.875rem 1.25rem;
+}
+
+/* Control Bar */
+.control-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-muted);
+  border-bottom: 1px solid var(--border-color);
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.control-bar-filters {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex: 1;
+  min-width: 0;
+}
+
+.control-bar-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--border-color);
+}
+
+/* Form Group (Filter Label + Input) */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filter-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Summary Stats Panel */
+.summary-panel {
+  margin: 0 1rem 1rem;
+  padding: 1.25rem 1.5rem;
+  background-color: #f8fafc;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.summary-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.summary-value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+}
+
+.summary-main-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.summary-secondary-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.summary-caption {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Tier Preview Styles */
+.tier-preview-section {
+  padding-left: 2rem;
+  border-left: 2px solid #cbd5e1;
+  flex-grow: 1;
+}
+
+.tier-preview-label {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+/* Strategy Columns Highlight */
+.strategy-col-list {
+  background-color: #eff6ff !important;
+  border-left: 2px solid #ddd;
+}
+
+.strategy-col-net {
+  background-color: #ecfdf5 !important;
+}
+
+/* Add Form */
+.add-form {
+  margin: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-muted);
+}
+
+.add-form h4 {
+  background: none;
+  color: var(--text-primary);
+  padding: 0;
+  margin-bottom: 1rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Price/Margin Highlights */
+.price-positive {
+  color: var(--success);
+}
+
+.price-negative {
+  color: var(--danger);
+}
+
+.margin-warning {
+  color: var(--warning);
+}
+
+/* Impact Badge */
+.impact-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.impact-badge.positive {
+  background-color: var(--success-light);
+  color: var(--success-dark);
+}
+
+.impact-badge.negative {
+  background-color: var(--danger-light);
+  color: var(--danger-dark);
+}
+
+/* Diagnostic Info Box */
+.diagnostic-box {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  color: #1e40af;
+  font-size: var(--text-xs);
+}
+
+.diagnostic-box strong {
+  font-weight: 700;
+}
+
+/* Top Contributors Mini-List */
+.contributors-list {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.contributors-list strong {
+  display: block;
+  margin-bottom: 0.25rem;
 }

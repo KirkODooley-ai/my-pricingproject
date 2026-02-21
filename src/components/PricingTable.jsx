@@ -145,15 +145,15 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     </>
                 ) : (
                     <>
-                        <td style={{ color: '#6b7280', fontSize: '0.9rem' }}>{product.category}</td>
-                        <td style={{ color: '#6b7280', fontSize: '0.9rem' }}>{product.vendor}</td>
-                        <td style={{ color: '#6b7280', fontFamily: 'monospace' }}>{product.itemCode}</td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{product.category}</td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{product.vendor}</td>
+                        <td style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{product.itemCode}</td>
                         <td style={{ fontWeight: 500 }}>{product.name}</td>
-                        <td style={{ textAlign: 'right' }}>{formatCurrency(product.cost)}</td>
-                        <td style={{ textAlign: 'right', color: '#6b7280' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 500 }}>{formatCurrency(product.cost)}</td>
+                        <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>
                             {product.unitCost ? formatCurrency(product.unitCost) : '-'} <span style={{ fontSize: '0.7em' }}>(Unit)</span>
                         </td>
-                        <td style={{ textAlign: 'right' }}>{formatCurrency(product.price)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(product.price)}</td>
                         <td style={{ textAlign: 'center' }}>
                             <span className={`badge ${currentMargin < 0.2 ? 'badge-red' : 'badge-green'}`}>
                                 {formatPercent(currentMargin)}
@@ -161,13 +161,13 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         </td>
                         {previewTier.tier && (
                             <>
-                                <td style={{ textAlign: 'right', fontWeight: 600, color: '#2563eb', backgroundColor: '#eff6ff', borderLeft: '2px solid #ddd' }}>
+                                <td className="strategy-col-list" style={{ textAlign: 'right', fontWeight: 600, color: 'var(--primary-color)' }}>
                                     {formatCurrency(stratList)}
                                 </td>
-                                <td style={{ textAlign: 'right', fontWeight: 700, color: '#059669', backgroundColor: '#ecfdf5' }}>
+                                <td className="strategy-col-net" style={{ textAlign: 'right', fontWeight: 700, color: 'var(--success)' }}>
                                     {formatCurrency(stratNet)}
                                 </td>
-                                <td style={{ textAlign: 'right', color: stratMargin < 0.15 ? '#ef4444' : '#059669', backgroundColor: '#ecfdf5' }}>
+                                <td className="strategy-col-net" style={{ textAlign: 'right', color: stratMargin < 0.15 ? 'var(--danger)' : 'var(--success)' }}>
                                     {formatPercent(stratMargin)}
                                 </td>
                             </>
@@ -210,14 +210,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
     return (
         <div className="pricing-table-container">
-            {/* [NEW] Control Bar (Dropdown + Search + Strategy) */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-
+            {/* Control Bar */}
+            <div className="control-bar">
                 {/* Left: Filter Controls */}
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexGrow: 1 }}>
-                    {/* 1. Category Dropdown */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Category</label>
+                <div className="control-bar-filters">
+                    <div className="filter-group">
+                        <label className="filter-label">Category</label>
                         <select
                             className="input-field"
                             style={{ minWidth: '220px', fontWeight: 600 }}
@@ -237,9 +235,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         </select>
                     </div>
 
-                    {/* 2. Search Input */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flexGrow: 1, maxWidth: '400px' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Search</label>
+                    <div className="filter-group" style={{ flexGrow: 1, maxWidth: '350px' }}>
+                        <label className="filter-label">Search</label>
                         <input
                             type="text"
                             placeholder="Find by Name, Code, or Vendor..."
@@ -251,12 +248,17 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 </div>
 
                 {/* Right: Strategy & Actions */}
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', paddingLeft: '2rem', borderLeft: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#2563eb', textTransform: 'uppercase' }}>Preview Strategy</label>
+                <div className="control-bar-actions">
+                    <div className="filter-group">
+                        <label className="filter-label" style={{ color: 'var(--primary-color)' }}>Preview Strategy</label>
                         <select
                             className="input-field"
-                            style={{ borderRadius: '6px', backgroundColor: '#eff6ff', borderColor: '#93c5fd' }}
+                            style={{ 
+                                borderRadius: 'var(--radius-md)', 
+                                backgroundColor: 'var(--info-light)', 
+                                borderColor: '#93c5fd',
+                                fontWeight: 500
+                            }}
                             value={`${previewTier.group}|${previewTier.tier}`}
                             onChange={(e) => {
                                 const [g, t] = e.target.value.split('|')
@@ -278,7 +280,11 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     </div>
 
                     {!isManager && (
-                        <button className="add-btn" onClick={() => setShowAddForm(!showAddForm)} style={{ height: 'fit-content', alignSelf: 'flex-end', marginBottom: '2px' }}>
+                        <button 
+                            className="add-btn" 
+                            onClick={() => setShowAddForm(!showAddForm)} 
+                            style={{ alignSelf: 'flex-end', marginBottom: 0 }}
+                        >
                             {showAddForm ? 'Cancel' : '+ Product'}
                         </button>
                     )}
@@ -308,9 +314,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 </form>
             )}
 
-            {/* [NEW] Category Summary Stats (Actual Sales Data) */}
+            {/* Category Summary Stats */}
             {(() => {
-                // 1. Calculate Actual Historical Totals for this Category (All Customers)
                 const categorySales = salesTransactions.filter(tx =>
                     activeCategory === 'All' || tx.category === activeCategory
                 )
@@ -319,12 +324,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 const totalCOGS = categorySales.reduce((sum, tx) => sum + (parseFloat(tx.cogs) || 0), 0)
                 const totalMargin = totalRevenue > 0 ? (totalRevenue - totalCOGS) / totalRevenue : 0
 
-                // 2. Strategy Logic (Preview)
-                // We still need the 'Lift Multiplier' from the Product List to project changes
                 let liftMultiplier = 1.0
                 if (previewTier.tier && pricingStrategy) {
-                    // Calculate the theoretical lift based on the product list (Basket Lift)
-                    // This is used as a proxy for how much prices will increase/decrease
                     let sumListCost = 0
                     let sumListCurrPrice = 0
                     let sumListStratPrice = 0
@@ -346,46 +347,34 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 }
 
                 return (
-                    <div style={{
-                        margin: '0 1rem 1rem 1rem',
-                        padding: '1rem',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        gap: '3rem',
-                        alignItems: 'flex-start',
-                        fontSize: '0.9rem'
-                    }}>
-                        {/* LEFT: Global Category Performance (Actual History) */}
-                        <div>
-                            <span style={{ fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.5rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>
+                    <div className="summary-panel">
+                        {/* LEFT: Global Category Performance */}
+                        <div className="summary-section">
+                            <span className="summary-label">
                                 Total {activeCategory === 'All' ? 'Sales' : activeCategory} Spend
                             </span>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.5rem' }}>
+                            <div className="summary-value-group">
                                 <div>
-                                    <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>
+                                    <span className="summary-main-value">
                                         {formatCurrency(totalRevenue)}
                                     </span>
-                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Last 12 Months</div>
+                                    <div className="summary-caption">Last 12 Months</div>
                                 </div>
                                 <div>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: 600, color: totalMargin < 0.2 ? '#e11d48' : '#10b981' }}>
+                                    <span className="summary-secondary-value" style={{ color: totalMargin < 0.2 ? 'var(--danger)' : 'var(--success)' }}>
                                         {formatPercent(totalMargin)}
                                     </span>
-                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Realized Margin</div>
+                                    <div className="summary-caption">Realized Margin</div>
                                 </div>
 
-                                {/* [NEW] Unclassified / Other Display */}
+                                {/* Unclassified / Other Display */}
                                 {(() => {
-                                    // Calculate Unmatched (Other) Revenue
                                     const unmatchedRevenue = categorySales.reduce((sum, tx) => {
                                         const rawTxName = (tx.name || tx.customerName || '').trim()
                                         const aliasTarget = customerAliases && customerAliases[rawTxName]
                                         const effectiveName = (aliasTarget || rawTxName).toLowerCase()
                                         const normalize = (n) => n.replace(/ inc\.?| llc\.?| co\.?| ltd\.?| corp\.?/g, '').trim()
 
-                                        // Quick Match Check
                                         const matched = customers.some(c => {
                                             const cName = (c.name || '').toLowerCase().trim()
                                             if (cName === effectiveName) return true
@@ -403,11 +392,11 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                     if (unmatchedRevenue <= 0) return null
 
                                     return (
-                                        <div style={{ marginLeft: '1rem', paddingLeft: '1.5rem', borderLeft: '1px solid #e2e8f0' }}>
-                                            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f59e0b' }}>
+                                        <div style={{ marginLeft: '1rem', paddingLeft: '1.5rem', borderLeft: '1px solid var(--border-light)' }}>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--warning)' }}>
                                                 {formatCurrency(unmatchedRevenue)}
                                             </span>
-                                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Unclassified (Other)</div>
+                                            <div className="summary-caption">Unclassified (Other)</div>
                                         </div>
                                     )
                                 })()}
@@ -416,8 +405,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
                         {/* RIGHT: Tier Specific Projection */}
                         {previewTier.tier && (
-                            <div style={{ paddingLeft: '2rem', borderLeft: '2px solid #cbd5e1', flexGrow: 1 }}>
-                                <span style={{ fontWeight: 600, color: '#2563eb', display: 'block', marginBottom: '0.5rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>
+                            <div className="tier-preview-section">
+                                <span className="tier-preview-label">
                                     Impact Analysis: {previewTier.tier}
                                 </span>
 
@@ -509,18 +498,18 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                     return (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '0.5rem 2rem', alignItems: 'center' }}>
-                                                <span style={{ color: '#64748b' }}>Historical Volume:</span>
+                                                <span style={{ color: 'var(--text-muted)' }}>Historical Volume:</span>
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                     <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{formatCurrency(tierHistRev)}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                                         (from {uniqueCustomers} matched customers)
                                                     </span>
                                                 </div>
 
-                                                <span style={{ color: '#2563eb' }}>Projected Volume:</span>
+                                                <span style={{ color: 'var(--primary-color)' }}>Projected Volume:</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#2563eb' }}>{formatCurrency(tierProjRev)}</span>
-                                                    <span style={{ fontSize: '0.85em', fontWeight: 600, color: diff > 0 ? '#10b981' : '#e11d48', padding: '2px 6px', borderRadius: '4px', backgroundColor: diff > 0 ? '#d1fae5' : '#fee2e2' }}>
+                                                    <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary-color)' }}>{formatCurrency(tierProjRev)}</span>
+                                                    <span className={`impact-badge ${diff > 0 ? 'positive' : 'negative'}`}>
                                                         {diff > 0 ? '+' : ''}{formatCurrency(diff)} ({formatPercent((diff / tierHistRev) || 0)})
                                                     </span>
                                                 </div>
@@ -528,7 +517,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
                                             {/* Contributors Mini-List */}
                                             {tierHistRev > 0 && (
-                                                <div style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'right' }}>
+                                                <div className="contributors-list">
                                                     <strong>Top Customers:</strong>
                                                     {topContrib.map(([n, v]) => (
                                                         <div key={n}>{n} ({formatCurrency(v)})</div>
@@ -536,12 +525,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                                 </div>
                                             )}
                                             {tierHistRev === 0 && (
-                                                <div style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                                                <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.85rem' }}>
                                                     No historical sales found for this tier.
 
-                                                    {/* [NEW] Data Match Diagnostics */}
+                                                    {/* Data Match Diagnostics */}
                                                     {categorySales.length > 0 && (
-                                                        <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '4px', color: '#1e40af', fontSize: '0.75rem' }}>
+                                                        <div className="diagnostic-box">
                                                             <strong>Tier Status:</strong> No customers currently qualify for {previewTier.tier}.<br />
 
                                                             {(() => {
@@ -633,7 +622,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                                                         {unmatchedNames.size > 0 && (
                                                                             <div style={{ marginBottom: '0.5rem' }}>
                                                                                 <span style={{ fontWeight: 600 }}>• {unmatchedNames.size} transactions are Unclassified.</span><br />
-                                                                                <span style={{ color: '#be123c' }}>To fix: Link "{unknownList}..." to a Customer (e.g. "Employees") in the Variance Report.</span>
+                                                                                <span style={{ color: 'var(--danger-dark)' }}>To fix: Link "{unknownList}..." to a Customer (e.g. "Employees") in the Variance Report.</span>
                                                                             </div>
                                                                         )}
                                                                         {matchedToOtherTier.size > 0 && matches > 0 && (
@@ -705,8 +694,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                         return (
                                             <React.Fragment key={subCat}>
                                                 {/* LEVEL 1 HEADER: Sub-Category */}
-                                                <tr style={{ backgroundColor: '#e2e8f0', borderTop: '2px solid #94a3b8' }}>
-                                                    <td colSpan="13" style={{ padding: '0.75rem 1rem', fontWeight: 800, color: '#1e293b', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                <tr className="group-header-row">
+                                                    <td colSpan="13">
                                                         {subCat}
                                                     </td>
                                                 </tr>
@@ -772,9 +761,9 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                                     return (
                                                         <React.Fragment key={type}>
                                                             {/* LEVEL 2 HEADER: Type */}
-                                                            <tr style={{ backgroundColor: '#f1f5f9', borderTop: '1px solid #cbd5e1', borderBottom: '1px solid #e2e8f0' }}>
-                                                                <td colSpan="13" style={{ padding: '0.5rem 1rem 0.5rem 2rem', fontWeight: 700, color: '#334155', fontSize: '0.95rem' }}>
-                                                                    {type} <span style={{ fontWeight: 400, color: '#64748b', fontSize: '0.85rem' }}>({groupItems.length} items)</span>
+                                                            <tr className="subgroup-header-row">
+                                                                <td colSpan="13">
+                                                                    {type} <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.85rem' }}>({groupItems.length} items)</span>
                                                                 </td>
                                                             </tr>
 
@@ -782,46 +771,41 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                                             {groupItems.map(p => renderProductRow(p))}
 
                                                             {/* GROUP FOOTER (STATS) */}
-                                                            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                                                                {/* 1. Indent (Skip Category, Vendor, Code) -> 3 Columns */}
-                                                                <td colSpan="3" style={{ borderRight: 'none' }}></td>
-
-                                                                {/* 2. Stats Content (Spans Name + Data Cols) */}
-                                                                <td colSpan={previewTier.tier ? 8 : 5} style={{ padding: '0.75rem 1rem', borderLeft: 'none' }}>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4rem' }}>
-                                                                        <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                                            <tr className="stats-row">
+                                                                <td colSpan="3"></td>
+                                                                <td colSpan={previewTier.tier ? 8 : 5}>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
+                                                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
                                                                             {type} Averages:
                                                                         </span>
 
                                                                         {/* Price Stats */}
-                                                                        <div style={{ display: 'flex', gap: '2rem', paddingRight: '2rem', borderRight: '1px solid #e2e8f0' }}>
+                                                                        <div style={{ display: 'flex', gap: '1.5rem', paddingRight: '1.5rem', borderRight: '1px solid var(--border-light)' }}>
                                                                             <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                                                                                <span style={{ color: '#64748b' }}>Min Price:</span> <span style={{ fontWeight: 600, color: '#334155', marginLeft: '0.5rem' }}>{formatCurrency(minPrice)}</span>
+                                                                                <span style={{ color: 'var(--text-muted)' }}>Min:</span> <span style={{ fontWeight: 600, marginLeft: '0.25rem' }}>{formatCurrency(minPrice)}</span>
                                                                             </div>
                                                                             <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                                                                                <span style={{ color: '#64748b' }}>Max:</span> <span style={{ fontWeight: 600, marginLeft: '0.5rem' }}>{formatCurrency(maxPrice)}</span>
+                                                                                <span style={{ color: 'var(--text-muted)' }}>Max:</span> <span style={{ fontWeight: 600, marginLeft: '0.25rem' }}>{formatCurrency(maxPrice)}</span>
                                                                             </div>
                                                                             <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                                                                                <span style={{ color: '#64748b' }}>Avg:</span> <span style={{ fontWeight: 700, color: '#0f172a', marginLeft: '0.5rem' }}>{formatCurrency(avgPrice)}</span>
+                                                                                <span style={{ color: 'var(--text-muted)' }}>Avg:</span> <span style={{ fontWeight: 700, color: 'var(--text-primary)', marginLeft: '0.25rem' }}>{formatCurrency(avgPrice)}</span>
                                                                             </div>
                                                                         </div>
 
                                                                         {/* Margin Stats */}
-                                                                        <div style={{ display: 'flex', gap: '3rem' }}>
+                                                                        <div style={{ display: 'flex', gap: '1.5rem' }}>
                                                                             <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                                                                                <span style={{ color: '#64748b' }}>Min Margin:</span> <span style={{ fontWeight: 600, color: minMargin < 0.15 ? '#ef4444' : '#334155', marginLeft: '0.5rem' }}>{formatPercent(minMargin)}</span>
+                                                                                <span style={{ color: 'var(--text-muted)' }}>Min Margin:</span> <span style={{ fontWeight: 600, color: minMargin < 0.15 ? 'var(--danger)' : 'var(--text-primary)', marginLeft: '0.25rem' }}>{formatPercent(minMargin)}</span>
                                                                             </div>
                                                                             <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                                                                                <span style={{ color: '#64748b' }}>Max:</span> <span style={{ fontWeight: 600, marginLeft: '0.5rem' }}>{formatPercent(maxMargin)}</span>
+                                                                                <span style={{ color: 'var(--text-muted)' }}>Max:</span> <span style={{ fontWeight: 600, marginLeft: '0.25rem' }}>{formatPercent(maxMargin)}</span>
                                                                             </div>
                                                                             <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                                                                                <span style={{ color: '#64748b' }}>Avg:</span> <span style={{ fontWeight: 700, color: '#2563eb', marginLeft: '0.5rem' }}>{formatPercent(avgMargin)}</span>
+                                                                                <span style={{ color: 'var(--text-muted)' }}>Avg:</span> <span style={{ fontWeight: 700, color: 'var(--primary-color)', marginLeft: '0.25rem' }}>{formatPercent(avgMargin)}</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </td>
-
-                                                                {/* 3. Actions Column Placeholder */}
                                                                 <td></td>
                                                             </tr>
                                                         </React.Fragment>

@@ -84,8 +84,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--primary-color);
-  opacity: 0.6;
+  color: #0A2245;
+  opacity: 0.5;
   padding: 1.25rem 0.75rem 0.5rem;
   margin-top: 0.5rem;
 }
@@ -103,7 +103,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
   font-family: var(--font-base);
-  color: var(--primary-color);
+  color: #0A2245;
   text-decoration: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -114,15 +114,15 @@
 }
 
 .nav-link:hover {
-  color: var(--primary-light);
-  background-color: rgba(51, 99, 175, 0.08);
+  color: #3363AF;
+  background-color: rgba(10, 34, 69, 0.06);
 }
 
 .nav-link.active {
   color: #ffffff;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #4a7fd4 100%);
+  background: linear-gradient(135deg, #0A2245 0%, #3363AF 100%);
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(51, 99, 175, 0.4);
+  box-shadow: 0 2px 8px rgba(10, 34, 69, 0.3);
 }
 
 .nav-link.active::before {
@@ -142,6 +142,7 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  color: #0A2245;
   opacity: 0.7;
 }
 
@@ -156,11 +157,13 @@
 
 /* Logout Button Special Styling */
 .nav-link.nav-link-logout {
-  color: var(--text-muted);
+  color: #0A2245;
+  opacity: 0.6;
 }
 
 .nav-link.nav-link-logout:hover {
   color: var(--danger);
+  opacity: 1;
   background-color: rgba(239, 68, 68, 0.08);
 }
 
@@ -175,21 +178,23 @@
 .sidebar-user-info {
   padding: 0.5rem 0.25rem;
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: #0A2245;
+  opacity: 0.7;
 }
 
 .sidebar-user-name {
-  color: var(--dark-blue);
+  color: #0A2245;
   font-weight: 700;
   display: block;
   margin-top: 0.25rem;
+  opacity: 1;
 }
 
 .sidebar-user-role {
   display: inline-block;
   margin-top: 0.25rem;
   padding: 0.2rem 0.5rem;
-  background-color: var(--primary-color);
+  background-color: #0A2245;
   border-radius: 9999px;
   font-size: 0.65rem;
   font-weight: 600;

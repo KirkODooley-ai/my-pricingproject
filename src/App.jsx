@@ -592,7 +592,7 @@ function App() {
           </div>
 
           {/* Admin Section */}
-          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem' }}>
+          <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
             {user.role === 'admin' && (
               <>
                 <div className="nav-group-label">Administration</div>

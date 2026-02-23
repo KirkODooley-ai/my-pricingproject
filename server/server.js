@@ -34,6 +34,7 @@ app.post('/api/auth/login', async (req, res) => {
         const result = await query('SELECT * FROM users WHERE username = $1', [username]);
         if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
         const user = result.rows[0];
+        if (user.is_active === false) return res.status(401).json({ error: 'Account is deactivated' });
         if (await bcrypt.compare(password, user.password_hash)) {
             // Create Token
             const token = jwt.sign(
@@ -514,9 +515,19 @@ app.post('/api/settings', async (req, res) => {
 app.get('/api/users', authenticateToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can list users' });
-        const result = await query(
-            'SELECT id, username, role, region, created_at as "createdAt" FROM users ORDER BY username'
-        );
+        let result;
+        try {
+            result = await query(
+                'SELECT id, username, role, region, is_active as "isActive", permissions, created_at as "createdAt" FROM users ORDER BY username'
+            );
+        } catch (colErr) {
+            if (colErr.message && colErr.message.includes('is_active')) {
+                result = await query(
+                    'SELECT id, username, role, region, created_at as "createdAt" FROM users ORDER BY username'
+                );
+                result.rows = result.rows.map(r => ({ ...r, isActive: true, permissions: [] }));
+            } else throw colErr;
+        }
         res.json(result.rows);
     } catch (e) {
         console.error("Users GET Error:", e);
@@ -542,6 +553,91 @@ app.post('/api/users', authenticateToken, async (req, res) => {
         if (e.code === '23514') return res.status(400).json({ error: 'Invalid role or region value' });
         console.error("Users POST Error:", e);
         res.status(500).json({ error: e.message });
+    }
+});
+
+// PATCH user (update role, region, permissions, password, is_active)
+app.patch('/api/users/:id', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can update users' });
+        const { id } = req.params;
+        const { username, password, role, region, permissions, isActive } = req.body;
+
+        const updates = [];
+        const values = [];
+        let idx = 1;
+
+        if (username !== undefined) { updates.push(`username = $${idx++}`); values.push(String(username).trim()); }
+        if (role !== undefined) { updates.push(`role = $${idx++}`); values.push(role); }
+        if (region !== undefined) { updates.push(`region = $${idx++}`); values.push(region || null); }
+        if (permissions !== undefined) { updates.push(`permissions = $${idx++}`); values.push(JSON.stringify(Array.isArray(permissions) ? permissions : [])); }
+        if (isActive !== undefined) { updates.push(`is_active = $${idx++}`); values.push(!!isActive); }
+        if (password !== undefined && password !== '') {
+            const password_hash = await bcrypt.hash(password, 10);
+            updates.push(`password_hash = $${idx++}`);
+            values.push(password_hash);
+        }
+
+        if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+        values.push(id);
+        const setClause = updates.join(', ');
+        const fullQuery = `UPDATE users SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx}`;
+        const fallbackUpdates = [];
+        const fallbackValues = [];
+        let fi = 1;
+        if (username !== undefined) { fallbackUpdates.push(`username = $${fi++}`); fallbackValues.push(String(username).trim()); }
+        if (role !== undefined) { fallbackUpdates.push(`role = $${fi++}`); fallbackValues.push(role); }
+        if (region !== undefined) { fallbackUpdates.push(`region = $${fi++}`); fallbackValues.push(region || null); }
+        if (password !== undefined && password !== '') {
+            const password_hash = await bcrypt.hash(password, 10);
+            fallbackUpdates.push(`password_hash = $${fi++}`);
+            fallbackValues.push(password_hash);
+        }
+        fallbackValues.push(id);
+
+        try {
+            await query(fullQuery, values);
+        } catch (colErr) {
+            const msg = colErr.message || '';
+            if (msg.includes('updated_at') || msg.includes('permissions') || msg.includes('is_active')) {
+                if (fallbackUpdates.length === 0) {
+                    return res.status(400).json({
+                        error: 'User management upgrade required. Run: npm run migrate:users'
+                    });
+                }
+                await query(
+                    `UPDATE users SET ${fallbackUpdates.join(', ')} WHERE id = $${fi}`,
+                    fallbackValues
+                );
+            } else throw colErr;
+        }
+        res.json({ success: true });
+    } catch (e) {
+        if (e.code === '23505') return res.status(400).json({ error: 'Username already exists' });
+        if (e.code === '23514') return res.status(400).json({ error: 'Invalid role or region value' });
+        console.error("Users PATCH Error:", e);
+        const msg = e.message || 'Failed to update user';
+        res.status(500).json({ error: msg.includes('column') ? 'Run migration: npm run migrate:users' : msg });
+    }
+});
+
+// DELETE user
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can delete users' });
+        const { id } = req.params;
+        const targetId = parseInt(id, 10);
+        if (Number(req.user.id) === targetId) return res.status(400).json({ error: 'You cannot delete your own account' });
+        // Remove proposals referencing this user first (avoids FK violation)
+        await query('DELETE FROM proposals WHERE user_id = $1', [targetId]);
+        const result = await query('DELETE FROM users WHERE id = $1 RETURNING id', [targetId]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'User not found' });
+        res.json({ success: true });
+    } catch (e) {
+        console.error("Users DELETE Error:", e);
+        const msg = e.message || 'Failed to delete user';
+        res.status(500).json({ error: msg });
     }
 });
 

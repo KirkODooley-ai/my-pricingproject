@@ -54,25 +54,25 @@
 }
 
 .pricing-table td {
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #dee2e6;
   color: var(--text-primary);
 }
 
-/* Zebra striping */
+/* Zebra striping - higher contrast */
 .pricing-table tbody tr:nth-child(odd) {
-  background-color: var(--bg-surface);
+  background-color: #ffffff;
 }
 
 .pricing-table tbody tr:nth-child(even) {
-  background-color: #fafbfc;
+  background-color: #ebedef;
 }
 
 .pricing-table tbody tr:hover {
-  background-color: rgba(51, 99, 175, 0.04);
+  background-color: rgba(51, 99, 175, 0.06);
 }
 
 .pricing-table tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1px solid #dee2e6;
 }
 
 /* Action Buttons */

@@ -319,26 +319,26 @@ th:last-child {
 
 td {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #dee2e6;
   color: var(--text-primary);
   vertical-align: middle;
 }
 
-/* Zebra striping with better contrast */
+/* Zebra striping - higher contrast */
 tbody tr:nth-child(odd) {
-  background-color: var(--bg-surface);
+  background-color: #ffffff;
 }
 
 tbody tr:nth-child(even) {
-  background-color: #fafbfc;
+  background-color: #ebedef;
 }
 
 tbody tr:hover {
-  background-color: rgba(51, 99, 175, 0.04);
+  background-color: rgba(51, 99, 175, 0.06);
 }
 
 tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1px solid #dee2e6;
 }
 
 tbody tr:last-child td:first-child {

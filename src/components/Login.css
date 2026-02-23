@@ -49,7 +49,7 @@
   display: block;
   margin: 0 auto 1.5rem;
   height: 220px;
-  width: 120%;
+  width: 240%;
   max-width: none;
   margin-left: 50%;
   transform: translateX(-50%);
@@ -133,18 +133,14 @@
   font-weight: 600;
   text-align: center;
   cursor: pointer;
-  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: background-color var(--transition-fast);
 }
 
 .login-submit:hover {
-  background-color: var(--primary-hover) !important;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
+  background-color: #2a5299 !important;
+  color: #ffffff !important;
 }
 
-.login-submit:active {
-  transform: translateY(0);
-}
 
 .login-footer {
   margin-top: 2rem;

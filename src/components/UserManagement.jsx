@@ -30,6 +30,7 @@ const UserManagement = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({
         username: '',
         password: '',
@@ -98,6 +99,7 @@ const UserManagement = () => {
             setError('Password is required');
             return;
         }
+        setSaving(true);
         try {
             if (editingUser) {
                 const payload = {
@@ -123,6 +125,8 @@ const UserManagement = () => {
             await loadUsers();
         } catch (e) {
             setError(e.message || (editingUser ? 'Failed to update user' : 'Failed to create user'));
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -268,9 +272,11 @@ const UserManagement = () => {
                                 <span>Active (can log in)</span>
                             </label>
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button type="submit" className="btn btn-primary">Save Changes</button>
-                            <button type="button" className="btn" style={{ backgroundColor: '#e5e7eb' }} onClick={closeEdit}>Cancel</button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button type="submit" className="btn btn-primary" disabled={saving}>
+                                {saving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                            <button type="button" className="btn" style={{ backgroundColor: '#e5e7eb' }} onClick={closeEdit} disabled={saving}>Cancel</button>
                         </div>
                     </form>
                 </div>

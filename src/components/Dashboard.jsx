@@ -104,7 +104,8 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
             </div>
 
             {/* Territory Performance */}
-            <div className="pricing-table-container" style={{ marginBottom: '2rem' }}>
+            <div className="dashboard-section-card">
+            <div className="pricing-table-container">
                 <h4>Territory Performance</h4>
                 <div className="table-wrapper" style={{ maxHeight: 'none' }}>
                     <table className="pricing-table">
@@ -168,8 +169,10 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                     </table>
                 </div>
             </div>
+            </div>
 
             {/* Top 5 Product Lines */}
+            <div className="dashboard-section-card">
             <div className="pricing-table-container">
                 <h4>Top 5 Product Lines (Revenue)</h4>
                 <div className="table-wrapper" style={{ maxHeight: 'none' }}>
@@ -245,7 +248,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                             </tr>
                                         )}
                                         {categories.length > 0 && (
-                                            <tr style={{ 
+                                            <tr className="dashboard-summary-row" style={{ 
                                                 backgroundColor: 'var(--dark-blue)', 
                                                 color: 'white'
                                             }}>
@@ -291,6 +294,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
             </div>
         </div>

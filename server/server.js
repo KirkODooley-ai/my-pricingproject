@@ -36,13 +36,21 @@ app.post('/api/auth/login', async (req, res) => {
         const user = result.rows[0];
         if (user.is_active === false) return res.status(401).json({ error: 'Account is deactivated' });
         if (await bcrypt.compare(password, user.password_hash)) {
-            // Create Token
+            // Parse permissions for login response and JWT (JSONB may be array or need parsing)
+            let perms = user.permissions;
+            if (typeof perms === 'string') try { perms = JSON.parse(perms); } catch { perms = []; }
+            if (!Array.isArray(perms)) perms = [];
+            // Admin role: if no permissions in DB, use full set (backward compat)
+            if (user.role === 'admin' && perms.length === 0) {
+                perms = ['view_costs', 'edit_pricing', 'submit_proposals', 'approve_proposals', 'manage_users', 'view_all_regions'];
+            }
+            // Create Token (include permissions so backend can enforce granular checks)
             const token = jwt.sign(
-                { id: user.id, username: user.username, role: user.role, region: user.region },
+                { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms },
                 JWT_SECRET,
                 { expiresIn: '8h' }
             );
-            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region } });
+            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms } });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -520,8 +528,15 @@ app.get('/api/users', authenticateToken, async (req, res) => {
             result = await query(
                 'SELECT id, username, role, region, is_active as "isActive", permissions, created_at as "createdAt" FROM users ORDER BY username'
             );
+            // Ensure permissions is always an array (pg returns JSONB parsed; handle null/string)
+            result.rows = result.rows.map(r => {
+                let perms = r.permissions;
+                if (typeof perms === 'string') try { perms = JSON.parse(perms); } catch { perms = []; }
+                if (!Array.isArray(perms)) perms = [];
+                return { ...r, permissions: perms };
+            });
         } catch (colErr) {
-            if (colErr.message && colErr.message.includes('is_active')) {
+            if (colErr.message && (colErr.message.includes('is_active') || colErr.message.includes('permissions'))) {
                 result = await query(
                     'SELECT id, username, role, region, created_at as "createdAt" FROM users ORDER BY username'
                 );
@@ -570,7 +585,7 @@ app.patch('/api/users/:id', authenticateToken, async (req, res) => {
         if (username !== undefined) { updates.push(`username = $${idx++}`); values.push(String(username).trim()); }
         if (role !== undefined) { updates.push(`role = $${idx++}`); values.push(role); }
         if (region !== undefined) { updates.push(`region = $${idx++}`); values.push(region || null); }
-        if (permissions !== undefined) { updates.push(`permissions = $${idx++}`); values.push(JSON.stringify(Array.isArray(permissions) ? permissions : [])); }
+        if (permissions !== undefined) { updates.push(`permissions = $${idx++}::jsonb`); values.push(JSON.stringify(Array.isArray(permissions) ? permissions : [])); }
         if (isActive !== undefined) { updates.push(`is_active = $${idx++}`); values.push(!!isActive); }
         if (password !== undefined && password !== '') {
             const password_hash = await bcrypt.hash(password, 10);
@@ -622,10 +637,11 @@ app.patch('/api/users/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// DELETE user
+// DELETE user (requires MANAGE_USERS permission or admin role)
 app.delete('/api/users/:id', authenticateToken, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can delete users' });
+        const canManage = req.user.role === 'admin' || (Array.isArray(req.user.permissions) && req.user.permissions.includes('manage_users'));
+        if (!canManage) return res.status(403).json({ error: 'manage_users permission required to delete users' });
         const { id } = req.params;
         const targetId = parseInt(id, 10);
         if (Number(req.user.id) === targetId) return res.status(400).json({ error: 'You cannot delete your own account' });

@@ -118,9 +118,10 @@ const UserManagement = () => {
                     username: form.username.trim(),
                     password: form.password,
                     role: form.role,
-                    region: form.region === 'National' ? null : form.region
+                    region: form.region === 'National' ? null : form.region,
+                    permissions: form.permissions
                 });
-                setForm({ username: '', password: '', role: 'analyst', region: 'National' });
+                setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [] });
                 setShowForm(false);
             }
             await loadUsers();
@@ -215,6 +216,18 @@ const UserManagement = () => {
                             <select name="region" value={form.region} onChange={handleChange} style={inputStyle}>
                                 {REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                             </select>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={labelStyle}>Additional Permissions</label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem' }}>
+                                {ALL_PERMISSION_KEYS.map(perm => (
+                                    <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                        <input type="checkbox" checked={form.permissions.includes(perm)}
+                                            onChange={() => handlePermissionToggle(perm)} />
+                                        {PERMISSION_LABELS[perm] || perm}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                         <button type="submit" className="btn btn-primary">Create User</button>
                     </form>

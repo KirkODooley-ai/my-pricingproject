@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { PERMISSIONS, PERMISSION_LABELS } from '../constants/permissions';
+import { PERMISSIONS, PERMISSION_LABELS, hasPermission } from '../constants/permissions';
 
 const ROLES = [
     { value: 'admin', label: 'Admin' },
-    { value: 'bc_sales', label: 'BC Sales' },
-    { value: 'sask_sales', label: 'Sask Sales' },
+    { value: 'outside_sales', label: 'Outside Sales' },
+    { value: 'sales_manager', label: 'Sales Manager' },
+    { value: 'sales_support', label: 'Sales Support' },
     { value: 'analyst', label: 'Analyst' }
 ];
 
@@ -159,6 +160,7 @@ const UserManagement = () => {
         }
     };
 
+    const canManageUsers = currentUser?.role === 'admin' || hasPermission(currentUser?.permissions, PERMISSIONS.MANAGE_USERS);
     const cardStyle = { padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' };
     const inputStyle = { width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' };
     const labelStyle = { display: 'block', marginBottom: '0.5rem', fontWeight: 500 };
@@ -314,16 +316,20 @@ const UserManagement = () => {
                                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                                     </td>
                                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
-                                        <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem' }}
-                                            onClick={() => openEdit(u)}>Edit</button>
-                                        <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem', backgroundColor: u.isActive !== false ? '#fef3c7' : '#d1fae5' }}
-                                            onClick={() => handleDeactivate(u)}>
-                                            {u.isActive !== false ? 'Deactivate' : 'Activate'}
-                                        </button>
-                                        <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', backgroundColor: deleteConfirm === u.id ? '#dc2626' : '#fee2e2', color: deleteConfirm === u.id ? 'white' : '#b91c1c' }}
-                                            onClick={() => handleDelete(u)} disabled={currentUser?.id === u.id}>
-                                            {deleteConfirm === u.id ? 'Confirm Delete' : 'Delete'}
-                                        </button>
+                                        {canManageUsers && (
+                                            <>
+                                                <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem' }}
+                                                    onClick={() => openEdit(u)}>Edit</button>
+                                                <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem', backgroundColor: u.isActive !== false ? '#fef3c7' : '#d1fae5' }}
+                                                    onClick={() => handleDeactivate(u)}>
+                                                    {u.isActive !== false ? 'Deactivate' : 'Activate'}
+                                                </button>
+                                                <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', backgroundColor: deleteConfirm === u.id ? '#dc2626' : '#fee2e2', color: deleteConfirm === u.id ? 'white' : '#b91c1c' }}
+                                                    onClick={() => handleDelete(u)} disabled={currentUser?.id === u.id}>
+                                                    {deleteConfirm === u.id ? 'Confirm Delete' : 'Delete'}
+                                                </button>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

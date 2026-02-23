@@ -19,8 +19,8 @@ export const PERMISSIONS = {
 export const PERMISSION_LABELS = {
   [PERMISSIONS.VIEW_COSTS]: 'View Costs',
   [PERMISSIONS.EDIT_PRICING]: 'Edit Pricing Strategy',
-  [PERMISSIONS.SUBMIT_PROPOSALS]: 'Submit Proposals',
-  [PERMISSIONS.APPROVE_PROPOSALS]: 'Approve Proposals',
+  [PERMISSIONS.SUBMIT_PROPOSALS]: 'Submit Pricing Change',
+  [PERMISSIONS.APPROVE_PROPOSALS]: 'Approve Pricing Change',
   [PERMISSIONS.MANAGE_USERS]: 'Manage Users',
   [PERMISSIONS.VIEW_ALL_REGIONS]: 'View All Regions'
 };
@@ -41,7 +41,10 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.VIEW_COSTS,
     PERMISSIONS.SUBMIT_PROPOSALS,
     PERMISSIONS.VIEW_ALL_REGIONS
-  ]
+  ],
+  outside_sales: [],
+  sales_manager: [],
+  sales_support: []
 };
 
 /** Get permissions for a role (default starting point) */

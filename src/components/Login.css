@@ -48,8 +48,9 @@
 .login-logo {
   display: block;
   margin: 0 auto 1.5rem;
-  height: 52px;
+  height: 180px;
   width: auto;
+  max-width: 100%;
   object-fit: contain;
 }
 
@@ -119,9 +120,10 @@
 .login-submit {
   display: block;
   width: 100%;
+  max-width: 280px;
   margin: 1.5rem auto 0;
   padding: 0.875rem 1.5rem;
-  background-color: var(--primary-color) !important;
+  background-color: #3363AF !important;
   color: #ffffff !important;
   border: none;
   border-radius: var(--radius-md);

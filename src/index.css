@@ -4,46 +4,45 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* === Forma Steel Brand Palette === */
-  --primary-color: #3363AF;
-  --primary-hover: #2a5299;
-  --primary-light: #4a7fd4;
-  --accent-color: #3363AF;
-  --accent-hover: #2a5299;
-  --dark-blue: #0A2245;
-  --dark-blue-hover: #0d2d5c;
-  --light-blue: #DCE5F2;
+  /* === Forma Steel Brand Palette (Warmed up slightly) === */
+  --primary-color: #2F5AA3;     /* Slightly softer, deeper blue */
+  --primary-hover: #264A87;
+  --primary-light: #F0F4FA;     /* Very soft tinted background for active states */
+  --accent-color: #F77A55;      /* HubSpot uses warm coral/orange accents for contrast */
+  --accent-hover: #E0603D;
+  --dark-blue: #0F172A;         /* Slate-900 instead of pure navy */
+  --dark-blue-hover: #1E293B;
 
-  /* === Neutral Palette (ERP Standard) === */
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-on-dark: #f1f5f9;
+  /* === Neutral Palette (Rich Slate instead of generic grey) === */
+  --text-primary: #1E293B;      /* Slate-800 - softer than pure black */
+  --text-secondary: #475569;    /* Slate-600 */
+  --text-muted: #8492A6;        /* A warmer, softer grey */
+  --text-on-dark: #F8FAFC;
 
   /* === Page & Surface Colors === */
-  --bg-page: #f4f7f9;
-  --bg-surface: #ffffff;
-  --bg-surface-raised: #ffffff;
-  --bg-surface-hover: #f8fafc;
-  --bg-muted: #f1f5f9;
+  --bg-page: #F8FAFC;           /* Warmer, creamier off-white (Slate-50) */
+  --bg-surface: #FFFFFF;        /* Pure white for cards to pop against bg-page */
+  --bg-surface-raised: #FFFFFF;
+  --bg-surface-hover: #F1F5F9;
+  --bg-muted: #F1F5F9;          /* Slate-100 */
 
   /* === Border Colors === */
-  --border-color: #e2e8f0;
-  --border-light: #f1f5f9;
-  --border-strong: #cbd5e1;
+  --border-light: rgba(15, 23, 42, 0.06); /* Nearly invisible, structural borders */
+  --border-color: rgba(15, 23, 42, 0.12); /* Standard soft border */
+  --border-strong: rgba(15, 23, 42, 0.20);
 
-  /* === Semantic Colors === */
-  --success: #10b981;
-  --success-light: #d1fae5;
-  --success-dark: #059669;
-  --warning: #f59e0b;
-  --warning-light: #fef3c7;
-  --warning-dark: #d97706;
-  --danger: #ef4444;
-  --danger-light: #fee2e2;
-  --danger-dark: #dc2626;
-  --info: #3b82f6;
-  --info-light: #dbeafe;
+  /* === Semantic Colors (Softened) === */
+  --success: #059669;
+  --success-light: #ECFDF5;
+  --success-dark: #047857;
+  --warning: #D97706;
+  --warning-light: #FFFBEB;
+  --warning-dark: #B45309;
+  --danger: #DC2626;
+  --danger-light: #FEF2F2;
+  --danger-dark: #B91C1C;
+  --info: #2563EB;
+  --info-light: #EFF6FF;
 
   /* === Tier Colors (Color-coded badges) === */
   --tier-obsidian: #1e1e1e;
@@ -60,18 +59,18 @@
   --tier-bronze-bg: #fed7aa;
 
   /* === Dimensions & Spacing === */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;             /* Larger base radius makes UI feel modern and friendly */
+  --radius-lg: 12px;            /* Use for Cards */
+  --radius-xl: 16px;            /* Use for Modals */
+  --radius-2xl: 20px;
   
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
+  --spacing-xl: 2rem;           /* Generous spacing is key to premium feel */
   --spacing-2xl: 3rem;
 
   /* === Typography === */
@@ -86,19 +85,20 @@
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
 
-  /* === Shadows (Subtle depth for ERP feel) === */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
-  --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* === Shadows (The secret to SaaS design: Large, soft, diffuse) === */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+  --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.03), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+  --shadow-dropdown: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+  --shadow-xl: 0 25px 50px -12px rgba(15, 23, 42, 0.08), 0 12px 24px -8px rgba(15, 23, 42, 0.04);
+  --shadow-glow: 0 0 0 3px rgba(47, 90, 163, 0.15); /* Soft focus glow instead of harsh ring */
 
   /* === Transitions === */
-  --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* === Reset & Base === */

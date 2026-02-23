@@ -59,19 +59,21 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
     const formatPercent = (val) => (val * 100).toFixed(1) + '%'
 
     return (
-        <div className="dashboard-container">
-            {/* Page Header */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '0.25rem' }}>
-                    Executive Dashboard
-                </h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                    High-level overview of the pricing transition impact and business performance.
-                </p>
-            </div>
+        <div className="dashboard-page-wrapper">
+            <div className="dashboard-container">
+            <div className="dashboard-header-card">
+                {/* Page Header */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '0.25rem' }}>
+                        Executive Dashboard
+                    </h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
+                        High-level overview of the pricing transition impact and business performance.
+                    </p>
+                </div>
 
-            {/* KPI Cards */}
-            <div className="stats-grid" style={{ marginBottom: '2rem' }}>
+                {/* KPI Cards */}
+                <div className="stats-grid">
                 <div className="stat-card">
                     <h3>Current Revenue</h3>
                     <div className="metric-value">{formatCurrency(totalCurrentRevenue)}</div>
@@ -97,6 +99,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                         {totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}
                     </div>
                     <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Total Delta</small>
+                </div>
                 </div>
             </div>
 
@@ -288,6 +291,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
         </div>
     )

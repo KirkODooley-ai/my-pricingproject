@@ -64,10 +64,10 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
             <div className="dashboard-header-card">
                 {/* Page Header */}
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 700, marginBottom: '0.25rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', color: '#0A2245', fontWeight: 700, marginBottom: '0.25rem' }}>
                         Executive Dashboard
                     </h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
+                    <p style={{ color: '#1F1F1F', fontSize: '0.9rem', margin: 0 }}>
                         High-level overview of the pricing transition impact and business performance.
                     </p>
                 </div>
@@ -77,18 +77,18 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                 <div className="stat-card">
                     <h3>Current Revenue</h3>
                     <div className="metric-value">{formatCurrency(totalCurrentRevenue)}</div>
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Based on Annual Spend</small>
+                    <small style={{ color: '#1F1F1F', fontSize: '0.8rem' }}>Based on Annual Spend</small>
                 </div>
                 <div className="stat-card projected">
                     <h3>Projected Revenue</h3>
                     <div className="metric-value">{formatCurrency(totalProjectedRevenue)}</div>
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Post-Transition</small>
+                    <small style={{ color: '#1F1F1F', fontSize: '0.8rem' }}>Post-Transition</small>
                 </div>
                 <div 
                     className="stat-card" 
                     style={{ 
                         borderLeft: totalDelta >= 0 ? '4px solid var(--success)' : '4px solid var(--danger)',
-                        backgroundColor: totalDelta < 0 ? '#fef2f2' : 'var(--bg-surface)'
+                        backgroundColor: totalDelta < 0 ? '#fef2f2' : '#ffffff'
                     }}
                 >
                     <h3>Net Impact</h3>
@@ -98,7 +98,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                     >
                         {totalDelta >= 0 ? '+' : ''}{formatCurrency(totalDelta)}
                     </div>
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Total Delta</small>
+                    <small style={{ color: '#1F1F1F', fontSize: '0.8rem' }}>Total Delta</small>
                 </div>
                 </div>
             </div>
@@ -249,7 +249,7 @@ const Dashboard = ({ analysis, customers = [], categories = [] }) => {
                                         )}
                                         {categories.length > 0 && (
                                             <tr className="dashboard-summary-row" style={{ 
-                                                backgroundColor: 'var(--dark-blue)', 
+                                                backgroundColor: '#0A2245', 
                                                 color: 'white'
                                             }}>
                                                 <td style={{ 

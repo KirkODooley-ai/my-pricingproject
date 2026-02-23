@@ -270,9 +270,11 @@
   margin: 0;
 }
 
-/* === Dashboard Specific Styles === */
+/* === Dashboard Specific Styles (HubSpot-style SaaS Design System) === */
+/* Brand: Primary #3363AF | Navy #0A2245 | Secondary #1F1F1F | Ice Blue #DCE5F2 */
+
 .dashboard-page-wrapper {
-  background-color: #f5f7f9;
+  background-color: #DCE5F2;
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -283,15 +285,15 @@
   width: 100%;
 }
 
-/* Dashboard text visibility - dark charcoal/black */
+/* Typography - Headers in Deep Navy */
 .dashboard-page-wrapper h2,
-.dashboard-page-wrapper h3,
 .dashboard-page-wrapper .stat-card h3 {
-  color: #212529 !important;
+  color: #0A2245 !important;
 }
 
 .dashboard-page-wrapper .stat-card .metric-value {
-  color: #212529 !important;
+  color: #3363AF !important;
+  font-weight: 700;
 }
 
 .dashboard-page-wrapper .stat-card.projected .metric-value {
@@ -300,19 +302,18 @@
 
 .dashboard-page-wrapper .stat-card small,
 .dashboard-page-wrapper .dashboard-header-card p {
-  color: #212529 !important;
-  opacity: 0.85;
+  color: #1F1F1F !important;
 }
 
 .dashboard-container h2 {
   margin-bottom: 0.5rem;
 }
 
+/* Header card - white with ice blue border */
 .dashboard-header-card {
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border-radius: var(--radius-lg);
+  border: 1px solid #c5d4e8;
+  border-radius: 8px;
   padding: 1.5rem 2rem;
   margin-bottom: 2rem;
 }
@@ -325,14 +326,21 @@
 
 .dashboard-container .stat-card {
   min-height: 120px;
+  background: #ffffff;
+  border: 1px solid #c5d4e8;
+  border-radius: 8px;
 }
 
-/* Dashboard section cards - white with light gray border */
+.dashboard-container .stat-card.projected {
+  border-left: 4px solid var(--success);
+}
+
+/* Section cards - white with darker ice blue border */
 .dashboard-section-card {
   background: #ffffff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #c5d4e8;
   padding: 24px;
-  border-radius: var(--radius-lg);
+  border-radius: 8px;
   margin-bottom: 2rem;
 }
 
@@ -347,24 +355,53 @@
   overflow: visible;
 }
 
-/* Dashboard table text - dark charcoal/black */
-.dashboard-page-wrapper .pricing-table th {
-  color: #212529 !important;
-  background-color: #f0f2f5 !important;
+.dashboard-section-card .table-wrapper {
+  background: transparent;
 }
 
+/* Dashboard section titles (Territory Performance, Top 5 Product Lines) */
+.dashboard-section-card .pricing-table-container h4 {
+  background: #DCE5F2 !important;
+  color: #0A2245 !important;
+}
+
+/* Table headers - Navy text on Ice Blue background */
+.dashboard-page-wrapper .pricing-table th {
+  color: #0A2245 !important;
+  background-color: #DCE5F2 !important;
+}
+
+/* Table data - Secondary text */
 .dashboard-page-wrapper .pricing-table td {
-  color: #212529 !important;
+  color: #1F1F1F !important;
 }
 
 .dashboard-page-wrapper .pricing-table td span {
-  color: #212529 !important;
+  color: #1F1F1F !important;
+}
+
+/* Zebra striping - faint ice blue tint on even rows */
+.dashboard-page-wrapper .pricing-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.dashboard-page-wrapper .pricing-table tbody tr:nth-child(even) {
+  background-color: rgba(220, 229, 242, 0.5);
+}
+
+/* Row borders - thin horizontal lines in ice blue */
+.dashboard-page-wrapper .pricing-table td {
+  border-bottom: 1px solid #DCE5F2 !important;
 }
 
 /* Preserve white text on summary row (Top 5 Combined) */
 .dashboard-page-wrapper .pricing-table .dashboard-summary-row td,
 .dashboard-page-wrapper .pricing-table .dashboard-summary-row td span {
   color: #ffffff !important;
+}
+
+.dashboard-page-wrapper .pricing-table .dashboard-summary-row {
+  background-color: #0A2245 !important;
 }
 
 /* === Pricing Table Container === */

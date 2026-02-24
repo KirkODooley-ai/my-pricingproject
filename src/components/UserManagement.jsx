@@ -228,6 +228,9 @@ const UserManagement = () => {
                                     if (editingUser) {
                                         closeEdit();
                                     } else {
+                                        if (!showForm) {
+                                            setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true, canEdit: false });
+                                        }
                                         setShowForm(!showForm); 
                                     }
                                     setError(''); 
@@ -307,19 +310,30 @@ const UserManagement = () => {
                             <div style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
                                 <label style={{...styles.label, marginBottom: '1rem'}}>Granular Permissions</label>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-                                    {ALL_PERMISSION_KEYS.map(perm => (
-                                        <label key={perm} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.95rem', color: '#334155' }}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={form.permissions.includes(perm)}
-                                                onChange={() => handlePermissionToggle(perm)} 
-                                                style={{ width: '1.1rem', height: '1.1rem', marginTop: '0.1rem', cursor: 'pointer' }}
-                                            />
-                                            <span style={{ fontWeight: form.permissions.includes(perm) ? '600' : '400' }}>
-                                                {PERMISSION_LABELS[perm] || perm}
-                                            </span>
-                                        </label>
-                                    ))}
+                                    {ALL_PERMISSION_KEYS.map(perm => {
+                                        const isChecked = form.permissions.includes(perm);
+                                        return (
+                                            <div
+                                                key={perm}
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => handlePermissionToggle(perm)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePermissionToggle(perm); } }}
+                                                style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.95rem', color: '#334155' }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    readOnly
+                                                    tabIndex={-1}
+                                                    style={{ width: '1.1rem', height: '1.1rem', marginTop: '0.1rem', cursor: 'pointer', pointerEvents: 'none' }}
+                                                />
+                                                <span style={{ fontWeight: isChecked ? '600' : '400' }}>
+                                                    {PERMISSION_LABELS[perm] || perm}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -373,6 +387,7 @@ const UserManagement = () => {
                                     <tr>
                                         <th style={styles.th}>Authorized User</th>
                                         <th style={styles.th}>System Role</th>
+                                        <th style={styles.th}>Permissions</th>
                                         <th style={styles.th}>Territory</th>
                                         <th style={styles.th}>Access Status</th>
                                         <th style={styles.th}>Registration Date</th>
@@ -395,6 +410,19 @@ const UserManagement = () => {
                                                 </td>
                                                 <td style={styles.td}>
                                                     <span style={styles.roleBadge}>{formatRole(u.role)}</span>
+                                                </td>
+                                                <td style={{...styles.td, fontSize: '0.8rem', maxWidth: '200px'}}>
+                                                    {Array.isArray(u.permissions) && u.permissions.length > 0 ? (
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                            {u.permissions.map(p => (
+                                                                <span key={p} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem' }}>
+                                                                    {PERMISSION_LABELS[p] || p}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ color: '#94a3b8' }}>—</span>
+                                                    )}
                                                 </td>
                                                 <td style={{...styles.td, color: '#475569', fontWeight: '500'}}>
                                                     {u.region || <span style={{ color: '#cbd5e1' }}>Global</span>}

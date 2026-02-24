@@ -33,33 +33,6 @@ export const PERMISSION_LABELS = {
   [PERMISSIONS.IMPORT_DATA]: 'Import Data'
 };
 
-/** Default permissions for each role (starting point for migration from RBAC) */
-export const ROLE_PERMISSIONS = {
-  admin: [
-    PERMISSIONS.VIEW_COSTS,
-    PERMISSIONS.EDIT_PRICING,
-    PERMISSIONS.APPROVE_PROPOSALS,
-    PERMISSIONS.MANAGE_USERS,
-    PERMISSIONS.VIEW_ALL_REGIONS
-  ],
-  manager: [
-    // Managers: no cost visibility, no strategy edit, region-filtered data
-  ],
-  analyst: [
-    PERMISSIONS.VIEW_COSTS,
-    PERMISSIONS.SUBMIT_PROPOSALS,
-    PERMISSIONS.VIEW_ALL_REGIONS
-  ],
-  outside_sales: [],
-  sales_manager: [],
-  sales_support: []
-};
-
-/** Get permissions for a role (default starting point) */
-export function getPermissionsForRole(role) {
-  return ROLE_PERMISSIONS[role] ?? [];
-}
-
 /** Check if a permission set includes a specific permission */
 export function hasPermission(permissions, permission) {
   return Array.isArray(permissions) && permissions.includes(permission);

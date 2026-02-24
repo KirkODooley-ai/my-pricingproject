@@ -1,22 +1,13 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react';
 import {
     CUSTOMER_GROUPS,
     TIER_RULES,
     formatCurrency,
     formatPercent,
     aggregateCustomerStats
-} from '../utils/pricingEngine'
-import './PricingTable.css'
+} from '../utils/pricingEngine';
 
-const ImpactAnalysis = ({
-    customers,
-    salesTransactions,
-    categories = [],
-    // Legacy props (kept for compatibility if we switch back)
-    mix, setMix,
-    tierCategoryDiscounts, setTierCategoryDiscounts,
-    activeCategory, setActiveCategory
-}) => {
+const ImpactAnalysis = ({ customers, salesTransactions }) => {
 
     // --- 1. Aggregation Logic ---
     const tierData = useMemo(() => {
@@ -24,7 +15,7 @@ const ImpactAnalysis = ({
             [CUSTOMER_GROUPS.DEALER]: {},
             [CUSTOMER_GROUPS.COMMERCIAL]: {},
             'Other': {} // Catch-all
-        }
+        };
 
         // Initialize Tiers Structure
         Object.keys(TIER_RULES).forEach(group => {
@@ -36,75 +27,58 @@ const ImpactAnalysis = ({
                     totalCOGS: 0,
                     totalProfit: 0,
                     avgMargin: 0
-                }
-            })
-        })
-        // Init 'Unassigned' buckets
-        groups[CUSTOMER_GROUPS.DEALER]['Unassigned'] = { name: 'Unassigned', customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 }
-        groups[CUSTOMER_GROUPS.COMMERCIAL]['Unassigned'] = { name: 'Unassigned', customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 }
+                };
+            });
+        });
+        
+        groups[CUSTOMER_GROUPS.DEALER]['Unassigned'] = { name: 'Unassigned', customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 };
+        groups[CUSTOMER_GROUPS.COMMERCIAL]['Unassigned'] = { name: 'Unassigned', customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 };
 
-
-        // Process Customers
         if (Array.isArray(customers)) {
             customers.forEach(cust => {
-                if (!cust) return
-                // Calculate Stats from Sales Data (Actuals)
-                const stats = aggregateCustomerStats(cust, salesTransactions)
+                if (!cust) return;
+                const stats = aggregateCustomerStats(cust, salesTransactions);
+                const groupKey = groups[cust.group] ? cust.group : 'Other';
+                const effectiveSpend = Math.max(cust.annualSpend || 0, stats.revenue);
 
-                // Determine Group & Tier
-                const groupKey = groups[cust.group] ? cust.group : 'Other'
-
-                // Re-calculate Tier dynamically based on ACTUAL spend (from Sales Data if avail, else manual)
-                // Use the higher of Manual Annual Spend or Actual Sales Revenue
-                const effectiveSpend = Math.max(cust.annualSpend || 0, stats.revenue)
-
-                // Find Tier
-                let tierName = 'Unassigned'
+                let tierName = 'Unassigned';
                 if (TIER_RULES[groupKey]) {
-                    const matchedRule = TIER_RULES[groupKey].find(r => effectiveSpend >= r.minSpend)
-                    if (matchedRule) tierName = matchedRule.name
+                    const matchedRule = TIER_RULES[groupKey].find(r => effectiveSpend >= r.minSpend);
+                    if (matchedRule) tierName = matchedRule.name;
                 }
 
-                // Init bucket if missing (e.g. Other)
                 if (!groups[groupKey][tierName]) {
-                    groups[groupKey][tierName] = { name: tierName, customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 }
+                    groups[groupKey][tierName] = { name: tierName, customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 };
                 }
 
-                // Add to Bucket
                 const customerRecord = {
                     ...cust,
-                    derivedRevenue: effectiveSpend, // [FIX] Use Hybrid Spend
+                    derivedRevenue: effectiveSpend,
                     derivedProfit: stats.profit,
                     derivedMargin: stats.margin
-                }
+                };
 
-                const bucket = groups[groupKey][tierName]
-                bucket.customers.push(customerRecord)
-                bucket.totalRevenue += effectiveSpend // [FIX] Use Hybrid Spend
-                bucket.totalCOGS += stats.cogs
-                bucket.totalProfit += stats.profit
-            })
+                const bucket = groups[groupKey][tierName];
+                bucket.customers.push(customerRecord);
+                bucket.totalRevenue += effectiveSpend;
+                bucket.totalCOGS += stats.cogs;
+                bucket.totalProfit += stats.profit;
+            });
 
-            // Finalize Margin Calcs
             Object.values(groups).forEach(groupTiers => {
                 Object.values(groupTiers).forEach(tier => {
-                    if (tier.totalRevenue > 0) {
-                        tier.avgMargin = tier.totalProfit / tier.totalRevenue
-                    }
-                    // Sort customers by Revenue Desc
-                    tier.customers.sort((a, b) => b.derivedRevenue - a.derivedRevenue)
-                })
-            })
-
+                    if (tier.totalRevenue > 0) tier.avgMargin = tier.totalProfit / tier.totalRevenue;
+                    tier.customers.sort((a, b) => b.derivedRevenue - a.derivedRevenue);
+                });
+            });
         }
-        return groups
-    }, [customers, salesTransactions])
+        return groups;
+    }, [customers, salesTransactions]);
 
-    // --- 2. Chart Logic (SVG Scatter Plot) ---
-    // Prepare data points: { x: Revenue, y: Margin, size: Count, label: Tier }
+    // --- 2. Chart Logic ---
     const chartData = useMemo(() => {
-        const points = []
-        let maxRev = 0
+        const points = [];
+        let maxRev = 0;
 
         Object.keys(tierData).forEach(group => {
             Object.values(tierData[group]).forEach(tier => {
@@ -114,186 +88,241 @@ const ImpactAnalysis = ({
                         x: tier.totalRevenue,
                         y: tier.avgMargin,
                         size: tier.customers.length,
-                        group // 'Dealer' or 'Commercial'
-                    })
-                    if (tier.totalRevenue > maxRev) maxRev = tier.totalRevenue
+                        group
+                    });
+                    if (tier.totalRevenue > maxRev) maxRev = tier.totalRevenue;
                 }
-            })
-        })
-        return { points, maxRev: maxRev || 1 }
-    }, [tierData])
+            });
+        });
+        return { points, maxRev: maxRev || 1 };
+    }, [tierData]);
 
+    // Premium SaaS UI Variables
+    const styles = {
+        pageWrapper: { width: '100%', minHeight: '100%' },
+        container: { maxWidth: '1400px', margin: '0 auto', padding: '2.5rem', width: '100%', fontFamily: 'var(--font-base)' },
+        headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid #e2e8f0' },
+        headerText: { fontSize: '1.85rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em', margin: '0 0 0.5rem 0' },
+        subText: { color: '#64748b', fontSize: '1.05rem', margin: 0, lineHeight: '1.5' },
+        
+        card: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', padding: '2rem', marginBottom: '2.5rem' },
+        cardTitle: { margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', letterSpacing: '-0.01em' },
+        cardSubTitle: { fontSize: '0.85rem', fontWeight: '500', color: '#64748b', marginTop: '0.2rem' },
+        
+        tableContainer: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', overflow: 'hidden' },
+        table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
+        th: { padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' },
+        td: { padding: '1rem 1.5rem', fontSize: '0.95rem', color: '#0f172a', borderBottom: '1px solid #f1f5f9', verticalAlign: 'middle' },
+        
+        badgeBlue: { backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '0.25rem 0.6rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '2.5rem' },
+        badgeGray: { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', padding: '0.25rem 0.6rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: '500', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '2.5rem' }
+    };
 
     return (
-        <div className="calculator-container" style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '4rem' }}>
-            <div style={{ marginBottom: '2rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.8rem', color: '#111827' }}>Tier Performance Analysis</h2>
-                <p style={{ color: '#6b7280', margin: '0.5rem 0 0 0' }}>
-                    Analyze profitability and volume across your customer tiers. Data is aggregated from <strong>Actual Sales Transactions</strong>.
-                </p>
-            </div>
+        <div style={styles.pageWrapper}>
+            <div style={styles.container}>
+                {/* Header */}
+                <div style={styles.headerRow}>
+                    <div>
+                        <h2 style={styles.headerText}>Transition Analysis</h2>
+                        <p style={styles.subText}>
+                            Visualize profitability and volume across your customer tiers. <br/>
+                            Data is aggregated from <strong style={{color: '#0f172a', fontWeight: '600'}}>Actual Sales Transactions</strong>.
+                        </p>
+                    </div>
+                </div>
 
-            {/* --- TOP: Visual Analysis (Scatter Plot) --- */}
-            <div className="stat-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-                <h3 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>📊 value Matrix</span>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#6b7280' }}>(Revenue vs. Margin)</span>
-                </h3>
+                {/* --- TOP: Visual Analysis (Scatter Plot) --- */}
+                <div style={styles.card}>
+                    <h3 style={styles.cardTitle}>
+                        <span style={{ fontSize: '1.4rem' }}>📈</span> Performance Matrix
+                        <span style={styles.cardSubTitle}>(Revenue vs. Margin Correlation)</span>
+                    </h3>
 
-                <div style={{ position: 'relative', height: '300px', width: '100%', borderLeft: '2px solid #e5e7eb', borderBottom: '2px solid #e5e7eb', margin: '0 0 2rem 2rem' }}>
-                    {/* Y-Axis Label */}
-                    <div style={{ position: 'absolute', left: '-50px', top: '50%', transform: 'rotate(-90deg)', fontWeight: 'bold', color: '#6b7280', fontSize: '0.9rem' }}>Gross Margin %</div>
+                    <div style={{ position: 'relative', height: '360px', width: '90%', borderLeft: '2px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', margin: '2rem auto 3rem auto', right: '-20px' }}>
+                        {/* Axes Labels */}
+                        <div style={{ position: 'absolute', left: '-60px', top: '50%', transform: 'rotate(-90deg)', fontWeight: '600', color: '#475569', fontSize: '0.9rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Gross Margin %</div>
+                        <div style={{ position: 'absolute', bottom: '-50px', left: '50%', transform: 'translateX(-50%)', fontWeight: '600', color: '#475569', fontSize: '0.9rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Total Revenue ($)</div>
 
-                    {/* X-Axis Label */}
-                    <div style={{ position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)', fontWeight: 'bold', color: '#6b7280', fontSize: '0.9rem' }}>Total Revenue ($)</div>
+                        {/* Chart Area */}
+                        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+                            {/* Grid Lines */}
+                            <div style={{ position: 'absolute', left: 0, right: 0, bottom: '33.3%', borderTop: '1px dashed #e2e8f0' }}><span style={{ position: 'absolute', left: '-40px', top: '-10px', fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>20%</span></div>
+                            <div style={{ position: 'absolute', left: 0, right: 0, bottom: '66.6%', borderTop: '1px dashed #e2e8f0' }}><span style={{ position: 'absolute', left: '-40px', top: '-10px', fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>40%</span></div>
 
-                    {/* Plot Points */}
-                    {chartData.points.map((pt, idx) => {
-                        // Scales
-                        // X: 0 -> maxRev * 1.1
-                        // Y: 0 -> 60% (0.6) fixed scale for Margin
-                        const xPos = (pt.x / (chartData.maxRev * 1.1)) * 100
-                        const yPos = (pt.y / 0.6) * 100 // Assume 60% max margin for scale
+                            {/* Plot Points */}
+                            {chartData.points.map((pt, idx) => {
+                                const xPos = (pt.x / (chartData.maxRev * 1.1)) * 100;
+                                const yPos = (pt.y / 0.6) * 100; 
+                                const size = Math.max(16, Math.min(50, 12 + Math.log2(pt.size) * 6));
+                                const isDealer = pt.group === CUSTOMER_GROUPS.DEALER;
+                                const color = isDealer ? 'rgba(37, 99, 235, 0.85)' : 'rgba(5, 150, 105, 0.85)'; // Blue / Green
+                                const borderColor = isDealer ? '#1d4ed8' : '#047857';
 
-                        // Bubble Size (log scale)
-                        const size = Math.max(12, Math.min(40, 10 + Math.log2(pt.size) * 5))
-                        const color = pt.group === CUSTOMER_GROUPS.DEALER ? '#2563eb' : '#059669' // Blue vs Green
+                                if (isNaN(xPos) || isNaN(yPos) || yPos > 100 || xPos > 100) return null;
 
-                        if (isNaN(xPos) || isNaN(yPos) || yPos > 100 || xPos > 100) return null // [FIX] Safety Guard
+                                return (
+                                    <div key={idx}
+                                        title={`${pt.label}\nRevenue: ${formatCurrency(pt.x)}\nMargin: ${formatPercent(pt.y)}\nCustomers: ${pt.size}`}
+                                        style={{
+                                            position: 'absolute',
+                                            left: `${xPos}%`,
+                                            bottom: `${yPos}%`,
+                                            width: `${size}px`,
+                                            height: `${size}px`,
+                                            backgroundColor: color,
+                                            border: `2px solid ${borderColor}`,
+                                            borderRadius: '50%',
+                                            transform: 'translate(-50%, 50%)',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.3)',
+                                            transition: 'all 0.2s',
+                                            zIndex: 10
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, 50%) scale(1.1)'; e.currentTarget.style.zIndex = 20; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, 50%) scale(1)'; e.currentTarget.style.zIndex = 10; }}
+                                    >
+                                        <span style={{
+                                            position: 'absolute',
+                                            top: `-${size/2 + 25}px`,
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            fontSize: '0.75rem',
+                                            whiteSpace: 'nowrap',
+                                            fontWeight: '600',
+                                            color: '#334155',
+                                            backgroundColor: 'rgba(255,255,255,0.9)',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            pointerEvents: 'none',
+                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                        }}>
+                                            {pt.label.split(' ')[0]}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    {/* Legend */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '500', color: '#475569' }}>
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgba(37, 99, 235, 0.85)', border: '2px solid #1d4ed8' }}></div>
+                            Dealer Group
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '500', color: '#475569' }}>
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgba(5, 150, 105, 0.85)', border: '2px solid #047857' }}></div>
+                            Commercial Group
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '500', color: '#475569' }}>
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '2px dashed #94a3b8' }}></div>
+                            Size = Customer Count
+                        </div>
+                    </div>
+                </div>
 
-                        return (
-                            <div key={idx}
-                                title={`${pt.label}\nRevenue: ${formatCurrency(pt.x)}\nMargin: ${formatPercent(pt.y)}\nCustomers: ${pt.size}`}
-                                style={{
-                                    position: 'absolute',
-                                    left: `${xPos}%`,
-                                    bottom: `${yPos}%`,
-                                    width: `${size}px`,
-                                    height: `${size}px`,
-                                    backgroundColor: color,
-                                    borderRadius: '50%',
-                                    opacity: 0.7,
-                                    transform: 'translate(-50%, 50%)',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                    transition: 'all 0.2s',
-                                    zIndex: 10
-                                }}
-                            >
-                                <span style={{
-                                    position: 'absolute',
-                                    top: '-20px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    fontSize: '0.7rem',
-                                    whiteSpace: 'nowrap',
-                                    fontWeight: 600,
-                                    color: '#374151',
-                                    pointerEvents: 'none'
-                                }}>
-                                    {pt.label.split(' ')[0]}
-                                </span>
-                            </div>
-                        )
-                    })}
-
-                    {/* Grid Lines (20%, 40% Margin) */}
-                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: '33.3%', borderTop: '1px dashed #e5e7eb' }}><span style={{ position: 'absolute', left: '-35px', top: '-10px', fontSize: '0.75rem', color: '#9ca3af' }}>20%</span></div>
-                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: '66.6%', borderTop: '1px dashed #e5e7eb' }}><span style={{ position: 'absolute', left: '-35px', top: '-10px', fontSize: '0.75rem', color: '#9ca3af' }}>40%</span></div>
+                {/* --- BOTTOM: Tier Tables --- */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    <TierGroupTable
+                        title="Dealer Network Breakdown"
+                        color="#2563EB" 
+                        bgColor="#EFF6FF"
+                        borderColor="#BFDBFE"
+                        tiers={TIER_RULES[CUSTOMER_GROUPS.DEALER]}
+                        data={tierData[CUSTOMER_GROUPS.DEALER]}
+                        styles={styles}
+                    />
+                    <TierGroupTable
+                        title="Commercial Division Breakdown"
+                        color="#059669"
+                        bgColor="#ECFDF5"
+                        borderColor="#A7F3D0"
+                        tiers={TIER_RULES[CUSTOMER_GROUPS.COMMERCIAL]}
+                        data={tierData[CUSTOMER_GROUPS.COMMERCIAL]}
+                        styles={styles}
+                    />
                 </div>
             </div>
-
-            {/* --- BOTTOM: Tier Tables --- */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '3rem' }}>
-
-                {/* Dealer Table */}
-                <TierGroupTable
-                    title="Dealer Performance"
-                    color="#1e3a8a" // Blue
-                    tiers={TIER_RULES[CUSTOMER_GROUPS.DEALER]}
-                    data={tierData[CUSTOMER_GROUPS.DEALER]}
-                />
-
-                {/* Commercial Table */}
-                <TierGroupTable
-                    title="Commercial Performance"
-                    color="#065f46" // Green
-                    tiers={TIER_RULES[CUSTOMER_GROUPS.COMMERCIAL]}
-                    data={tierData[CUSTOMER_GROUPS.COMMERCIAL]}
-                />
-
-            </div>
         </div>
-    )
-}
+    );
+};
 
-// Sub-Component for Cleanliness
-const TierGroupTable = ({ title, color, tiers, data }) => {
-    // Merge Rules with actual buckets (ensure order matches Rules)
+const TierGroupTable = ({ title, color, bgColor, borderColor, tiers, data, styles }) => {
     const sortedTiers = [
-        ...tiers.map(r => data[r.name]), // Expected Tiers
-        data['Unassigned'] // Catch-all
-    ].filter(Boolean)
+        ...tiers.map(r => data[r.name]), 
+        data['Unassigned'] 
+    ].filter(Boolean);
 
     return (
-        <div className="pricing-table-container">
-            <h3 style={{ padding: '1rem', margin: 0, borderBottom: `4px solid ${color}`, color: color }}>
-                {title}
-            </h3>
-            <table className="pricing-table" style={{ width: '100%' }}>
-                <thead>
-                    <tr style={{ backgroundColor: '#f9fafb', fontSize: '0.9rem' }}>
-                        <th style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>Tier Level</th>
-                        <th style={{ textAlign: 'center' }}>Customers</th>
-                        <th style={{ textAlign: 'right' }}>Total Spend</th>
-                        <th style={{ textAlign: 'right' }}>Total Profit</th>
-                        <th style={{ textAlign: 'right', paddingRight: '1.5rem' }}>Gross Margin</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {sortedTiers.map(tier => {
-                        const isUnassigned = tier.name === 'Unassigned'
-                        const isEmpty = tier.customers.length === 0
+        <div style={styles.tableContainer}>
+            <div style={{ backgroundColor: bgColor, borderBottom: `1px solid ${borderColor}`, padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center' }}>
+                <div style={{ width: '4px', height: '24px', backgroundColor: color, borderRadius: '2px', marginRight: '12px' }}></div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: color, letterSpacing: '-0.01em' }}>
+                    {title}
+                </h3>
+            </div>
+            
+            <div style={{ overflowX: 'auto' }}>
+                <table style={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={{...styles.th, textAlign: 'left', paddingLeft: '2rem'}}>Tier Classification</th>
+                            <th style={{...styles.th, textAlign: 'center'}}>Coverage</th>
+                            <th style={{...styles.th, textAlign: 'right'}}>Total Implied Spend</th>
+                            <th style={{...styles.th, textAlign: 'right'}}>Net Profit Contribution</th>
+                            <th style={{...styles.th, textAlign: 'right', paddingRight: '2rem'}}>Aggregate Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sortedTiers.map(tier => {
+                            const isUnassigned = tier.name === 'Unassigned';
+                            const isEmpty = tier.customers.length === 0;
 
-                        return (
-                            <React.Fragment key={tier.name}>
-                                <tr style={{
-                                    fontWeight: isEmpty ? 'normal' : '600',
+                            return (
+                                <tr key={tier.name} style={{
+                                    backgroundColor: isUnassigned ? '#fffbeb' : '#ffffff',
+                                    borderTop: isUnassigned ? '2px solid #fde68a' : 'none',
                                     opacity: isEmpty ? 0.6 : 1,
-                                    backgroundColor: isUnassigned ? '#fefce8' : 'white',
-                                    borderTop: isUnassigned ? '2px solid #e5e7eb' : '1px solid #f3f4f6'
+                                    transition: 'background-color 0.2s'
                                 }}>
-                                    <td style={{ paddingLeft: '1.5rem', color: color }}>{tier.name}</td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <span className={`badge ${isEmpty ? 'gray' : 'blue'}`} style={{ fontSize: '0.8rem' }}>
-                                            {tier.customers.length}
+                                    <td style={{...styles.td, paddingLeft: '2rem', fontWeight: isEmpty ? '500' : '600', color: isEmpty ? '#94a3b8' : color}}>
+                                        {tier.name}
+                                    </td>
+                                    <td style={{...styles.td, textAlign: 'center'}}>
+                                        <span style={isEmpty ? styles.badgeGray : styles.badgeBlue}>
+                                            {tier.customers.length} Accounts
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: 'right' }}>{formatCurrency(tier.totalRevenue, 0)}</td>
-                                    <td style={{ textAlign: 'right', color: tier.totalProfit > 0 ? '#16a34a' : '#6b7280' }}>
+                                    <td style={{...styles.td, textAlign: 'right', fontWeight: '500'}}>
+                                        {formatCurrency(tier.totalRevenue, 0)}
+                                    </td>
+                                    <td style={{...styles.td, textAlign: 'right', fontWeight: '500', color: tier.totalProfit > 0 ? '#10b981' : '#64748b'}}>
                                         {formatCurrency(tier.totalProfit, 0)}
                                     </td>
-                                    <td style={{ textAlign: 'right', paddingRight: '1.5rem' }}>
+                                    <td style={{...styles.td, textAlign: 'right', paddingRight: '2rem'}}>
                                         <div style={{
-                                            display: 'inline-block',
-                                            padding: '2px 8px',
-                                            borderRadius: '4px',
-                                            backgroundColor: tier.avgMargin > 0.3 ? '#dcfce7' : tier.avgMargin < 0.15 ? '#fee2e2' : '#f3f4f6',
-                                            color: tier.avgMargin > 0.3 ? '#166534' : tier.avgMargin < 0.15 ? '#b91c1c' : '#374151'
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            padding: '0.3rem 0.8rem',
+                                            borderRadius: '6px',
+                                            fontWeight: '600',
+                                            fontSize: '0.9rem',
+                                            backgroundColor: tier.avgMargin > 0.3 ? '#ecfdf5' : tier.avgMargin < 0.15 ? '#fef2f2' : '#f8fafc',
+                                            color: tier.avgMargin > 0.3 ? '#059669' : tier.avgMargin < 0.15 ? '#dc2626' : '#475569',
+                                            border: `1px solid ${tier.avgMargin > 0.3 ? '#a7f3d0' : tier.avgMargin < 0.15 ? '#fecaca' : '#e2e8f0'}`
                                         }}>
                                             {formatPercent(tier.avgMargin)}
                                         </div>
                                     </td>
                                 </tr>
-                                {/* Expandable / Inline Customers (If < 5 show inline, else just summary?) */}
-                                {/* For now, simple summary row if active */}
-                            </React.Fragment>
-                        )
-                    })}
-                </tbody>
-            </table>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    )
-}
+    );
+};
 
-export default ImpactAnalysis
+export default ImpactAnalysis;

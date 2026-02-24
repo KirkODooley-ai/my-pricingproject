@@ -13,6 +13,7 @@ import MarginAlerts from './components/MarginAlerts' // [NEW] Phase 15
 import Dashboard from './components/Dashboard'
 import Login from './components/Login' // [NEW]
 import UserManagement from './components/UserManagement'
+import AdminSettings from './components/AdminSettings'
 import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
@@ -732,53 +733,7 @@ function App() {
         {activeTab === 'users' && user.role === 'admin' && <UserManagement />}
 
         {activeTab === 'settings' && user.role === 'admin' && (
-          <div style={{ maxWidth: '700px' }}>
-            <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Admin Settings</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Configure global system settings and pricing parameters.</p>
-            </div>
-
-            <div className="card">
-              <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-light)' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Global Pricing Configuration</h3>
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ 
-                  display: 'block', 
-                  textTransform: 'uppercase', 
-                  fontSize: '0.7rem', 
-                  fontWeight: 600, 
-                  color: 'var(--text-muted)', 
-                  marginBottom: '0.5rem',
-                  letterSpacing: '0.05em'
-                }}>
-                  Global Markup Multiplier (Default)
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1.0"
-                    value={globalSettings.global_multiplier || 1.5}
-                    onChange={(e) => handleUpdateSetting('global_multiplier', parseFloat(e.target.value))}
-                    className="input-field"
-                    style={{
-                      width: '120px',
-                      fontSize: '1rem',
-                      fontWeight: 600
-                    }}
-                  />
-                  <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                    Base List Price = Cost × {globalSettings.global_multiplier || 1.5}
-                  </span>
-                </div>
-                <div className="alert alert-warning" style={{ marginTop: '1rem' }}>
-                  <strong>Warning:</strong> Changing this affects all products using the "Default" multiplier immediately.
-                </div>
-              </div>
-            </div>
-          </div>
+             <AdminSettings globalSettings={globalSettings} onUpdateSetting={handleUpdateSetting} />
         )}
 
 

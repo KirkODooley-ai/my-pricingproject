@@ -1,327 +1,289 @@
-import React, { useState } from 'react'
-import * as XLSX from 'xlsx'
-import { CUSTOMER_GROUPS } from '../utils/pricingEngine'
-import './PricingTable.css'
+import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
+import { CUSTOMER_GROUPS } from '../utils/pricingEngine';
 
 const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, categories = [], fullState, onRestoreState, onClearData }) => {
-    const [importType, setImportType] = useState('products')
-    const [status, setStatus] = useState('')
-    const [fileName, setFileName] = useState('')
-    const [debugInfo, setDebugInfo] = useState(null)
-    const [mappingDebug, setMappingDebug] = useState(null)
+    const [importType, setImportType] = useState('products');
+    const [status, setStatus] = useState('');
+    const [fileName, setFileName] = useState('');
+    const [debugInfo, setDebugInfo] = useState(null);
+    const [mappingDebug, setMappingDebug] = useState(null);
 
     // Validation State
-    const [importReview, setImportReview] = useState(null) // Array of new customers to confirm
-    const [pendingSalesData, setPendingSalesData] = useState(null) // Full dataset waiting for confirmation
+    const [importReview, setImportReview] = useState(null); // Array of new customers to confirm
+    const [pendingSalesData, setPendingSalesData] = useState(null); // Full dataset waiting for confirmation
 
     // Default group for 2-col imports (Customers)
-    const [importGroup, setImportGroup] = useState(CUSTOMER_GROUPS.DEALER)
+    const [importGroup, setImportGroup] = useState(CUSTOMER_GROUPS.DEALER);
     // Default category for imports (Products) or Sales Data
-    const [importCategory, setImportCategory] = useState('')
+    const [importCategory, setImportCategory] = useState('');
 
-    const [confirmAction, setConfirmAction] = useState(null)
+    const [confirmAction, setConfirmAction] = useState(null);
 
     const handleFileUpload = (e) => {
-        const file = e.target.files[0]
-        if (!file) return
+        const file = e.target.files[0];
+        if (!file) return;
 
-        setFileName(file.name)
-        const reader = new FileReader()
+        setFileName(file.name);
+        const reader = new FileReader();
 
         reader.onload = (evt) => {
             try {
                 // JSON RESTORE
                 if (file.name.endsWith('.json')) {
-                    const json = JSON.parse(evt.target.result)
+                    const json = JSON.parse(evt.target.result);
                     if (json.products && json.customers && json.categories) {
-                        onRestoreState(json)
-                        setStatus(`Success! Restored system backup from ${file.name}`)
+                        onRestoreState(json);
+                        setStatus(`Success! Restored system backup from ${file.name}`);
                     } else {
-                        setStatus('Error: Invalid backup file format.')
+                        setStatus('Error: Invalid backup file format.');
                     }
-                    return
+                    return;
                 }
 
                 // EXCEL IMPORT
-                const data = new Uint8Array(evt.target.result)
-                const wb = XLSX.read(data, { type: 'array' })
-                const wsname = wb.SheetNames[0]
-                const ws = wb.Sheets[wsname]
-                const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 }) // Get array of arrays
+                const data = new Uint8Array(evt.target.result);
+                const wb = XLSX.read(data, { type: 'array' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 }); // Get array of arrays
 
-                processData(jsonData)
+                processData(jsonData);
             } catch (err) {
-                console.error(err)
-                setStatus(`Error: ${err.message || 'Unknown parsing error'}`)
+                console.error(err);
+                setStatus(`Error: ${err.message || 'Unknown parsing error'}`);
             }
-        }
+        };
 
         if (file.name.endsWith('.json')) {
-            reader.readAsText(file)
+            reader.readAsText(file);
         } else {
-            reader.readAsArrayBuffer(file)
+            reader.readAsArrayBuffer(file);
         }
-    }
+    };
 
     const handleExportBackup = () => {
-        if (!fullState) return
-        const dataStr = JSON.stringify(fullState, null, 2)
-        const blob = new Blob([dataStr], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.download = `pricing_backup_${new Date().toISOString().split('T')[0]}.json`
-        link.href = url
-        link.click()
-        setStatus('Backup exported successfully.')
-    }
+        if (!fullState) return;
+        const dataStr = JSON.stringify(fullState, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `pricing_backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.href = url;
+        link.click();
+        setStatus('Backup exported successfully.');
+    };
 
     const findColumnIndex = (headers, possibleNames) => {
-        if (!headers) return -1
-        const lowerHeaders = headers.map(h => String(h).toLowerCase().trim())
+        if (!headers) return -1;
+        const lowerHeaders = headers.map(h => String(h).toLowerCase().trim());
 
         // Strategy 1: Exact Match (Safe)
         for (const name of possibleNames) {
-            const idx = lowerHeaders.indexOf(name.toLowerCase())
-            if (idx !== -1) return idx
+            const idx = lowerHeaders.indexOf(name.toLowerCase());
+            if (idx !== -1) return idx;
         }
 
         // Strategy 2: Ends With (e.g. "Product Cost" matches "Cost")
         for (const name of possibleNames) {
-            const idx = lowerHeaders.findIndex(h => h.endsWith(name.toLowerCase()))
-            if (idx !== -1) return idx
+            const idx = lowerHeaders.findIndex(h => h.endsWith(name.toLowerCase()));
+            if (idx !== -1) return idx;
         }
 
         // Strategy 3: Includes (Fuzzy - e.g. "Unit Cost ($)" matches "Cost")
-        // Use with caution, but necessary for messy files
         for (const name of possibleNames) {
-            const idx = lowerHeaders.findIndex(h => h.includes(name.toLowerCase()))
-            if (idx !== -1) return idx
+            const idx = lowerHeaders.findIndex(h => h.includes(name.toLowerCase()));
+            if (idx !== -1) return idx;
         }
 
-        return -1
-    }
+        return -1;
+    };
 
     const cleanCurrency = (val) => {
-        if (!val) return 0
-        if (typeof val === 'number') return val
-        const str = String(val).replace(/[$,]/g, '').trim()
-        return parseFloat(str) || 0
-    }
+        if (!val) return 0;
+        if (typeof val === 'number') return val;
+        const str = String(val).replace(/[$,]/g, '').trim();
+        return parseFloat(str) || 0;
+    };
 
     const processData = (rows) => {
-        let count = 0
+        let count = 0;
         if (!rows || rows.length < 2) {
-            setStatus('File appears empty or missing headers.')
-            return
+            setStatus('File appears empty or missing headers.');
+            return;
         }
 
-        let headers = rows[0]
-        let startRow = 1
+        let headers = rows[0];
+        let startRow = 1;
 
         // HEADLESS CHECK (For Customers)
         if (importType === 'customers' && rows.length > 0) {
-            // Check if Row 0, Col 1 looks like Money (Spend) OR Territory
-            const val1 = rows[0][1]
-            const isMoney = val1 && !isNaN(parseFloat(String(val1).replace(/[$,]/g, '')))
-            const isTerritory = /^(SK|AB|BC|MB|ON|QC|NB|NS|PE|NL|YT|NT|NU|OTHER|SASKATCHEWAN|ALBERTA|BRITISH COLUMBIA)$/i.test(String(val1 || '').trim())
+            const val1 = rows[0][1];
+            const isMoney = val1 && !isNaN(parseFloat(String(val1).replace(/[$,]/g, '')));
+            const isTerritory = /^(SK|AB|BC|MB|ON|QC|NB|NS|PE|NL|YT|NT|NU|OTHER|SASKATCHEWAN|ALBERTA|BRITISH COLUMBIA)$/i.test(String(val1 || '').trim());
 
-            // Heuristic: If Col 1 is money/territory AND Col 0 is not a known header name
-            const col0 = String(rows[0][0] || '').toLowerCase()
-            const isHeaderName = ['name', 'customer', 'customer name'].includes(col0)
+            const col0 = String(rows[0][0] || '').toLowerCase();
+            const isHeaderName = ['name', 'customer', 'customer name'].includes(col0);
 
             if ((isMoney || isTerritory) && !isHeaderName) {
-                // Detected Headless!
-                headers = [] // No headers
-                startRow = 0 // Start from the very first row
+                headers = []; // No headers
+                startRow = 0; // Start from the very first row
             }
         }
 
-        setDebugInfo({ headers, firstRow: rows[startRow] || [] })
+        setDebugInfo({ headers, firstRow: rows[startRow] || [] });
 
         // --- SMART DETECT MISMATCH ---
-        const headerStr = headers.map(h => String(h).toLowerCase()).join(' ')
+        const headerStr = headers.map(h => String(h).toLowerCase()).join(' ');
 
-        // Scenario 1: User is on 'products' but file looks like Sales (Customer ID + Revenue)
         if (importType === 'products') {
-            const hasCustomer = headerStr.includes('customer name') || headerStr.includes('customer id')
-            const hasRevenue = headerStr.includes('revenue') || headerStr.includes('amount')
-            const hasVendor = headerStr.includes('vendor') || headerStr.includes('supplier')
+            const hasCustomer = headerStr.includes('customer name') || headerStr.includes('customer id');
+            const hasRevenue = headerStr.includes('revenue') || headerStr.includes('amount');
+            const hasVendor = headerStr.includes('vendor') || headerStr.includes('supplier');
 
             if (hasCustomer && !hasVendor) {
-                setStatus('⚠️ It looks like you uploaded a Sales/Customer file but "Import Type" is set to "Products". Please switch to "Sales Data" or "Customers".')
-                return
+                setStatus('⚠️ It looks like you uploaded a Sales/Customer file but "Import Type" is set to "Products". Please switch to "Sales Data" or "Customers".');
+                return;
             }
         }
 
-        // Scenario 2: User is on 'products' but file looks like Sales (2 columns: Name, Spend)
         if (importType === 'products' && headers.length <= 3) {
-            const hasSpend = headerStr.includes('spend') || headerStr.includes('sales')
+            const hasSpend = headerStr.includes('spend') || headerStr.includes('sales');
             if (hasSpend) {
-                setStatus('⚠️ It looks like you uploaded a simple Sales file but "Import Type" is set to "Products". Please switch to "Customers" or "Sales Data".')
-                return
+                setStatus('⚠️ It looks like you uploaded a simple Sales file but "Import Type" is set to "Products". Please switch to "Customers" or "Sales Data".');
+                return;
             }
         }
 
         if (importType === 'sales') {
             // SALES DATA IMPORT
+            let headerRowIndex = 0;
+            let detectedHeaders = rows[0];
+            let startRow = 1;
 
-            // --- SMART HEADER SCAN ---
-            // Scan first 10 rows to find the real header row (skips Report Titles, empty lines)
-            let headerRowIndex = 0
-            let detectedHeaders = rows[0]
-            let startRow = 1
-
-            // Heuristic: Look for a row that has BOTH "Customer" (or synonym) AND "Amount" (or synonym)
-            const customerKeywords = ['customer', 'name', 'client', 'bill to']
-            const amountKeywords = ['amount', 'sales', 'revenue', 'spend', 'total', 'price', 'value']
+            const customerKeywords = ['customer', 'name', 'client', 'bill to'];
+            const amountKeywords = ['amount', 'sales', 'revenue', 'spend', 'total', 'price', 'value'];
 
             for (let r = 0; r < Math.min(rows.length, 10); r++) {
-                const rowStr = rows[r].map(c => String(c).toLowerCase()).join(' ')
-                const hasCustomer = customerKeywords.some(k => rowStr.includes(k))
-                const hasAmount = amountKeywords.some(k => rowStr.includes(k))
+                const rowStr = rows[r].map(c => String(c).toLowerCase()).join(' ');
+                const hasCustomer = customerKeywords.some(k => rowStr.includes(k));
+                const hasAmount = amountKeywords.some(k => rowStr.includes(k));
 
                 if (hasCustomer && hasAmount) {
-                    headerRowIndex = r
-                    detectedHeaders = rows[r]
-                    startRow = r + 1 // Data starts after this
-                    break
+                    headerRowIndex = r;
+                    detectedHeaders = rows[r];
+                    startRow = r + 1;
+                    break;
                 }
             }
 
-            // Use the detected headers (or fallback to row 0)
-            headers = detectedHeaders
+            headers = detectedHeaders;
 
-            const nameIdx = findColumnIndex(headers, ['Customer Name', 'Name', 'Customer', 'Bill To', 'Client', 'Cust Name', 'Bill'])
-            const idIdx = findColumnIndex(headers, ['Customer ID', 'ID', 'Cust #', 'Account #', 'Account'])
-            const amountIdx = findColumnIndex(headers, ['Amount', 'Sales', 'Total Sales', 'Revenue', 'Spend', 'Total', 'Ext Price', 'Extension', 'Value', 'Net Sales'])
-            // [NEW] COGS Support - Added 'Material'
-            const cogsIdx = findColumnIndex(headers, ['COGS', 'Cost of Goods Sold', 'Cost', 'Unit Cost', 'Total Cost', 'COGS Amount', 'Material', 'Material Cost'])
-            // [NEW] Category Detection
-            const catIdx = findColumnIndex(headers, ['Category', 'Product Category', 'Type', 'Item Class'])
+            const nameIdx = findColumnIndex(headers, ['Customer Name', 'Name', 'Customer', 'Bill To', 'Client', 'Cust Name', 'Bill']);
+            const idIdx = findColumnIndex(headers, ['Customer ID', 'ID', 'Cust #', 'Account #', 'Account']);
+            const amountIdx = findColumnIndex(headers, ['Amount', 'Sales', 'Total Sales', 'Revenue', 'Spend', 'Total', 'Ext Price', 'Extension', 'Value', 'Net Sales']);
+            const cogsIdx = findColumnIndex(headers, ['COGS', 'Cost of Goods Sold', 'Cost', 'Unit Cost', 'Total Cost', 'COGS Amount', 'Material', 'Material Cost']);
+            const catIdx = findColumnIndex(headers, ['Category', 'Product Category', 'Type', 'Item Class']);
 
-            // VALIDATION: Ensure we have a Category source
             if (catIdx === -1 && !importCategory) {
-                setStatus('Error: Could not find a "Category" column in your file. Please select a specific Category from the dropdown (e.g., Fasteners) to force-assign one.')
-                return
+                setStatus('Error: Could not find a "Category" column in your file. Please select a specific Category from the dropdown (e.g., Fasteners) to force-assign one.');
+                return;
             }
 
-            const debugNameStr = nameIdx !== -1 ? `${headers[nameIdx]} (Col ${nameIdx + 1})` : 'NOT FOUND (Will try Col 2 if 3 cols exist)'
-            const debugAmountStr = amountIdx !== -1 ? `${headers[amountIdx]} (Col ${amountIdx + 1})` : 'NOT FOUND (Will try Col 3 if 3 cols exist)'
-            const debugCogsStr = cogsIdx !== -1 ? `${headers[cogsIdx]} (Col ${cogsIdx + 1})` : 'NOT FOUND (Default set to 0)'
-            const debugCatStr = catIdx !== -1 ? `${headers[catIdx]} (Col ${catIdx + 1})` : 'NOT FOUND (Will use Dropdown Selection)'
+            const debugNameStr = nameIdx !== -1 ? `${headers[nameIdx]} (Col ${nameIdx + 1})` : 'NOT FOUND (Will try Col 2 if 3 cols exist)';
+            const debugAmountStr = amountIdx !== -1 ? `${headers[amountIdx]} (Col ${amountIdx + 1})` : 'NOT FOUND (Will try Col 3 if 3 cols exist)';
+            const debugCogsStr = cogsIdx !== -1 ? `${headers[cogsIdx]} (Col ${cogsIdx + 1})` : 'NOT FOUND (Default set to 0)';
+            const debugCatStr = catIdx !== -1 ? `${headers[catIdx]} (Col ${catIdx + 1})` : 'NOT FOUND (Will use Dropdown Selection)';
 
             setMappingDebug({
                 HeaderRow: { index: headerRowIndex, foundHeader: `Row ${headerRowIndex + 1}` },
                 CustomerName: { index: nameIdx, foundHeader: debugNameStr },
                 Amount: { index: amountIdx, foundHeader: debugAmountStr },
                 Category: { index: catIdx, foundHeader: debugCatStr },
-                COGS: { index: cogsIdx, foundHeader: debugCogsStr }, // Debugging help
-            })
+                COGS: { index: cogsIdx, foundHeader: debugCogsStr },
+            });
 
-            const salesData = []
-            let totalCogsImported = 0 // Track if we found any COGS
-            let multiCategoriesFound = new Set()
+            const salesData = [];
+            let totalCogsImported = 0;
+            let multiCategoriesFound = new Set();
 
             for (let i = startRow; i < rows.length; i++) {
-                const row = rows[i]
-                if (!row || row.length === 0) continue
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
 
-                let name, amount, customerId, cogs = 0, rowCategory = ''
+                let name, amount, customerId, cogs = 0, rowCategory = '';
 
-                // HEADER-BASED LOOKUP
                 if (nameIdx !== -1 && amountIdx !== -1) {
-                    name = row[nameIdx]
-                    customerId = idIdx !== -1 ? row[idIdx] : ''
-                    amount = cleanCurrency(row[amountIdx])
-                    if (cogsIdx !== -1) cogs = cleanCurrency(row[cogsIdx])
-                    if (catIdx !== -1) rowCategory = row[catIdx]
-                }
-                // FALLBACK: ID (0), Name (1), Revenue (2), COGS? (3) OR Name (0), Revenue (1), COGS? (2)
-                else {
-                    // Try 3-Col first (ID, Name, Amount)
+                    name = row[nameIdx];
+                    customerId = idIdx !== -1 ? row[idIdx] : '';
+                    amount = cleanCurrency(row[amountIdx]);
+                    if (cogsIdx !== -1) cogs = cleanCurrency(row[cogsIdx]);
+                    if (catIdx !== -1) rowCategory = row[catIdx];
+                } else {
                     if (rows[0].length >= 3) {
-                        customerId = row[0]
-                        name = row[1]
-                        amount = cleanCurrency(row[2])
-                        // If there happens to be a 4th col, maybe it's COGS? Conservative approach: only if explicit.
-                        // But if headers completely failed, check if row has 4 cols
-                        if (row.length >= 4) cogs = cleanCurrency(row[3])
-                    }
-                    // Try 2-Col (Name, Amount)
-                    else {
-                        name = row[0]
-                        amount = cleanCurrency(row[1])
-                        if (row.length >= 3) cogs = cleanCurrency(row[2])
+                        customerId = row[0];
+                        name = row[1];
+                        amount = cleanCurrency(row[2]);
+                        if (row.length >= 4) cogs = cleanCurrency(row[3]);
+                    } else {
+                        name = row[0];
+                        amount = cleanCurrency(row[1]);
+                        if (row.length >= 3) cogs = cleanCurrency(row[2]);
                     }
                 }
 
-                // Determine Final Category
-                // Priority: 1. Row Data, 2. Dropdown Selection, 3. 'Uncategorized'
                 const finalCategory = (rowCategory && String(rowCategory).trim())
                     ? String(rowCategory).trim()
-                    : (importCategory || 'Uncategorized')
+                    : (importCategory || 'Uncategorized');
 
                 if ((name || customerId) && amount > 0) {
                     salesData.push({
-                        id: `tx_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 5)}`, // [NEW] Unique ID
-                        name: name || `Customer ${customerId}`, // Fallback name if only ID
+                        id: `tx_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 5)}`,
+                        name: name || `Customer ${customerId}`,
                         customerId: String(customerId || '').trim(),
                         amount,
                         cogs: cogs || 0,
                         category: finalCategory
-                    })
-                    totalCogsImported += (cogs || 0)
-                    multiCategoriesFound.add(finalCategory)
-                    count++
+                    });
+                    totalCogsImported += (cogs || 0);
+                    multiCategoriesFound.add(finalCategory);
+                    count++;
                 }
             }
 
             if (salesData.length === 0) {
-                setStatus('Error: No valid sales records found. Check headers (Customer, Amount) or try a simpler format (Name, Amount).')
-                return
+                setStatus('Error: No valid sales records found. Check headers (Customer, Amount) or try a simpler format (Name, Amount).');
+                return;
             }
 
-            onImportSales(salesData)
+            onImportSales(salesData);
 
-            // Enhanced Status Message
-            const catCount = multiCategoriesFound.size
+            const catCount = multiCategoriesFound.size;
             if (totalCogsImported > 0) {
-                setStatus(`Success! Imported ${count} records across ${catCount} categories (${Array.from(multiCategoriesFound).slice(0, 3).join(', ')}${catCount > 3 ? '...' : ''}). Found Total COGS: $${totalCogsImported.toLocaleString()}.`)
+                setStatus(`Success! Imported ${count} records across ${catCount} categories (${Array.from(multiCategoriesFound).slice(0, 3).join(', ')}${catCount > 3 ? '...' : ''}). Found Total COGS: $${totalCogsImported.toLocaleString()}.`);
             } else {
-                setStatus(`Success! Imported ${count} records across ${catCount} categories. (Warning: No COGS data detected. Check if column is named "COGS", "Cost", or "Material")`)
+                setStatus(`Success! Imported ${count} records across ${catCount} categories. (Warning: No COGS data detected. Check if column is named "COGS", "Cost", or "Material")`);
             }
-
+            return;
         }
         else if (importType === 'products') {
-            // MAPPING STRATEGY:
-            // Revised to match User's Simplified Structure:
-            // 1. Item Code
-            // 2. Description (Name)
-            // 3. Category
-            // 4. Sub-Category (New)
-            // 5. Sell Unit
-            // 6. Bag Units (New - for Calc)
-            // 7. Unit Cost (New - for Calc)
-            // 8. Unit Price (New - for Calc)
+            const itemCodeIdx = findColumnIndex(headers, ['Item Code', 'ItemCode', 'SKU', 'Part Number', 'Item #', 'Code']);
+            const nameIdx = findColumnIndex(headers, ['Description', 'Item Description', 'Product Name', 'Name']);
+            const catIdx = findColumnIndex(headers, ['Category', 'Product Category']);
+            const subCatIdx = findColumnIndex(headers, ['Sub-Category', 'Sub Category', 'SubCategory', 'Type']);
+            const sellUnitIdx = findColumnIndex(headers, ['Sell Unit', 'Unit', 'UOM']);
+            const bagUnitsIdx = findColumnIndex(headers, ['Bag Units', 'Units', 'Qty', 'Quantity', 'Units Per Bag']);
+            const unitCostIdx = findColumnIndex(headers, ['Unit Cost', 'Cost Per Unit', 'Cost']);
+            const unitPriceIdx = findColumnIndex(headers, ['Unit Price', 'Price Per Unit', 'Price']);
 
-            const itemCodeIdx = findColumnIndex(headers, ['Item Code', 'ItemCode', 'SKU', 'Part Number', 'Item #', 'Code'])
-            const nameIdx = findColumnIndex(headers, ['Description', 'Item Description', 'Product Name', 'Name'])
-            const catIdx = findColumnIndex(headers, ['Category', 'Product Category'])
-            const subCatIdx = findColumnIndex(headers, ['Sub-Category', 'Sub Category', 'SubCategory', 'Type'])
-            const sellUnitIdx = findColumnIndex(headers, ['Sell Unit', 'Unit', 'UOM'])
-            const bagUnitsIdx = findColumnIndex(headers, ['Bag Units', 'Units', 'Qty', 'Quantity', 'Units Per Bag'])
-            const unitCostIdx = findColumnIndex(headers, ['Unit Cost', 'Cost Per Unit', 'Cost'])
-            const unitPriceIdx = findColumnIndex(headers, ['Unit Price', 'Price Per Unit', 'Price'])
-
-            // DEBUG MAPPING
-            const missingCount = [itemCodeIdx, nameIdx, unitCostIdx, unitPriceIdx].filter(i => i === -1).length
-            if (missingCount >= 3) { // If critical cols missing
-                setStatus('⚠️ Error: Could not match key Product columns (Description, Item Code, Unit Cost). Did you mean to select "Sales Data" or "Customers"?')
+            const missingCount = [itemCodeIdx, nameIdx, unitCostIdx, unitPriceIdx].filter(i => i === -1).length;
+            if (missingCount >= 3) {
+                setStatus('⚠️ Error: Could not match key Product columns (Description, Item Code, Unit Cost). Did you mean to select "Sales Data" or "Customers"?');
                 setMappingDebug({
                     Message: { index: -1, foundHeader: 'Missing Key Headers' },
                     Missing: { index: -1, foundHeader: 'Description, Unit Cost, Unit Price, or Bag Units' }
-                })
-                return
+                });
+                return;
             }
 
             setMappingDebug({
@@ -330,406 +292,435 @@ const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, cate
                 SubCategory: { index: subCatIdx, foundHeader: subCatIdx !== -1 ? headers[subCatIdx] : 'NOT FOUND' },
                 UnitCost: { index: unitCostIdx, foundHeader: unitCostIdx !== -1 ? headers[unitCostIdx] : 'NOT FOUND' },
                 UnitPrice: { index: unitPriceIdx, foundHeader: unitPriceIdx !== -1 ? headers[unitPriceIdx] : 'NOT FOUND' }
-            })
+            });
 
-            const newProducts = []
+            const newProducts = [];
             for (let i = 1; i < rows.length; i++) {
-                const row = rows[i]
-                if (!row || row.length === 0) continue
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
 
-                let product = { id: Date.now() + i + '' }
+                let product = { id: Date.now() + i + '' };
 
-                // Full Mapping
-                product.itemCode = itemCodeIdx !== -1 ? row[itemCodeIdx] : ''
-                product.name = nameIdx !== -1 ? row[nameIdx] : (row[0] || 'Unknown Product')
-                product.category = catIdx !== -1 ? row[catIdx] : 'Uncategorized'
-                product.subCategory = subCatIdx !== -1 ? row[subCatIdx] : '' // [NEW]
-                product.sellUnit = sellUnitIdx !== -1 ? row[sellUnitIdx] : 'Each'
+                product.itemCode = itemCodeIdx !== -1 ? row[itemCodeIdx] : '';
+                product.name = nameIdx !== -1 ? row[nameIdx] : (row[0] || 'Unknown Product');
+                product.category = catIdx !== -1 ? row[catIdx] : 'Uncategorized';
+                product.subCategory = subCatIdx !== -1 ? row[subCatIdx] : '';
+                product.sellUnit = sellUnitIdx !== -1 ? row[sellUnitIdx] : 'Each';
 
-                // CALCULATION LOGIC
-                const units = bagUnitsIdx !== -1 ? (parseFloat(row[bagUnitsIdx]) || 1) : 1
-                const uCost = unitCostIdx !== -1 ? cleanCurrency(row[unitCostIdx]) : 0
-                const uPrice = unitPriceIdx !== -1 ? cleanCurrency(row[unitPriceIdx]) : 0
+                const units = bagUnitsIdx !== -1 ? (parseFloat(row[bagUnitsIdx]) || 1) : 1;
+                const uCost = unitCostIdx !== -1 ? cleanCurrency(row[unitCostIdx]) : 0;
+                const uPrice = unitPriceIdx !== -1 ? cleanCurrency(row[unitPriceIdx]) : 0;
 
-                product.bagUnits = units
-                product.unitCost = uCost
-                product.unitPrice = uPrice
+                product.bagUnits = units;
+                product.unitCost = uCost;
+                product.unitPrice = uPrice;
 
-                // Derived
-                product.bagCost = uCost * units
-                product.cost = product.bagCost // Standardizing 'cost' as the bag cost
-                product.price = uPrice * units
+                product.bagCost = uCost * units;
+                product.cost = product.bagCost;
+                product.price = uPrice * units;
 
-                // Legacy/Compat
-                product.vendor = '' // Removed
-                product.itemClass = '' // Deprecated by SubCat
-                product.importedMargin = 0 // Calculated dynamically now
+                product.vendor = '';
+                product.itemClass = '';
+                product.importedMargin = 0;
 
-                // Override with Force-Selected Category if present
                 if (importCategory) {
-                    product.category = importCategory
+                    product.category = importCategory;
                 }
 
                 if (product.name || product.itemCode) {
-                    newProducts.push(product)
-                    count++
+                    newProducts.push(product);
+                    count++;
                 }
             }
-            onImportProducts(newProducts)
+            onImportProducts(newProducts);
 
         } else {
-            // CUSTOMERS MAPPING (unchanged)
-            const nameIdx = findColumnIndex(headers, ['Customer Name', 'Name', 'Customer'])
-            const groupIdx = findColumnIndex(headers, ['Group', 'Customer Group', 'Type', 'Segment'])
-            const spendIdx = findColumnIndex(headers, ['Annual Spend', 'Spend', 'Total Sales', 'Revenue', 'Sales', 'Amount', 'Total Spend'])
-            const territoryIdx = findColumnIndex(headers, ['Territory', 'Province', 'State', 'Region'])
+            // CUSTOMERS MAPPING
+            const nameIdx = findColumnIndex(headers, ['Customer Name', 'Name', 'Customer']);
+            const groupIdx = findColumnIndex(headers, ['Group', 'Customer Group', 'Type', 'Segment']);
+            const spendIdx = findColumnIndex(headers, ['Annual Spend', 'Spend', 'Total Sales', 'Revenue', 'Sales', 'Amount', 'Total Spend']);
+            const territoryIdx = findColumnIndex(headers, ['Territory', 'Province', 'State', 'Region']);
 
-            const useIndices = (nameIdx === -1 && groupIdx === -1 && spendIdx === -1 && territoryIdx === -1)
+            const useIndices = (nameIdx === -1 && groupIdx === -1 && spendIdx === -1 && territoryIdx === -1);
 
-            // DEBUG MAPPING
             if (useIndices) {
                 setMappingDebug({
                     Status: { index: -1, foundHeader: 'Detected No Headers. Using 2-column fallback (Name, Spend).', mode: 'fallback' }
-                })
+                });
             } else {
                 setMappingDebug({
                     CustomerName: { index: nameIdx, foundHeader: nameIdx !== -1 ? headers[nameIdx] : 'NOT FOUND' },
                     Group: { index: groupIdx, foundHeader: groupIdx !== -1 ? headers[groupIdx] : 'NOT FOUND' },
                     Spend: { index: spendIdx, foundHeader: spendIdx !== -1 ? headers[spendIdx] : 'NOT FOUND' },
                     Territory: { index: territoryIdx, foundHeader: territoryIdx !== -1 ? headers[territoryIdx] : 'NOT FOUND' },
-                })
+                });
             }
 
-            const newCustomers = []
+            const newCustomers = [];
             for (let i = startRow; i < rows.length; i++) {
-                const row = rows[i]
-                if (!row || row.length === 0) continue
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
 
-                let name, groupRaw, spend, territory
+                let name, groupRaw, spend, territory;
 
                 if (useIndices) {
-                    // Smart detection: Check if Col 2 (index 1) is a Territory
-                    // Regex for 2-letter codes or full names
-                    const val2 = String(row[1] || '').trim()
-                    const isTerritory = /^(SK|AB|BC|MB|ON|QC|NB|NS|PE|NL|YT|NT|NU|OTHER|SASKATCHEWAN|ALBERTA|BRITISH COLUMBIA)$/i.test(val2)
-
-                    // Smart detection for 2-column format (Name, Spend)
-                    // If row[1] looks like a number and row[2] is empty, assume col 2 is spend
-                    const col1IsMoney = !isNaN(parseFloat(String(row[1]).replace(/[$,]/g, '')))
-                    const col2IsEmpty = !row[2]
+                    const val2 = String(row[1] || '').trim();
+                    const isTerritory = /^(SK|AB|BC|MB|ON|QC|NB|NS|PE|NL|YT|NT|NU|OTHER|SASKATCHEWAN|ALBERTA|BRITISH COLUMBIA)$/i.test(val2);
+                    const col1IsMoney = !isNaN(parseFloat(String(row[1]).replace(/[$,]/g, '')));
+                    const col2IsEmpty = !row[2];
 
                     if (isTerritory) {
-                        // Format: Name, Territory, Spend
-                        name = row[0]
-                        territory = row[1] // Use original casing or normalized
-                        spend = cleanCurrency(row[2])
-                        groupRaw = '' // Fallback to importGroup (dropdown)
+                        name = row[0];
+                        territory = row[1];
+                        spend = cleanCurrency(row[2]);
+                        groupRaw = '';
                     } else if (col1IsMoney && col2IsEmpty) {
-                        name = row[0]
-                        groupRaw = '' // Will fallback to selected Default Group
-                        spend = cleanCurrency(row[1])
-                        territory = 'Other'
+                        name = row[0];
+                        groupRaw = '';
+                        spend = cleanCurrency(row[1]);
+                        territory = 'Other';
                     } else {
-                        // Standard 3-col format (Name, Group, Spend)
-                        name = row[0]
-                        groupRaw = row[1] || ''
-                        spend = cleanCurrency(row[2])
-                        territory = 'Other'
+                        name = row[0];
+                        groupRaw = row[1] || '';
+                        spend = cleanCurrency(row[2]);
+                        territory = 'Other';
                     }
                 } else {
-                    name = nameIdx !== -1 ? row[nameIdx] : (row[0] || 'Unknown Customer')
-                    groupRaw = groupIdx !== -1 ? row[groupIdx] : ''
-                    spend = spendIdx !== -1 ? cleanCurrency(row[spendIdx]) : 0
+                    name = nameIdx !== -1 ? row[nameIdx] : (row[0] || 'Unknown Customer');
+                    groupRaw = groupIdx !== -1 ? row[groupIdx] : '';
+                    spend = spendIdx !== -1 ? cleanCurrency(row[spendIdx]) : 0;
 
-                    const tRaw = territoryIdx !== -1 ? row[territoryIdx] : 'Other'
-                    // Normalize on import for consistency
-                    if (/^(SK|SASK|SASKATCHEWAN)$/i.test(tRaw)) territory = 'SK'
-                    else if (/^(AB|ALTA|ALBERTA)$/i.test(tRaw)) territory = 'AB'
-                    else if (/^(BC|BRITISH COLUMBIA)$/i.test(tRaw)) territory = 'BC'
-                    else territory = 'Other'
+                    const tRaw = territoryIdx !== -1 ? row[territoryIdx] : 'Other';
+                    if (/^(SK|SASK|SASKATCHEWAN)$/i.test(tRaw)) territory = 'SK';
+                    else if (/^(AB|ALTA|ALBERTA)$/i.test(tRaw)) territory = 'AB';
+                    else if (/^(BC|BRITISH COLUMBIA)$/i.test(tRaw)) territory = 'BC';
+                    else territory = 'Other';
                 }
 
-                let group = importGroup // Use selected default
+                let group = importGroup;
                 if (groupRaw && String(groupRaw).toLowerCase().includes('commercial')) {
-                    group = CUSTOMER_GROUPS.COMMERCIAL
+                    group = CUSTOMER_GROUPS.COMMERCIAL;
                 } else if (groupRaw && String(groupRaw).toLowerCase().includes('dealer')) {
-                    group = CUSTOMER_GROUPS.DEALER
+                    group = CUSTOMER_GROUPS.DEALER;
                 }
 
                 if (name) {
-                    newCustomers.push({ id: Date.now() + i + '', name, group, annualSpend: spend, territory: territory || 'Other' })
-                    count++
+                    newCustomers.push({ id: Date.now() + i + '', name, group, annualSpend: spend, territory: territory || 'Other' });
+                    count++;
                 }
             }
-            onImportCustomers(newCustomers)
+            onImportCustomers(newCustomers);
         }
-        setStatus(`Success! Imported ${count} ${importType} from ${fileName}.`)
-    }
+        setStatus(`Success! Imported ${count} ${importType} from ${fileName}.`);
+    };
+
+    // Premium SaaS UI Variables
+    const styles = {
+        pageWrapper: { width: '100%', minHeight: '100%' },
+        container: { maxWidth: '1200px', margin: '0 auto', padding: '2.5rem', width: '100%', fontFamily: 'var(--font-base)' },
+        headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' },
+        headerText: { fontSize: '1.85rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em', margin: '0 0 0.5rem 0' },
+        subText: { color: '#64748b', fontSize: '1.05rem', margin: 0 },
+        
+        card: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', padding: '2.5rem', marginBottom: '2rem' },
+        
+        inputField: { padding: '0.65rem 1rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', color: '#0f172a', backgroundColor: '#ffffff', outline: 'none', fontWeight: '500', minWidth: '200px', cursor: 'pointer' },
+        label: { display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#475569', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+        
+        outlineBtn: { backgroundColor: 'white', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.65rem 1.25rem', fontSize: '0.9rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' },
+        dangerBtn: { backgroundColor: '#ffffff', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '8px', padding: '0.65rem 1rem', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, justifyContent: 'center' },
+        
+        uploadZone: { border: '2px dashed #cbd5e1', borderRadius: '12px', padding: '4rem 2rem', textAlign: 'center', backgroundColor: '#f8fafc', transition: 'all 0.2s', cursor: 'pointer' },
+        
+        infoBox: { backgroundColor: '#f0fdfa', borderRadius: '10px', padding: '1.5rem', border: '1px solid #ccfbf1', display: 'flex', gap: '1rem', alignItems: 'flex-start' }
+    };
 
     return (
-        <div className="pricing-table-container" style={{ padding: '2rem' }}>
-            <h3>Data Import (Excel)</h3>
-            <div style={{ marginBottom: '1rem' }}>
-                <label style={{ marginRight: '1rem', fontWeight: 'bold' }}>Import Type:</label>
-                <select
-                    className="input-field"
-                    value={importType}
-                    onChange={e => { setImportType(e.target.value); setStatus(''); setFileName(''); setDebugInfo(null); setMappingDebug(null); }}
-                    style={{ width: 'auto' }}
-                >
-                    <option value="products">Products</option>
-                    <option value="customers">Customers</option>
-                    <option value="sales">Sales Data (Per Category)</option>
-                </select>
+        <div style={styles.pageWrapper}>
+            <div style={styles.container}>
+                {/* Header */}
+                <div style={styles.headerRow}>
+                    <div>
+                        <h2 style={styles.headerText}>Data Importer</h2>
+                        <p style={styles.subText}>Upload and map spreadsheet data to update the pricing matrix.</p>
+                    </div>
 
-                {(importType === 'products' || importType === 'sales') && (
-                    <select
-                        className="input-field"
-                        value={importCategory}
-                        onChange={e => setImportCategory(e.target.value)}
-                        style={{ width: 'auto', marginLeft: '0.5rem', borderColor: '#7c3aed', color: '#7c3aed', fontWeight: 500 }}
+                    <button
+                        onClick={handleExportBackup}
+                        style={{...styles.outlineBtn, borderColor: '#e2e8f0', backgroundColor: '#f8fafc'}}
+                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f1f5f9'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; }}
                     >
-                        <option value="">{importType === 'sales' ? '(Auto-Detect / Optional)' : '(Auto-Detect Category)'}</option>
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.name}>Force Import to: {cat.name}</option>
-                        ))}
-                    </select>
-                )}
+                        <span>⬇️</span> Export JSON Backup
+                    </button>
+                </div>
 
-                {importType === 'customers' && (
-                    <select
-                        className="input-field"
-                        value={importGroup}
-                        onChange={e => setImportGroup(e.target.value)}
-                        style={{ width: 'auto', marginLeft: '0.5rem', borderColor: '#2563eb', color: '#2563eb', fontWeight: 500 }}
-                    >
-                        {Object.values(CUSTOMER_GROUPS).map(g => (
-                            <option key={g} value={g}>Import as {g}</option>
-                        ))}
-                    </select>
-                )}
-
-                <button
-                    onClick={handleExportBackup}
-                    style={{
-                        marginLeft: 'auto',
-                        backgroundColor: '#4b5563',
-                        color: 'white',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    ⬇ Export Backup (JSON)
-                </button>
-            </div>
-
-            <div style={{ marginBottom: '2rem', fontSize: '0.9rem', color: '#555', backgroundColor: '#f9fafb', padding: '1rem', borderRadius: '8px' }}>
-                <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Supported Headers:</p>
-                {importType === 'products' ? (
-                    <>
-                        <p style={{ marginBottom: '0.5rem' }}>Requries the following columns:</p>
-                        <ul style={{ paddingLeft: '1.5rem', marginTop: 0, display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-                            <li><strong>Item Code</strong></li>
-                            <li><strong>Description</strong> (Name)</li>
-                            <li><strong>Category</strong></li>
-                            <li><strong>Sub-Category</strong> (Sort Group)</li>
-                            <li><strong>Sell Unit</strong> (e.g. Bag100)</li>
-                            <li><strong>Bag Units</strong> (Qty per Bag)</li>
-                            <li><strong>Unit Cost</strong> (Cost per screw)</li>
-                            <li><strong>Unit Price</strong> (Price per screw)</li>
-                        </ul>
-                    </>
-                ) : importType === 'sales' ? (
-                    <ul style={{ paddingLeft: '1.5rem', marginTop: 0 }}>
-                        <li><strong>Customer ID</strong> (Optional, Col 1)</li>
-                        <li><strong>Customer Name</strong> (Col 2)</li>
-                        <li><strong>Revenue</strong> (Col 3)</li>
-                        <li><strong>COGS</strong> (Optional, Col 4)</li>
-                        <li><strong>Category</strong> (Optional)</li>
-                    </ul>
-                ) : (
-                    <ul style={{ paddingLeft: '1.5rem', marginTop: 0 }}>
-                        <li><strong>Name</strong> / Customer Name</li>
-                        <li><strong>Group</strong> (Dealer / Commercial)</li>
-                        <li><strong>Annual Spend</strong> / Spend / Revenue</li>
-                    </ul>
-                )}
-            </div>
-
-            <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '2rem', textAlign: 'center' }}>
-                <input
-                    type="file"
-                    accept=".xlsx, .xls, .csv"
-                    onChange={handleFileUpload}
-                    style={{ marginBottom: '1rem' }}
-                />
-                <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Supports .xlsx, .xls, .csv, and .json (Backup)</p>
-            </div>
-
-
-            {/* NEW CUSTOMER VALIDATION MODAL */}
-            {
-                importReview && (
-                    <div style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100
-                    }}>
-                        <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '500px', width: '90%', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                            <h3 style={{ marginTop: 0, color: '#b91c1c' }}>⚠️ New Customers Detected</h3>
-                            <p>
-                                Your import file contains <strong>{importReview.length}</strong> customers that don't match any existing records in the system.
-                            </p>
-                            <div style={{ maxHeight: '150px', overflowY: 'auto', backgroundColor: '#f9fafb', padding: '0.5rem', marginBottom: '1.5rem', border: '1px solid #e5e7eb', fontSize: '0.9rem' }}>
-                                {importReview.slice(0, 5).map((c, i) => (
-                                    <div key={i} style={{ padding: '2px 0' }}>• {c.name || 'Unknown'} {c.customerId ? `(ID: ${c.customerId})` : ''}</div>
-                                ))}
-                                {importReview.length > 5 && <div style={{ color: '#6b7280', fontStyle: 'italic', marginTop: '4px' }}>...and {importReview.length - 5} more</div>}
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                                <button
-                                    onClick={() => {
-                                        // Skip New
-                                        const allowedNames = new Set(fullState.customers.map(c => c.name.toLowerCase().trim()))
-                                        const filtered = pendingSalesData.filter(d => allowedNames.has(d.name.toLowerCase().trim()))
-                                        onImportSales(filtered)
-                                        setImportReview(null)
-                                        setPendingSalesData(null)
-                                        setStatus(`Imported ${filtered.length} sales records (Skipped ${importReview.length} new customers).`)
-                                    }}
-                                    style={{
-                                        padding: '0.75rem 1rem',
-                                        border: '1px solid #d1d5db',
-                                        backgroundColor: 'white',
-                                        color: '#374151',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    No, Skip New Customers
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        // Add All
-                                        onImportSales(pendingSalesData)
-                                        setImportReview(null)
-                                        setPendingSalesData(null)
-                                        setStatus(`Success! Imported ${pendingSalesData.length} sales records and created ${importReview.length} new customers.`)
-                                    }}
-                                    style={{
-                                        padding: '0.75rem 1rem',
-                                        border: 'none',
-                                        backgroundColor: '#2563eb',
-                                        color: 'white',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    Yes, Add & Import All
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {status && <div style={{ marginTop: '1rem', color: status.includes('Success') || status.includes('successfully') ? 'green' : 'red', fontWeight: '500' }}>{status}</div>}
-
-            {/* Data Cleanup Section */}
-            <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #e5e7eb' }}>
-                <h4 style={{ color: '#b91c1c', marginTop: 0 }}>Data Cleanup (Danger Zone)</h4>
-
-                {confirmAction ? (
-                    <div style={{ padding: '1rem', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ color: '#b91c1c', fontWeight: 600 }}>
-                            Are you sure you want to delete ALL {confirmAction}? This cannot be undone.
-                        </span>
-                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
-                            <button
-                                onClick={() => {
-                                    onClearData(confirmAction)
-                                    setStatus(`All ${confirmAction} cleared.`)
-                                    setConfirmAction(null)
-                                }}
-                                style={{ backgroundColor: '#dc2626', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
-                            >
-                                Yes, Delete All
-                            </button>
-                            <button
-                                onClick={() => setConfirmAction(null)}
-                                style={{ backgroundColor: 'white', color: '#4b5563', border: '1px solid #d1d5db', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button
-                            onClick={() => setConfirmAction('products')}
-                            style={{ backgroundColor: '#fee2e2', color: '#b91c1c', border: '1px solid #ef4444', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            🗑 Clear All Products
-                        </button>
-                        <button
-                            onClick={() => setConfirmAction('customers')}
-                            style={{ backgroundColor: '#fee2e2', color: '#b91c1c', border: '1px solid #ef4444', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            🗑 Clear All Customers
-                        </button>
-                        <button
-                            onClick={() => setConfirmAction('categories')}
-                            style={{ backgroundColor: '#fee2e2', color: '#b91c1c', border: '1px solid #ef4444', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            🗑 Clear All Categories
-                        </button>
-                        <button
-                            onClick={() => setConfirmAction('sales')}
-                            style={{ backgroundColor: '#fee2e2', color: '#b91c1c', border: '1px solid #ef4444', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
-                        >
-                            🗑 Clear All Sales Data
-                        </button>
-                    </div>
-                )}
-            </div>
-
-
-            {
-                debugInfo && (
-                    <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f3f4f6', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.85rem' }}>
-                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Debug Info</h4>
-                        <div style={{ marginBottom: '0.5rem' }}>
-                            <strong>Detected Headers:</strong>
-                            <pre style={{ margin: '0.25rem 0', whiteSpace: 'pre-wrap', color: '#4b5563' }}>{JSON.stringify(debugInfo.headers, null, 2)}</pre>
-                        </div>
+                {/* Import Controls Card */}
+                <div style={{...styles.card, borderTop: '4px solid #3b82f6'}}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginBottom: '2.5rem', alignItems: 'flex-end', paddingBottom: '2rem', borderBottom: '1px solid #f1f5f9' }}>
                         <div>
-                            <strong>First Data Row:</strong>
-                            <pre style={{ margin: '0.25rem 0', whiteSpace: 'pre-wrap', color: '#4b5563' }}>{JSON.stringify(debugInfo.firstRow, null, 2)}</pre>
+                            <label style={styles.label}>Import Target</label>
+                            <select
+                                style={styles.inputField}
+                                value={importType}
+                                onChange={e => { setImportType(e.target.value); setStatus(''); setFileName(''); setDebugInfo(null); setMappingDebug(null); }}
+                            >
+                                <option value="products">Product Catalog</option>
+                                <option value="customers">Customer Registry</option>
+                                <option value="sales">Sales Transactions</option>
+                            </select>
+                        </div>
+
+                        {(importType === 'products' || importType === 'sales') && (
+                            <div>
+                                <label style={styles.label}>Force Category Link</label>
+                                <select
+                                    style={{...styles.inputField, borderColor: '#bae6fd', backgroundColor: '#f0f9ff', color: '#0369a1'}}
+                                    value={importCategory}
+                                    onChange={e => setImportCategory(e.target.value)}
+                                >
+                                    <option value="">{importType === 'sales' ? 'Auto-Detect via Column' : 'Auto-Detect via Column'}</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.name}>Force to: {cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {importType === 'customers' && (
+                            <div>
+                                <label style={styles.label}>Default Segment</label>
+                                <select
+                                    style={{...styles.inputField, borderColor: '#bae6fd', backgroundColor: '#f0f9ff', color: '#0369a1'}}
+                                    value={importGroup}
+                                    onChange={e => setImportGroup(e.target.value)}
+                                >
+                                    {Object.values(CUSTOMER_GROUPS).map(g => (
+                                        <option key={g} value={g}>Import as {g}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem' }}>
+                        {/* File Upload Zone */}
+                        <div>
+                            <div style={styles.uploadZone} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#eff6ff'; e.currentTarget.style.borderColor = '#93c5fd'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.borderColor = '#cbd5e1'; }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem', color: '#94a3b8' }}>📄</div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', margin: '0 0 0.5rem 0' }}>Select File to Import</h3>
+                                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 1.5rem 0' }}>Supports .xlsx, .xls, .csv, and .json</p>
+                                
+                                <div style={{ position: 'relative', overflow: 'hidden', display: 'inline-block' }}>
+                                    <button style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', color: '#0f172a', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', pointerEvents: 'none' }}>
+                                        Browse Files
+                                    </button>
+                                    <input
+                                        type="file"
+                                        accept=".xlsx, .xls, .csv, .json"
+                                        onChange={handleFileUpload}
+                                        style={{ position: 'absolute', left: 0, top: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                                    />
+                                </div>
+                                {fileName && <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#2563eb', fontWeight: '500' }}>Selected: {fileName}</div>}
+                            </div>
+                            
+                            {status && (
+                                <div style={{ marginTop: '1.5rem', color: status.includes('Success') || status.includes('successfully') ? '#059669' : '#dc2626', backgroundColor: status.includes('Success') || status.includes('successfully') ? '#ecfdf5' : '#fef2f2', padding: '1rem', borderRadius: '8px', border: `1px solid ${status.includes('Success') || status.includes('successfully') ? '#a7f3d0' : '#fecaca'}`, fontSize: '0.95rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span>{status.includes('Success') || status.includes('successfully') ? '✓' : '⚠️'}</span> {status}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Allowed Headers Info */}
+                        <div>
+                            <div style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0', height: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#0f172a', margin: 0 }}>Required Data Schema</h3>
+                                    <span style={{ backgroundColor: '#e2e8f0', color: '#475569', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '700', textTransform: 'uppercase' }}>Auto-Mapped</span>
+                                </div>
+                                
+                                {importType === 'products' ? (
+                                    <>
+                                        <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 1rem 0' }}>The system will attempt to automatically map columns with the following names:</p>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.9rem', color: '#334155' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                <span>• <strong>Item Code</strong> (SKU)</span>
+                                                <span>• <strong>Description</strong> (Name)</span>
+                                                <span>• <strong>Category</strong></span>
+                                                <span>• <strong>Sub-Category</strong></span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                <span>• <strong>Sell Unit</strong></span>
+                                                <span>• <strong>Bag Units</strong> (Qty)</span>
+                                                <span>• <strong>Unit Cost</strong></span>
+                                                <span>• <strong>Unit Price</strong></span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : importType === 'sales' ? (
+                                    <>
+                                        <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 1rem 0' }}>The system will attempt to extract transactions using these columns:</p>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem', color: '#334155' }}>
+                                            <span>• <strong>Customer ID</strong> <span style={{ color: '#94a3b8' }}>(Optional, Col 1)</span></span>
+                                            <span>• <strong>Customer Name</strong> <span style={{ color: '#94a3b8' }}>(Col 2)</span></span>
+                                            <span>• <strong>Revenue / Amount</strong> <span style={{ color: '#94a3b8' }}>(Col 3)</span></span>
+                                            <span>• <strong>COGS / Cost</strong> <span style={{ color: '#94a3b8' }}>(Optional, Col 4)</span></span>
+                                            <span>• <strong>Category</strong> <span style={{ color: '#94a3b8' }}>(Optional)</span></span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '0 0 1rem 0' }}>The system will attempt to link customers based on these headers:</p>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem', color: '#334155' }}>
+                                            <span>• <strong>Name</strong> / Customer Name</span>
+                                            <span>• <strong>Group</strong> <span style={{ color: '#94a3b8' }}>(Dealer / Commercial)</span></span>
+                                            <span>• <strong>Annual Spend</strong> / Revenue</span>
+                                            <span>• <strong>Territory</strong> <span style={{ color: '#94a3b8' }}>(Auto-normalized)</span></span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
-                )
-            }
+                </div>
 
-            {
-                mappingDebug && (
-                    <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#eef2ff', borderRadius: '8px', border: '1px solid #c7d2fe', fontSize: '0.85rem' }}>
-                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a' }}>Mapping Status</h4>
-                        <ul style={{ margin: 0, paddingLeft: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-                            {Object.entries(mappingDebug).map(([key, val]) => (
-                                <li key={key} style={{ color: val.mode === 'fallback' ? '#059669' : (val.index === -1 ? 'red' : 'green') }}>
-                                    <strong>{key}:</strong> {val.foundHeader} {val.index !== -1 && `(Index: ${val.index})`}
-                                </li>
-                            ))}
-                        </ul>
+                {/* Debugging Info (Collapsed by default visually, but rendered if exists) */}
+                {(debugInfo || mappingDebug) && (
+                    <div style={{...styles.card, padding: '1.5rem', backgroundColor: '#fafaf9', borderColor: '#e7e5e4'}}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#44403c', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><span>🔧</span> Parsing Diagnostics</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
+                            {debugInfo && (
+                                <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e7e5e4', overflowX: 'auto' }}>
+                                    <strong style={{ display: 'block', fontSize: '0.8rem', textTransform: 'uppercase', color: '#78716c', marginBottom: '0.5rem' }}>Raw Headers</strong>
+                                    <pre style={{ margin: 0, fontSize: '0.8rem', color: '#44403c', whiteSpace: 'pre-wrap' }}>{JSON.stringify(debugInfo.headers, null, 2)}</pre>
+                                </div>
+                            )}
+                            {mappingDebug && (
+                                <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e7e5e4', overflowX: 'auto' }}>
+                                     <strong style={{ display: 'block', fontSize: '0.8rem', textTransform: 'uppercase', color: '#78716c', marginBottom: '0.5rem' }}>Column Mapping Results</strong>
+                                    <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.85rem' }}>
+                                        {Object.entries(mappingDebug).map(([key, val]) => (
+                                            <li key={key} style={{ color: val.mode === 'fallback' ? '#059669' : (val.index === -1 ? '#dc2626' : '#059669'), marginBottom: '0.25rem' }}>
+                                                <strong>{key}:</strong> {val.foundHeader} {val.index !== -1 && `(Idx: ${val.index})`}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )
-            }
-        </div >
-    )
-}
+                )}
 
-export default DataImporter
+                {/* NEW CUSTOMER VALIDATION MODAL */}
+                {importReview && (
+                    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
+                        <div style={{ backgroundColor: 'white', padding: '2.5rem', borderRadius: '12px', maxWidth: '550px', width: '90%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', fontSize: '1.25rem' }}>⚠️</div>
+                                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Unrecognized Customers Detected</h3>
+                            </div>
+                            
+                            <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                                Your import file contains <strong>{importReview.length}</strong> transactions assigned to customers that do not currently exist in your directory.
+                            </p>
+                            
+                            <div style={{ maxHeight: '180px', overflowY: 'auto', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.9rem', marginBottom: '2rem' }}>
+                                {importReview.slice(0, 5).map((c, i) => (
+                                    <div key={i} style={{ padding: '4px 0', borderBottom: i < 4 && i < importReview.length -1  ? '1px solid #f1f5f9' : 'none', color: '#334155', fontWeight: '500' }}>
+                                        <span style={{ color: '#94a3b8', marginRight: '8px' }}>•</span> 
+                                        {c.name || 'Unknown'} {c.customerId ? <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '4px' }}>(ID: {c.customerId})</span> : ''}
+                                    </div>
+                                ))}
+                                {importReview.length > 5 && <div style={{ color: '#64748b', fontStyle: 'italic', marginTop: '8px', fontSize: '0.85rem', textAlign: 'center' }}>...and {importReview.length - 5} more records</div>}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button
+                                    onClick={() => {
+                                        const allowedNames = new Set(fullState.customers.map(c => c.name.toLowerCase().trim()));
+                                        const filtered = pendingSalesData.filter(d => allowedNames.has(d.name.toLowerCase().trim()));
+                                        onImportSales(filtered);
+                                        setImportReview(null);
+                                        setPendingSalesData(null);
+                                        setStatus(`Imported ${filtered.length} sales records (Skipped ${importReview.length} unrecognized matches).`);
+                                    }}
+                                    style={{...styles.outlineBtn, flex: 1, justifyContent: 'center'}}
+                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'white'; }}
+                                >
+                                    Skip Invalid Records
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onImportSales(pendingSalesData);
+                                        setImportReview(null);
+                                        setPendingSalesData(null);
+                                        setStatus(`Success! Imported ${pendingSalesData.length} records and auto-created ${importReview.length} new customer profiles.`);
+                                    }}
+                                    style={{...styles.outlineBtn, backgroundColor: '#2563eb', color: 'white', borderColor: '#2563eb', flex: 1, justifyContent: 'center'}}
+                                >
+                                    Force Import All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Data Cleanup Section (Danger Zone) */}
+                <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        <h4 style={{ color: '#0f172a', fontSize: '1.1rem', margin: 0, fontWeight: '700' }}>Data Reset Tools</h4>
+                        <span style={{ backgroundColor: '#fef2f2', color: '#ef4444', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Danger Zone</span>
+                    </div>
+
+                    {confirmAction ? (
+                        <div style={{ padding: '1.5rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                            <div style={{ flex: '1 1 auto' }}>
+                                <h4 style={{ margin: '0 0 0.25rem 0', color: '#991b1b', fontSize: '1rem' }}>Confirm Permanent Deletion</h4>
+                                <span style={{ color: '#b91c1c', fontSize: '0.95rem' }}>
+                                    Are you sure you want to permanently erase all <strong style={{ textTransform: 'uppercase' }}>{confirmAction}</strong>? This action cannot be undone unless you have a JSON backup.
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0 }}>
+                                <button
+                                    onClick={() => setConfirmAction(null)}
+                                    style={{ backgroundColor: 'white', color: '#475569', border: '1px solid #cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onClearData(confirmAction);
+                                        setStatus(`System reset: All ${confirmAction} have been erased.`);
+                                        setConfirmAction(null);
+                                    }}
+                                    style={{ backgroundColor: '#dc2626', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', boxShadow: '0 1px 2px rgba(220, 38, 38, 0.2)' }}
+                                >
+                                    Yes, Erase Data
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                            <button onClick={() => setConfirmAction('products')} style={styles.dangerBtn} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                                <span>🗑</span> Reset Catalog
+                            </button>
+                            <button onClick={() => setConfirmAction('customers')} style={styles.dangerBtn} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                                <span>🗑</span> Reset Customers
+                            </button>
+                            <button onClick={() => setConfirmAction('categories')} style={styles.dangerBtn} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                                <span>🗑</span> Reset Categories
+                            </button>
+                            <button onClick={() => setConfirmAction('sales')} style={styles.dangerBtn} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                                <span>🗑</span> Reset Sales History
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default DataImporter;

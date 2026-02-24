@@ -8,8 +8,10 @@ async function runMigration() {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '[]';
             ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NULL;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS can_edit BOOLEAN DEFAULT false;
         `);
-        console.log('Added is_active, permissions, updated_at columns.');
+        await query(`UPDATE users SET can_edit = true WHERE role = 'admin' AND (can_edit IS NULL OR can_edit = false);`);
+        console.log('Added is_active, permissions, updated_at, can_edit columns.');
 
         await query(`UPDATE users SET role = 'outside_sales' WHERE role IN ('bc_sales', 'sask_sales');`);
         console.log('Migrated bc_sales/sask_sales users to outside_sales.');

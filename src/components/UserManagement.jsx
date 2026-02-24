@@ -28,6 +28,7 @@ const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -58,6 +59,13 @@ const UserManagement = () => {
 
     useEffect(() => { loadUsers(); }, []);
 
+    useEffect(() => {
+        if (successMsg) {
+            const t = setTimeout(() => setSuccessMsg(''), 6000);
+            return () => clearTimeout(t);
+        }
+    }, [successMsg]);
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -65,14 +73,16 @@ const UserManagement = () => {
 
     const handlePermissionToggle = (perm) => {
         setForm(prev => {
-            const perms = prev.permissions.includes(perm)
-                ? prev.permissions.filter(p => p !== perm)
-                : [...prev.permissions, perm];
+            const current = Array.isArray(prev.permissions) ? prev.permissions : [];
+            const perms = current.includes(perm)
+                ? current.filter(p => p !== perm)
+                : [...current, perm];
             return { ...prev, permissions: perms };
         });
     };
 
     const openEdit = (u) => {
+        setSuccessMsg('');
         setEditingUser(u);
         setForm({
             username: u.username,
@@ -98,6 +108,7 @@ const UserManagement = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccessMsg('');
         if (!form.username.trim()) {
             setError('Username is required');
             return;
@@ -109,28 +120,32 @@ const UserManagement = () => {
         setSaving(true);
         try {
             if (editingUser) {
+                const perms = Array.isArray(form.permissions) ? form.permissions : [];
                 const payload = {
                     username: form.username.trim(),
                     role: form.role,
                     region: form.region === 'National' ? null : form.region,
-                    permissions: form.permissions,
+                    permissions: perms,
                     isActive: form.isActive,
                     canEdit: form.canEdit
                 };
                 if (form.password) payload.password = form.password;
                 await api.updateUser(editingUser.id, payload);
                 closeEdit();
+                setSuccessMsg('Permissions updated. User must log out and log back in to see changes.');
             } else {
+                const perms = Array.isArray(form.permissions) ? form.permissions : [];
                 await api.createUser({
                     username: form.username.trim(),
                     password: form.password,
                     role: form.role,
                     region: form.region === 'National' ? null : form.region,
-                    permissions: form.permissions,
+                    permissions: perms,
                     canEdit: form.canEdit
                 });
                 setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], canEdit: false });
                 setShowForm(false);
+                setSuccessMsg('User created. They can log in with their new permissions.');
             }
             await loadUsers();
         } catch (e) {
@@ -230,6 +245,7 @@ const UserManagement = () => {
                                     } else {
                                         if (!showForm) {
                                             setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true, canEdit: false });
+                                            setSuccessMsg('');
                                         }
                                         setShowForm(!showForm); 
                                     }
@@ -246,6 +262,11 @@ const UserManagement = () => {
                 {error && (
                     <div style={{ backgroundColor: '#fef2f2', borderLeft: '4px solid #ef4444', color: '#991b1b', padding: '1rem', borderRadius: '0 8px 8px 0', marginBottom: '2rem', fontSize: '0.95rem', alignItems: 'center', display: 'flex', gap: '0.5rem' }}>
                         <span style={{ fontSize: '1.2rem' }}>⚠️</span> {error}
+                    </div>
+                )}
+                {successMsg && (
+                    <div style={{ backgroundColor: '#ecfdf5', borderLeft: '4px solid #10b981', color: '#065f46', padding: '1rem', borderRadius: '0 8px 8px 0', marginBottom: '2rem', fontSize: '0.95rem', display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.2rem' }}>✓</span> {successMsg}
                     </div>
                 )}
 
@@ -311,27 +332,27 @@ const UserManagement = () => {
                                 <label style={{...styles.label, marginBottom: '1rem'}}>Granular Permissions</label>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
                                     {ALL_PERMISSION_KEYS.map(perm => {
-                                        const isChecked = form.permissions.includes(perm);
+                                        const permList = Array.isArray(form.permissions) ? form.permissions : [];
+                                        const isChecked = permList.includes(perm);
                                         return (
-                                            <div
+                                            <label
                                                 key={perm}
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => handlePermissionToggle(perm)}
-                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePermissionToggle(perm); } }}
                                                 style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.95rem', color: '#334155' }}
                                             >
                                                 <input
                                                     type="checkbox"
                                                     checked={isChecked}
-                                                    readOnly
-                                                    tabIndex={-1}
-                                                    style={{ width: '1.1rem', height: '1.1rem', marginTop: '0.1rem', cursor: 'pointer', pointerEvents: 'none' }}
+                                                    value={perm}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        handlePermissionToggle(perm);
+                                                    }}
+                                                    style={{ width: '1.1rem', height: '1.1rem', marginTop: '0.1rem', cursor: 'pointer', flexShrink: 0 }}
                                                 />
                                                 <span style={{ fontWeight: isChecked ? '600' : '400' }}>
                                                     {PERMISSION_LABELS[perm] || perm}
                                                 </span>
-                                            </div>
+                                            </label>
                                         );
                                     })}
                                 </div>

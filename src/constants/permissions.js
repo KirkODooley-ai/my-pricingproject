@@ -12,7 +12,11 @@ export const PERMISSIONS = {
   SUBMIT_PROPOSALS: 'submit_proposals',
   APPROVE_PROPOSALS: 'approve_proposals',
   MANAGE_USERS: 'manage_users',
-  VIEW_ALL_REGIONS: 'view_all_regions'
+  VIEW_ALL_REGIONS: 'view_all_regions',
+  VIEW_VARIANCE_REPORT: 'view_variance_report',
+  VIEW_MARGIN_ALERTS: 'view_margin_alerts',
+  VIEW_TRANSITION_ANALYSIS: 'view_transition_analysis',
+  IMPORT_DATA: 'import_data'
 };
 
 /** Human-readable labels for UI */
@@ -22,7 +26,11 @@ export const PERMISSION_LABELS = {
   [PERMISSIONS.SUBMIT_PROPOSALS]: 'Submit Pricing Change',
   [PERMISSIONS.APPROVE_PROPOSALS]: 'Approve Pricing Change',
   [PERMISSIONS.MANAGE_USERS]: 'Manage Users',
-  [PERMISSIONS.VIEW_ALL_REGIONS]: 'View All Regions'
+  [PERMISSIONS.VIEW_ALL_REGIONS]: 'View All Regions',
+  [PERMISSIONS.VIEW_VARIANCE_REPORT]: 'Variance Report',
+  [PERMISSIONS.VIEW_MARGIN_ALERTS]: 'Margin Alerts',
+  [PERMISSIONS.VIEW_TRANSITION_ANALYSIS]: 'Transition Analysis',
+  [PERMISSIONS.IMPORT_DATA]: 'Import Data'
 };
 
 /** Default permissions for each role (starting point for migration from RBAC) */

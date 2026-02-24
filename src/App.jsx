@@ -19,6 +19,7 @@ import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
 
 import { DEFAULT_CATEGORIES } from './utils/pricingEngine'
+import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
 // Forma Steel branding - white logo for dark sidebar
@@ -570,6 +571,7 @@ function App() {
           </div>
 
           <div className="nav-group-label">Analysis</div>
+          {(user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.VIEW_TRANSITION_ANALYSIS)) && (
           <div
             className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
             onClick={() => setActiveTab('analysis')}
@@ -577,6 +579,8 @@ function App() {
             <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
             Transition Analysis
           </div>
+          )}
+          {(user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.VIEW_MARGIN_ALERTS)) && (
           <div
             className={`nav-link ${activeTab === 'alerts' ? 'active' : ''}`}
             onClick={() => setActiveTab('alerts')}
@@ -584,6 +588,8 @@ function App() {
             <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             Margin Alerts
           </div>
+          )}
+          {(user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.VIEW_VARIANCE_REPORT)) && (
           <div
             className={`nav-link ${activeTab === 'variance' ? 'active' : ''}`}
             onClick={() => setActiveTab('variance')}
@@ -591,6 +597,7 @@ function App() {
             <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             Variance Report
           </div>
+          )}
 
           {/* Admin Section */}
           <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
@@ -613,6 +620,7 @@ function App() {
                 </div>
               </>
             )}
+            {(user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.IMPORT_DATA)) && (
             <div
               className={`nav-link ${activeTab === 'import' ? 'active' : ''}`}
               onClick={() => setActiveTab('import')}
@@ -620,6 +628,7 @@ function App() {
               <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               Import Data
             </div>
+            )}
           </div>
 
           {/* User Info & Logout */}
@@ -711,7 +720,7 @@ function App() {
           </>
         )}
 
-        {activeTab === 'import' && (
+        {activeTab === 'import' && (user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.IMPORT_DATA)) && (
           <DataImporter
             onImportProducts={handleImportProducts}
             onImportCustomers={handleImportCustomers}
@@ -757,7 +766,7 @@ function App() {
           />
         )}
 
-        {activeTab === 'alerts' && (
+        {activeTab === 'alerts' && (user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.VIEW_MARGIN_ALERTS)) && (
           <MarginAlerts
             strategy={pricingStrategy}
             setStrategy={setPricingStrategy}
@@ -765,7 +774,7 @@ function App() {
           />
         )}
 
-        {activeTab === 'analysis' && (
+        {activeTab === 'analysis' && (user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.VIEW_TRANSITION_ANALYSIS)) && (
           <ImpactAnalysis
             customers={customers}
             categories={categories}
@@ -779,7 +788,7 @@ function App() {
           />
         )}
 
-        {activeTab === 'variance' && ( // [NEW] Tab Render
+        {activeTab === 'variance' && (user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.VIEW_VARIANCE_REPORT)) && (
           <SalesAnalysis
             customers={customers}
             salesTransactions={salesTransactions}

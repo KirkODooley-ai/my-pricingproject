@@ -42,7 +42,7 @@ app.post('/api/auth/login', async (req, res) => {
             if (!Array.isArray(perms)) perms = [];
             // Admin role: if no permissions in DB, use full set (backward compat)
             if (user.role === 'admin' && perms.length === 0) {
-                perms = ['view_costs', 'edit_pricing', 'submit_proposals', 'approve_proposals', 'manage_users', 'view_all_regions'];
+                perms = ['view_costs', 'edit_pricing', 'submit_proposals', 'approve_proposals', 'manage_users', 'view_all_regions', 'view_variance_report', 'view_margin_alerts', 'view_transition_analysis', 'import_data'];
             }
             // Create Token (include permissions so backend can enforce granular checks)
             const token = jwt.sign(
@@ -553,15 +553,25 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 app.post('/api/users', authenticateToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can create users' });
-        const { username, password, role, region } = req.body;
+        const { username, password, role, region, permissions } = req.body;
         if (!username || !password || !role) {
             return res.status(400).json({ error: 'Username, password, and role are required' });
         }
         const password_hash = await bcrypt.hash(password, 10);
-        await query(
-            'INSERT INTO users (username, password_hash, role, region) VALUES ($1, $2, $3, $4)',
-            [username.trim(), password_hash, role, region || null]
-        );
+        const permsJson = JSON.stringify(Array.isArray(permissions) ? permissions : []);
+        try {
+            await query(
+                'INSERT INTO users (username, password_hash, role, region, permissions) VALUES ($1, $2, $3, $4, $5::jsonb)',
+                [username.trim(), password_hash, role, region || null, permsJson]
+            );
+        } catch (colErr) {
+            if (colErr.message && colErr.message.includes('permissions')) {
+                await query(
+                    'INSERT INTO users (username, password_hash, role, region) VALUES ($1, $2, $3, $4)',
+                    [username.trim(), password_hash, role, region || null]
+                );
+            } else throw colErr;
+        }
         res.json({ success: true });
     } catch (e) {
         if (e.code === '23505') return res.status(400).json({ error: 'Username already exists' });

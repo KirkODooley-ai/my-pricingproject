@@ -82,11 +82,15 @@ const UserManagement = () => {
             isActive: u.isActive !== false
         });
         setError('');
+        setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const closeEdit = () => {
         setEditingUser(null);
+        setShowForm(false);
         setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true });
+        setError('');
     };
 
     const handleSubmit = async (e) => {
@@ -148,6 +152,8 @@ const UserManagement = () => {
     const handleDelete = async (u) => {
         if (deleteConfirm !== u.id) {
             setDeleteConfirm(u.id);
+            // Auto reset delete confirmation after 3 seconds
+            setTimeout(() => setDeleteConfirm(null), 3000);
             return;
         }
         setError('');
@@ -162,193 +168,265 @@ const UserManagement = () => {
     };
 
     const canManageUsers = currentUser?.role === 'admin' || hasPermission(currentUser?.permissions, PERMISSIONS.MANAGE_USERS);
-    const cardStyle = { padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' };
-    const inputStyle = { width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' };
-    const labelStyle = { display: 'block', marginBottom: '0.5rem', fontWeight: 500 };
+
+    // Premium SaaS UI Variables
+    const styles = {
+        pageWrapper: { width: '100%', minHeight: '100%' },
+        container: { maxWidth: '1200px', margin: '0 auto', padding: '2.5rem', width: '100%', fontFamily: 'var(--font-base)' },
+        headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' },
+        headerText: { fontSize: '1.85rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em', margin: '0 0 0.5rem 0' },
+        subText: { color: '#64748b', fontSize: '1.05rem', margin: 0 },
+        
+        card: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', padding: '2rem', marginBottom: '2rem' },
+        tableContainer: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', overflow: 'hidden' },
+        
+        inputField: { padding: '0.65rem 1rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', color: '#0f172a', width: '100%', backgroundColor: '#ffffff', transition: 'border-color 0.2s', outline: 'none' },
+        label: { display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#475569', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+        
+        primaryBtn: { backgroundColor: '#2563eb', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '0.65rem 1.25rem', fontSize: '0.9rem', fontWeight: '600', cursor: 'pointer', boxShadow: '0 1px 3px rgba(37,99,235,0.2)', transition: 'background-color 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+        outlineBtn: { backgroundColor: 'white', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.65rem 1.25rem', fontSize: '0.9rem', fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s' },
+        dangerBtn: { backgroundColor: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '6px', padding: '0.4rem 0.8rem', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s' },
+        dangerBtnConfirm: { backgroundColor: '#dc2626', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '0.4rem 0.8rem', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s' },
+        actionBtn: { backgroundColor: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', padding: '0.4rem 0.8rem', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s' },
+        
+        table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
+        th: { padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#475569', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' },
+        td: { padding: '1rem 1.5rem', fontSize: '0.95rem', color: '#0f172a', borderBottom: '1px solid #f1f5f9', verticalAlign: 'middle' },
+        
+        badgeActive: { backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '0.25rem 0.6rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center' },
+        badgeInactive: { backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', padding: '0.25rem 0.6rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center' },
+        roleBadge: { backgroundColor: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '500' }
+    };
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '900px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>User Management</h2>
+        <div style={styles.pageWrapper}>
+            <div style={styles.container}>
+                {/* Header Profile */}
+                <div style={styles.headerRow}>
+                    <div>
+                        <h2 style={styles.headerText}>User Management</h2>
+                        <p style={styles.subText}>Manage system access, roles, and regional permissions.</p>
+                    </div>
 
-            {error && (
-                <div style={{
-                    backgroundColor: '#fee2e2', color: '#b91c1c', padding: '0.75rem',
-                    borderRadius: '4px', marginBottom: '1rem', fontSize: '0.9rem'
-                }}>{error}</div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <span style={{ color: '#3363AF', fontSize: '0.9rem' }}>
-                    {users.length} user{users.length !== 1 ? 's' : ''}
-                </span>
-                <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => { setShowForm(!showForm); setError(''); setEditingUser(null); }}
-                    disabled={!!editingUser}
-                >
-                    {showForm ? 'Cancel' : 'Create User'}
-                </button>
-            </div>
-
-            {showForm && !editingUser && (
-                <div className="card" style={cardStyle}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Create User</h3>
-                    <form onSubmit={handleSubmit}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Username</label>
-                            <input type="text" name="username" value={form.username} onChange={handleChange}
-                                style={inputStyle} placeholder="e.g. jsmith" autoComplete="off" />
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Password</label>
-                            <input type="password" name="password" value={form.password} onChange={handleChange}
-                                style={inputStyle} autoComplete="new-password" />
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Role</label>
-                            <select name="role" value={form.role} onChange={handleChange} style={inputStyle}>
-                                {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                            </select>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Region</label>
-                            <select name="region" value={form.region} onChange={handleChange} style={inputStyle}>
-                                {REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                            </select>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Additional Permissions</label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem' }}>
-                                {ALL_PERMISSION_KEYS.map(perm => (
-                                    <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                        <input type="checkbox" checked={form.permissions.includes(perm)}
-                                            onChange={() => handlePermissionToggle(perm)} />
-                                        {PERMISSION_LABELS[perm] || perm}
-                                    </label>
-                                ))}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f8fafc', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <span style={{ fontSize: '1.2rem' }}>👥</span>
+                            <div>
+                                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Total Users</span>
+                                <span style={{ display: 'block', fontSize: '1.1rem', color: '#0f172a', fontWeight: '700' }}>{users.length}</span>
                             </div>
                         </div>
-                        <button type="submit" className="btn btn-primary">Create User</button>
-                    </form>
-                </div>
-            )}
 
-            {(editingUser || deleteConfirm) && (
-                <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '4px', fontSize: '0.9rem' }}>
-                    {deleteConfirm && (
-                        <span>Click Delete again on the user to confirm permanent deletion. </span>
-                    )}
-                    {editingUser && <span>Editing: {editingUser.username}</span>}
-                </div>
-            )}
-
-            {editingUser && (
-                <div className="card" style={cardStyle}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Edit User</h3>
-                    <form onSubmit={handleSubmit}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Username</label>
-                            <input type="text" name="username" value={form.username} onChange={handleChange}
-                                style={inputStyle} autoComplete="off" />
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>New Password <span style={{ color: '#6b7280', fontWeight: 400 }}>(leave blank to keep current)</span></label>
-                            <input type="password" name="password" value={form.password} onChange={handleChange}
-                                style={inputStyle} autoComplete="new-password" />
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Role</label>
-                            <select name="role" value={form.role} onChange={handleChange} style={inputStyle}>
-                                {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                            </select>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Region</label>
-                            <select name="region" value={form.region} onChange={handleChange} style={inputStyle}>
-                                {REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                            </select>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={labelStyle}>Additional Permissions</label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem' }}>
-                                {ALL_PERMISSION_KEYS.map(perm => (
-                                    <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                        <input type="checkbox" checked={form.permissions.includes(perm)}
-                                            onChange={() => handlePermissionToggle(perm)} />
-                                        {PERMISSION_LABELS[perm] || perm}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} />
-                                <span>Active (can log in)</span>
-                            </label>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <button type="submit" className="btn btn-primary" disabled={saving}>
-                                {saving ? 'Saving...' : 'Save Changes'}
+                        {canManageUsers && (
+                            <button
+                                style={showForm && !editingUser ? styles.outlineBtn : styles.primaryBtn}
+                                onClick={() => { 
+                                    if (editingUser) {
+                                        closeEdit();
+                                    } else {
+                                        setShowForm(!showForm); 
+                                    }
+                                    setError(''); 
+                                }}
+                            >
+                                <span style={{ fontSize: '1.1rem' }}>{showForm && !editingUser ? '✕' : '＋'}</span> 
+                                {showForm && !editingUser ? 'Cancel' : 'Add New User'}
                             </button>
-                            <button type="button" className="btn" style={{ backgroundColor: '#e5e7eb' }} onClick={closeEdit} disabled={saving}>Cancel</button>
-                        </div>
-                    </form>
+                        )}
+                    </div>
                 </div>
-            )}
 
-            <div className="card" style={{ overflow: 'hidden', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                {loading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#3363AF' }}>Loading users...</div>
-                ) : users.length === 0 ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#3363AF' }}>No users found.</div>
-                ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem' }}>Username</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem' }}>Role</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem' }}>Region</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem' }}>Status</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem' }}>Created</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, fontSize: '0.85rem' }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(u => (
-                                <tr key={u.id} style={{ borderBottom: '1px solid #e5e7eb', opacity: u.isActive === false ? 0.65 : 1 }}>
-                                    <td style={{ padding: '0.75rem 1rem' }}>{u.username}</td>
-                                    <td style={{ padding: '0.75rem 1rem' }}>{formatRole(u.role)}</td>
-                                    <td style={{ padding: '0.75rem 1rem' }}>{u.region || '—'}</td>
-                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                        <span style={{ color: u.isActive !== false ? '#059669' : '#b91c1c', fontSize: '0.85rem' }}>
-                                            {u.isActive !== false ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#3363AF' }}>
-                                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
-                                    </td>
-                                    <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
-                                        {canManageUsers && (
-                                            <>
-                                                <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem' }}
-                                                    onClick={() => openEdit(u)}>Edit</button>
-                                                <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem', backgroundColor: u.isActive !== false ? '#fef3c7' : '#d1fae5' }}
-                                                    onClick={() => handleDeactivate(u)}>
-                                                    {u.isActive !== false ? 'Deactivate' : 'Activate'}
-                                                </button>
-                                                <button type="button" className="btn" style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem', backgroundColor: deleteConfirm === u.id ? '#dc2626' : '#fee2e2', color: deleteConfirm === u.id ? 'white' : '#b91c1c' }}
-                                                    onClick={() => handleDelete(u)} disabled={currentUser?.id === u.id}>
-                                                    {deleteConfirm === u.id ? 'Confirm Delete' : 'Delete'}
-                                                </button>
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                {error && (
+                    <div style={{ backgroundColor: '#fef2f2', borderLeft: '4px solid #ef4444', color: '#991b1b', padding: '1rem', borderRadius: '0 8px 8px 0', marginBottom: '2rem', fontSize: '0.95rem', alignItems: 'center', display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.2rem' }}>⚠️</span> {error}
+                    </div>
                 )}
+
+                {/* Create / Edit Form */}
+                {showForm && (
+                    <div style={{...styles.card, borderTop: `4px solid ${editingUser ? '#f59e0b' : '#3b82f6'}`}}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span>{editingUser ? '✏️' : '👤'}</span> {editingUser ? `Edit Profile: ${editingUser.username}` : 'Register New User'}
+                            </h3>
+                            {editingUser && (
+                                <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+                            )}
+                        </div>
+
+                        <form onSubmit={handleSubmit}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                                <div>
+                                    <label style={styles.label}>Username / Login ID</label>
+                                    <input type="text" name="username" value={form.username} onChange={handleChange} style={styles.inputField} placeholder="e.g. jsmith" autoComplete="off" />
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Password {editingUser && <span style={{ color: '#94a3b8', fontWeight: '400', textTransform: 'none', letterSpacing: '0' }}>(Leave blank to keep current)</span>}</label>
+                                    <input type="password" name="password" value={form.password} onChange={handleChange} style={styles.inputField} placeholder={editingUser ? "••••••••" : "Create a strong password"} autoComplete="new-password" />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                                <div>
+                                    <label style={styles.label}>System Role</label>
+                                    <select name="role" value={form.role} onChange={handleChange} style={styles.inputField}>
+                                        {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Territory / Region</label>
+                                    <select name="region" value={form.region} onChange={handleChange} style={styles.inputField}>
+                                        {REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+                                <label style={{...styles.label, marginBottom: '1rem'}}>Granular Permissions</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                                    {ALL_PERMISSION_KEYS.map(perm => (
+                                        <label key={perm} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.95rem', color: '#334155' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={form.permissions.includes(perm)}
+                                                onChange={() => handlePermissionToggle(perm)} 
+                                                style={{ width: '1.1rem', height: '1.1rem', marginTop: '0.1rem', cursor: 'pointer' }}
+                                            />
+                                            <span style={{ fontWeight: form.permissions.includes(perm) ? '600' : '400' }}>
+                                                {PERMISSION_LABELS[perm] || perm}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {editingUser && (
+                                <div style={{ marginBottom: '2rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '1rem', backgroundColor: form.isActive ? '#ecfdf5' : '#f1f5f9', border: `1px solid ${form.isActive ? '#a7f3d0' : '#cbd5e1'}`, borderRadius: '8px' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            name="isActive" 
+                                            checked={form.isActive} 
+                                            onChange={handleChange} 
+                                            style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                                        />
+                                        <div>
+                                            <span style={{ display: 'block', fontWeight: '600', color: '#0f172a', fontSize: '0.95rem' }}>Account Active</span>
+                                            <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b' }}>If unchecked, user will be unable to log in to the system.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+                                <button type="submit" style={{...styles.primaryBtn, width: '200px', display: 'flex', justifyContent: 'center'}} disabled={saving}>
+                                    {saving ? '⏳ Saving...' : (editingUser ? '💾 Save Changes' : '✓ Create Account')}
+                                </button>
+                                {editingUser && (
+                                    <button type="button" style={styles.outlineBtn} onClick={closeEdit} disabled={saving} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}>Cancel</button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                {/* Users List Data Table */}
+                <div style={styles.tableContainer}>
+                    {loading ? (
+                        <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'spin 2s linear infinite' }}>⏳</div>
+                            Loading user directory...
+                        </div>
+                    ) : users.length === 0 ? (
+                        <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>👥</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.5rem' }}>No Users Registered</h3>
+                            <p style={{ margin: 0 }}>Create the system's first user to get started.</p>
+                        </div>
+                    ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={styles.table}>
+                                <thead>
+                                    <tr>
+                                        <th style={styles.th}>Authorized User</th>
+                                        <th style={styles.th}>System Role</th>
+                                        <th style={styles.th}>Territory</th>
+                                        <th style={styles.th}>Access Status</th>
+                                        <th style={styles.th}>Registration Date</th>
+                                        {canManageUsers && <th style={{...styles.th, textAlign: 'right'}}>Management</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.map(u => {
+                                        const isInactive = u.isActive === false;
+                                        return (
+                                            <tr key={u.id} style={{ transition: 'background-color 0.2s', backgroundColor: isInactive ? '#fafaf9' : 'transparent', opacity: isInactive ? 0.8 : 1 }}>
+                                                <td style={{...styles.td, fontWeight: '600'}}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontWeight: '700', fontSize: '0.8rem' }}>
+                                                            {u.username.substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                        <span style={{ color: isInactive ? '#94a3b8' : '#0f172a' }}>{u.username}</span>
+                                                        {currentUser?.id === u.id && <span style={{ fontSize: '0.7rem', backgroundColor: '#dbeafe', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>YOU</span>}
+                                                    </div>
+                                                </td>
+                                                <td style={styles.td}>
+                                                    <span style={styles.roleBadge}>{formatRole(u.role)}</span>
+                                                </td>
+                                                <td style={{...styles.td, color: '#475569', fontWeight: '500'}}>
+                                                    {u.region || <span style={{ color: '#cbd5e1' }}>Global</span>}
+                                                </td>
+                                                <td style={styles.td}>
+                                                    <span style={!isInactive ? styles.badgeActive : styles.badgeInactive}>
+                                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: !isInactive ? '#10b981' : '#94a3b8', marginRight: '6px' }}></span>
+                                                        {!isInactive ? 'Active' : 'Suspended'}
+                                                    </span>
+                                                </td>
+                                                <td style={{...styles.td, fontSize: '0.85rem', color: '#64748b'}}>
+                                                    {u.createdAt ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(u.createdAt)) : 'Legacy'}
+                                                </td>
+                                                
+                                                {canManageUsers && (
+                                                    <td style={{...styles.td, textAlign: 'right'}}>
+                                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                            <button 
+                                                                title="Edit user profile"
+                                                                style={styles.actionBtn} 
+                                                                onClick={() => openEdit(u)}
+                                                                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; }}
+                                                                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f1f5f9'; }}
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            
+                                                            <button 
+                                                                title={!isInactive ? "Suspend account access" : "Restore account access"}
+                                                                style={{...styles.actionBtn, backgroundColor: !isInactive ? '#fffbeb' : '#ecfdf5', color: !isInactive ? '#b45309' : '#059669'}} 
+                                                                onClick={() => handleDeactivate(u)}
+                                                                disabled={currentUser?.id === u.id}
+                                                            >
+                                                                {!isInactive ? 'Suspend' : 'Activate'}
+                                                            </button>
+                                                            
+                                                            <button 
+                                                                title="Permanently delete user"
+                                                                style={deleteConfirm === u.id ? styles.dangerBtnConfirm : styles.dangerBtn} 
+                                                                onClick={() => handleDelete(u)} 
+                                                                disabled={currentUser?.id === u.id}
+                                                            >
+                                                                {deleteConfirm === u.id ? 'Confirm?' : 'Delete'}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

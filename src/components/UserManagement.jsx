@@ -14,9 +14,21 @@ const ROLES = [
 const REGIONS = [
     { value: 'National', label: 'National' },
     { value: 'BC', label: 'BC' },
-    { value: 'Alberta', label: 'Alberta' },
-    { value: 'Saskatchewan', label: 'Saskatchewan' },
-    { value: 'Manitoba', label: 'Manitoba' }
+    { value: 'AB', label: 'AB' },
+    { value: 'SK', label: 'SK' },
+    { value: 'MB', label: 'MB' },
+    { value: 'ON', label: 'ON' },
+    { value: 'Other', label: 'Other' }
+];
+
+const SALES_REGIONS = [
+    { value: '', label: '— None —' },
+    { value: 'BC', label: 'BC' },
+    { value: 'AB', label: 'AB' },
+    { value: 'SK', label: 'SK' },
+    { value: 'MB', label: 'MB' },
+    { value: 'ON', label: 'ON' },
+    { value: 'Other', label: 'Other' }
 ];
 
 const ALL_PERMISSION_KEYS = Object.values(PERMISSIONS);
@@ -38,6 +50,8 @@ const UserManagement = () => {
         password: '',
         role: 'analyst',
         region: 'National',
+        region1: '',
+        region2: '',
         permissions: [],
         isActive: true,
         canEdit: false
@@ -84,11 +98,14 @@ const UserManagement = () => {
     const openEdit = (u) => {
         setSuccessMsg('');
         setEditingUser(u);
+        const regions = Array.isArray(u.regions) ? u.regions : (u.region ? [u.region] : []);
         setForm({
             username: u.username,
             password: '',
             role: u.role,
             region: u.region || 'National',
+            region1: regions[0] || '',
+            region2: regions[1] || '',
             permissions: Array.isArray(u.permissions) ? [...u.permissions] : [],
             isActive: u.isActive !== false,
             canEdit: u.role === 'admin' || u.canEdit === true
@@ -101,7 +118,7 @@ const UserManagement = () => {
     const closeEdit = () => {
         setEditingUser(null);
         setShowForm(false);
-        setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true, canEdit: false });
+        setForm({ username: '', password: '', role: 'analyst', region: 'National', region1: '', region2: '', permissions: [], isActive: true, canEdit: false });
         setError('');
     };
 
@@ -121,10 +138,12 @@ const UserManagement = () => {
         try {
             if (editingUser) {
                 const perms = Array.isArray(form.permissions) ? form.permissions : [];
+                const regions = [form.region1, form.region2].filter(Boolean);
                 const payload = {
                     username: form.username.trim(),
                     role: form.role,
                     region: form.region === 'National' ? null : form.region,
+                    regions,
                     permissions: perms,
                     isActive: form.isActive,
                     canEdit: form.canEdit
@@ -135,15 +154,17 @@ const UserManagement = () => {
                 setSuccessMsg('Permissions updated. User must log out and log back in to see changes.');
             } else {
                 const perms = Array.isArray(form.permissions) ? form.permissions : [];
+                const regions = [form.region1, form.region2].filter(Boolean);
                 await api.createUser({
                     username: form.username.trim(),
                     password: form.password,
                     role: form.role,
                     region: form.region === 'National' ? null : form.region,
+                    regions,
                     permissions: perms,
                     canEdit: form.canEdit
                 });
-                setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], canEdit: false });
+                setForm({ username: '', password: '', role: 'analyst', region: 'National', region1: '', region2: '', permissions: [], canEdit: false });
                 setShowForm(false);
                 setSuccessMsg('User created. They can log in with their new permissions.');
             }
@@ -244,7 +265,7 @@ const UserManagement = () => {
                                         closeEdit();
                                     } else {
                                         if (!showForm) {
-                                            setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true, canEdit: false });
+                                            setForm({ username: '', password: '', role: 'analyst', region: 'National', region1: '', region2: '', permissions: [], isActive: true, canEdit: false });
                                             setSuccessMsg('');
                                         }
                                         setShowForm(!showForm); 
@@ -305,6 +326,21 @@ const UserManagement = () => {
                                     <label style={styles.label}>Territory / Region</label>
                                     <select name="region" value={form.region} onChange={handleChange} style={styles.inputField}>
                                         {REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                                <div>
+                                    <label style={styles.label}>Region 1 (Sales)</label>
+                                    <select name="region1" value={form.region1} onChange={handleChange} style={styles.inputField}>
+                                        {SALES_REGIONS.map(r => <option key={r.value || 'none'} value={r.value}>{r.label}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Region 2 (Sales)</label>
+                                    <select name="region2" value={form.region2} onChange={handleChange} style={styles.inputField}>
+                                        {SALES_REGIONS.map(r => <option key={r.value || 'none'} value={r.value}>{r.label}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -408,6 +444,7 @@ const UserManagement = () => {
                                     <tr>
                                         <th style={styles.th}>Authorized User</th>
                                         <th style={styles.th}>System Role</th>
+                                        <th style={styles.th}>Regions</th>
                                         <th style={styles.th}>Permissions</th>
                                         <th style={styles.th}>Territory</th>
                                         <th style={styles.th}>Access Status</th>
@@ -431,6 +468,15 @@ const UserManagement = () => {
                                                 </td>
                                                 <td style={styles.td}>
                                                     <span style={styles.roleBadge}>{formatRole(u.role)}</span>
+                                                </td>
+                                                <td style={{...styles.td, fontSize: '0.8rem'}}>
+                                                    {Array.isArray(u.regions) && u.regions.length > 0 ? (
+                                                        <span style={{ color: '#475569' }}>{u.regions.join(', ')}</span>
+                                                    ) : u.region ? (
+                                                        <span style={{ color: '#475569' }}>{u.region}</span>
+                                                    ) : (
+                                                        <span style={{ color: '#94a3b8' }}>—</span>
+                                                    )}
                                                 </td>
                                                 <td style={{...styles.td, fontSize: '0.8rem', maxWidth: '200px'}}>
                                                     {Array.isArray(u.permissions) && u.permissions.length > 0 ? (

@@ -48,19 +48,23 @@ app.post('/api/auth/login', async (req, res) => {
             let perms = user.permissions;
             if (typeof perms === 'string') try { perms = JSON.parse(perms); } catch { perms = []; }
             if (!Array.isArray(perms)) perms = [];
+            // Parse regions (sales territory)
+            let regions = user.regions;
+            if (typeof regions === 'string') try { regions = JSON.parse(regions); } catch { regions = []; }
+            if (!Array.isArray(regions)) regions = [];
             // Admin role: if no permissions in DB, use full set (backward compat)
             if (user.role === 'admin' && perms.length === 0) {
                 perms = ['view_costs', 'edit_pricing', 'submit_proposals', 'approve_proposals', 'manage_users', 'view_all_regions', 'view_variance_report', 'view_margin_alerts', 'view_transition_analysis', 'import_data'];
             }
             // can_edit: Admins always true; others use DB value (default false if column missing)
             const canEdit = user.role === 'admin' || user.can_edit === true;
-            // Create Token (include can_edit for backend middleware)
+            // Create Token (include can_edit and regions for backend middleware)
             const token = jwt.sign(
-                { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms, can_edit: canEdit },
+                { id: user.id, username: user.username, role: user.role, region: user.region, regions, permissions: perms, can_edit: canEdit },
                 JWT_SECRET,
                 { expiresIn: '8h' }
             );
-            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms, can_edit: canEdit } });
+            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region, regions, permissions: perms, can_edit: canEdit } });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -129,9 +133,10 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             LEFT JOIN categories cat ON st.category_id = cat.id
         `;
         let salesParams = [];
-        if (isManager && user.region) {
-            salesQuery += ` WHERE c.territory = $1`;
-            salesParams.push(user.region);
+        const userRegions = Array.isArray(user.regions) && user.regions.length > 0 ? user.regions : (user.region ? [user.region] : []);
+        if (userRegions.length > 0 && (isManager || ['outside_sales', 'sales_manager', 'sales_support'].includes(user.role))) {
+            salesQuery += ` WHERE c.territory = ANY($1::text[])`;
+            salesParams.push(userRegions);
         }
         const salesRes = await query(salesQuery, salesParams);
         result.salesTransactions = salesRes.rows;
@@ -536,21 +541,24 @@ app.get('/api/users', authenticateToken, async (req, res) => {
         let result;
         try {
             result = await query(
-                'SELECT id, username, role, region, is_active as "isActive", permissions, COALESCE(can_edit, false) as "canEdit", created_at as "createdAt" FROM users ORDER BY username'
+                'SELECT id, username, role, region, is_active as "isActive", permissions, COALESCE(can_edit, false) as "canEdit", COALESCE(regions, \'[]\')::jsonb as "regions", created_at as "createdAt" FROM users ORDER BY username'
             );
-            // Ensure permissions is always an array (pg returns JSONB parsed; handle null/string)
+            // Ensure permissions and regions are always arrays (pg returns JSONB parsed; handle null/string)
             result.rows = result.rows.map(r => {
                 let perms = r.permissions;
                 if (typeof perms === 'string') try { perms = JSON.parse(perms); } catch { perms = []; }
                 if (!Array.isArray(perms)) perms = [];
-                return { ...r, permissions: perms };
+                let regions = r.regions;
+                if (typeof regions === 'string') try { regions = JSON.parse(regions); } catch { regions = []; }
+                if (!Array.isArray(regions)) regions = [];
+                return { ...r, permissions: perms, regions };
             });
         } catch (colErr) {
-            if (colErr.message && (colErr.message.includes('is_active') || colErr.message.includes('permissions') || colErr.message.includes('can_edit'))) {
+            if (colErr.message && (colErr.message.includes('is_active') || colErr.message.includes('permissions') || colErr.message.includes('can_edit') || colErr.message.includes('regions'))) {
                 result = await query(
                     'SELECT id, username, role, region, created_at as "createdAt" FROM users ORDER BY username'
                 );
-                result.rows = result.rows.map(r => ({ ...r, isActive: true, permissions: [], canEdit: r.role === 'admin' }));
+                result.rows = result.rows.map(r => ({ ...r, isActive: true, permissions: [], canEdit: r.role === 'admin', regions: [] }));
             } else throw colErr;
         }
         res.json(result.rows);
@@ -563,20 +571,21 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 app.post('/api/users', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can create users' });
-        const { username, password, role, region, permissions, canEdit } = req.body;
+        const { username, password, role, region, regions, permissions, canEdit } = req.body;
         if (!username || !password || !role) {
             return res.status(400).json({ error: 'Username, password, and role are required' });
         }
         const password_hash = await bcrypt.hash(password, 10);
         const permsJson = JSON.stringify(Array.isArray(permissions) ? permissions : []);
+        const regionsJson = JSON.stringify(Array.isArray(regions) ? regions : []);
         const canEditVal = role === 'admin' ? true : !!canEdit;
         try {
             await query(
-                'INSERT INTO users (username, password_hash, role, region, permissions, can_edit) VALUES ($1, $2, $3, $4, $5::jsonb, $6)',
-                [username.trim(), password_hash, role, region || null, permsJson, canEditVal]
+                'INSERT INTO users (username, password_hash, role, region, regions, permissions, can_edit) VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7)',
+                [username.trim(), password_hash, role, region || null, regionsJson, permsJson, canEditVal]
             );
         } catch (colErr) {
-            if (colErr.message && (colErr.message.includes('permissions') || colErr.message.includes('can_edit'))) {
+            if (colErr.message && (colErr.message.includes('permissions') || colErr.message.includes('can_edit') || colErr.message.includes('regions'))) {
                 await query(
                     'INSERT INTO users (username, password_hash, role, region) VALUES ($1, $2, $3, $4)',
                     [username.trim(), password_hash, role, region || null]
@@ -597,7 +606,7 @@ app.patch('/api/users/:id', authenticateToken, requireCanEdit, async (req, res) 
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can update users' });
         const { id } = req.params;
-        const { username, password, role, region, permissions, isActive, canEdit } = req.body;
+        const { username, password, role, region, regions, permissions, isActive, canEdit } = req.body;
 
         const updates = [];
         const values = [];
@@ -606,6 +615,7 @@ app.patch('/api/users/:id', authenticateToken, requireCanEdit, async (req, res) 
         if (username !== undefined) { updates.push(`username = $${idx++}`); values.push(String(username).trim()); }
         if (role !== undefined) { updates.push(`role = $${idx++}`); values.push(role); }
         if (region !== undefined) { updates.push(`region = $${idx++}`); values.push(region || null); }
+        if (regions !== undefined) { updates.push(`regions = $${idx++}::jsonb`); values.push(JSON.stringify(Array.isArray(regions) ? regions : [])); }
         if (permissions !== undefined) { updates.push(`permissions = $${idx++}::jsonb`); values.push(JSON.stringify(Array.isArray(permissions) ? permissions : [])); }
         if (isActive !== undefined) { updates.push(`is_active = $${idx++}`); values.push(!!isActive); }
         if (canEdit !== undefined) { updates.push(`can_edit = $${idx++}`); values.push(role === 'admin' ? true : !!canEdit); }
@@ -637,7 +647,7 @@ app.patch('/api/users/:id', authenticateToken, requireCanEdit, async (req, res) 
             await query(fullQuery, values);
         } catch (colErr) {
             const msg = colErr.message || '';
-            if (msg.includes('updated_at') || msg.includes('permissions') || msg.includes('is_active') || msg.includes('can_edit')) {
+            if (msg.includes('updated_at') || msg.includes('permissions') || msg.includes('is_active') || msg.includes('can_edit') || msg.includes('regions')) {
                 if (fallbackUpdates.length === 0) {
                     return res.status(400).json({
                         error: 'User management upgrade required. Run: npm run migrate:users'

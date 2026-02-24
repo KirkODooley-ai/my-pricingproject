@@ -106,6 +106,9 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Old/backup files (can cause UTF-8 encoding issues in builds)
+old_*.jsx
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged

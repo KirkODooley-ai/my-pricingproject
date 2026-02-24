@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
-const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {} }) => {
+const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => { } }) => {
     const { user } = useAuth();
     const isManager = user?.role === 'manager';
     const [editingId, setEditingId] = useState(null);
@@ -10,6 +10,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
     const [searchTerm, setSearchTerm] = useState('');
     const [previewTier, setPreviewTier] = useState({ group: '', tier: '' });
     const [editFormData, setEditFormData] = useState({});
+
+    // Variant state
+    const [editingVariantId, setEditingVariantId] = useState(null);
+    const [editVariantFormData, setEditVariantFormData] = useState({});
+    const [expandedProducts, setExpandedProducts] = useState(new Set());
+
     const [showAddForm, setShowAddForm] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', unitCost: '', cost: '', price: '', vendor: '', itemCode: '', category: '' });
 
@@ -28,12 +34,34 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
     const categorySales = salesTransactions.filter(tx => activeCategory === 'All' || tx.category === activeCategory);
 
+    const toggleExpand = (id) => {
+        setExpandedProducts(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }
+
     const handleEditClick = (product) => { setEditingId(product.id); setEditFormData({ ...product }); };
     const handleCancelEdit = () => { setEditingId(null); setEditFormData({}); };
     const handleSaveClick = (id) => {
         onUpdateProduct(id, { ...editFormData, unitCost: parseFloat(editFormData.unitCost) || 0, cost: parseFloat(editFormData.cost) || 0, price: parseFloat(editFormData.price) || 0 });
         setEditingId(null);
     };
+
+    // Variant Handlers
+    const handleVariantEditClick = (variant) => { setEditingVariantId(variant.id); setEditVariantFormData({ ...variant }); };
+    const handleVariantCancelEdit = () => { setEditingVariantId(null); setEditVariantFormData({}); };
+    const handleVariantSaveClick = (id) => {
+        const newCost = parseFloat(editVariantFormData.costOverride)
+        const newPrice = parseFloat(editVariantFormData.priceOverride)
+        onUpdateVariants(prev => prev.map(v => v.id === id ? { ...v, ...editVariantFormData, costOverride: isNaN(newCost) ? null : newCost, priceOverride: isNaN(newPrice) ? null : newPrice } : v));
+        setEditingVariantId(null);
+    };
+
+    const handleVariantInputChange = (e) => setEditVariantFormData({ ...editVariantFormData, [e.target.name]: e.target.value });
+
     const handleInputChange = (e) => setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
     const handleAddSubmit = (e) => {
         e.preventDefault();
@@ -67,6 +95,11 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
     const renderProductRow = (product) => {
         const isEditing = editingId === product.id;
+
+        const variants = productVariants.filter(v => v.productId === product.id).sort((a, b) => b.gauge - a.gauge);
+        const hasVariants = variants.length > 0;
+        const isExpanded = expandedProducts.has(product.id);
+
         let stratList = 0, stratNet = 0, stratMargin = 0;
         const currentMargin = calculateMargin(product.price, product.cost);
 
@@ -78,51 +111,151 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
         } else { stratMargin = currentMargin; }
 
         return (
-            <tr key={product.id}>
-                {isEditing ? (
-                    <>
-                        <td style={styles.td}><select name="category" value={editFormData.category} onChange={handleInputChange} style={styles.input}>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></td>
-                        <td style={styles.td}><input type="text" name="vendor" value={editFormData.vendor} onChange={handleInputChange} style={{...styles.input, width: '90px'}} /></td>
-                        <td style={styles.td}><input type="text" name="itemCode" value={editFormData.itemCode} onChange={handleInputChange} style={{...styles.input, width: '100px'}} /></td>
-                        <td style={styles.td}><input type="text" name="name" value={editFormData.name} onChange={handleInputChange} style={styles.input} autoFocus /></td>
-                        <td style={styles.td}><input type="number" name="cost" value={editFormData.cost} onChange={handleInputChange} style={{...styles.input, width: '80px', textAlign: 'right'}} /></td>
-                        <td style={styles.td}><input type="number" name="unitCost" value={editFormData.unitCost} onChange={handleInputChange} style={{...styles.input, width: '80px', textAlign: 'right'}} disabled /></td>
-                        <td style={styles.td}><input type="number" name="price" value={editFormData.price} onChange={handleInputChange} style={{...styles.input, width: '80px', textAlign: 'right'}} /></td>
-                        <td style={styles.td}>-</td>
-                        {previewTier.tier && <><td colSpan="3" style={styles.td}>-</td></>}
-                        <td style={{...styles.td, textAlign: 'center'}}>
-                            <button onClick={() => handleSaveClick(product.id)} style={styles.actionTextBtn}>Save</button>
-                            <button onClick={handleCancelEdit} style={styles.dangerTextBtn}>Cancel</button>
-                        </td>
-                    </>
-                ) : (
-                    <>
-                        <td style={{...styles.td, color: 'var(--text-secondary)', fontSize: '0.85rem'}}>{product.category}</td>
-                        <td style={{...styles.td, color: 'var(--text-secondary)', fontSize: '0.85rem'}}>{product.vendor}</td>
-                        <td style={{...styles.td, fontFamily: 'monospace', color: 'var(--text-muted)'}}>{product.itemCode}</td>
-                        <td style={{...styles.td, fontWeight: 'bold'}}>{product.name}</td>
-                        <td style={{...styles.td, textAlign: 'right', fontWeight: '500'}}>{formatCurrency(product.cost)}</td>
-                        <td style={{...styles.td, textAlign: 'right', color: 'var(--text-muted)'}}>{product.unitCost ? formatCurrency(product.unitCost) : '-'}</td>
-                        <td style={{...styles.td, textAlign: 'right', fontWeight: 'bold'}}>{formatCurrency(product.price)}</td>
-                        <td style={{...styles.td, textAlign: 'center'}}>
-                            <span style={currentMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(currentMargin)}</span>
-                        </td>
-                        {previewTier.tier && (
-                            <>
-                                <td style={{...styles.td, textAlign: 'right', fontWeight: '500', backgroundColor: '#f8fafc'}}>{formatCurrency(stratList)}</td>
-                                <td style={{...styles.td, textAlign: 'right', fontWeight: 'bold', color: 'var(--primary-color)', backgroundColor: '#f8fafc'}}>{formatCurrency(stratNet)}</td>
-                                <td style={{...styles.td, textAlign: 'right', backgroundColor: '#f8fafc'}}>
-                                    <span style={stratMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(stratMargin)}</span>
-                                </td>
-                            </>
-                        )}
-                        <td style={{...styles.td, textAlign: 'center'}}>
-                            <button onClick={() => handleEditClick(product)} style={styles.actionTextBtn}>Edit</button>
-                            <button onClick={() => onDeleteProduct(product.id)} style={styles.dangerTextBtn}>Delete</button>
-                        </td>
-                    </>
-                )}
-            </tr>
+            <React.Fragment key={product.id}>
+                <tr>
+                    {isEditing ? (
+                        <>
+                            <td style={styles.td}><select name="category" value={editFormData.category} onChange={handleInputChange} style={styles.input}>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></td>
+                            <td style={styles.td}><input type="text" name="vendor" value={editFormData.vendor} onChange={handleInputChange} style={{ ...styles.input, width: '90px' }} /></td>
+                            <td style={styles.td}><input type="text" name="itemCode" value={editFormData.itemCode} onChange={handleInputChange} style={{ ...styles.input, width: '100px' }} /></td>
+                            <td style={styles.td}><input type="text" name="name" value={editFormData.name} onChange={handleInputChange} style={styles.input} autoFocus /></td>
+                            <td style={styles.td}><input type="number" name="cost" value={editFormData.cost} onChange={handleInputChange} style={{ ...styles.input, width: '80px', textAlign: 'right' }} /></td>
+                            <td style={styles.td}><input type="number" name="unitCost" value={editFormData.unitCost} onChange={handleInputChange} style={{ ...styles.input, width: '80px', textAlign: 'right' }} disabled /></td>
+                            <td style={styles.td}><input type="number" name="price" value={editFormData.price} onChange={handleInputChange} style={{ ...styles.input, width: '80px', textAlign: 'right' }} /></td>
+                            <td style={styles.td}>-</td>
+                            {previewTier.tier && <><td colSpan="3" style={styles.td}>-</td></>}
+                            <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <button onClick={() => handleSaveClick(product.id)} style={styles.actionTextBtn}>Save</button>
+                                <button onClick={handleCancelEdit} style={styles.dangerTextBtn}>Cancel</button>
+                            </td>
+                        </>
+                    ) : (
+                        <>
+                            <td style={{ ...styles.td, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{product.category}</td>
+                            <td style={{ ...styles.td, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{product.vendor}</td>
+                            <td style={{ ...styles.td, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{product.itemCode}</td>
+                            <td style={{ ...styles.td, fontWeight: 'bold' }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    {hasVariants && (
+                                        <button
+                                            onClick={() => toggleExpand(product.id)}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem', color: 'var(--primary-color)' }}
+                                        >
+                                            {isExpanded ? '▼' : '▶'}
+                                        </button>
+                                    )}
+                                    {product.name}
+                                </div>
+                            </td>
+                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500' }}>{formatCurrency(product.cost)}</td>
+                            <td style={{ ...styles.td, textAlign: 'right', color: 'var(--text-muted)' }}>{product.unitCost ? formatCurrency(product.unitCost) : '-'}</td>
+                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(product.price)}</td>
+                            <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <span style={currentMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(currentMargin)}</span>
+                            </td>
+                            {previewTier.tier && (
+                                <>
+                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500', backgroundColor: '#f8fafc' }}>{formatCurrency(stratList)}</td>
+                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold', color: 'var(--primary-color)', backgroundColor: '#f8fafc' }}>{formatCurrency(stratNet)}</td>
+                                    <td style={{ ...styles.td, textAlign: 'right', backgroundColor: '#f8fafc' }}>
+                                        <span style={stratMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(stratMargin)}</span>
+                                    </td>
+                                </>
+                            )}
+                            <td style={{ ...styles.td, textAlign: 'center' }}>
+                                <button onClick={() => handleEditClick(product)} style={styles.actionTextBtn}>Edit</button>
+                                <button onClick={() => onDeleteProduct(product.id)} style={styles.dangerTextBtn}>Delete</button>
+                            </td>
+                        </>
+                    )}
+                </tr>
+                {hasVariants && isExpanded && variants.map(variant => {
+                    const isVarEditing = editingVariantId === variant.id;
+
+                    // calculate variant pricing
+                    // price calculation logic based on weight ratios or overrides
+                    const baseWeight = parseFloat(product.weight_lbs_ft) || 2.0;
+                    const vWeight = parseFloat(variant.weight) || 0;
+
+                    let finalPrice = product.price;
+                    let finalCost = product.cost;
+
+                    if (variant.priceOverride != null && variant.priceOverride > 0) {
+                        finalPrice = parseFloat(variant.priceOverride);
+                    } else if (baseWeight > 0 && vWeight > 0) {
+                        finalPrice = (parseFloat(product.price) || 0) * (vWeight / baseWeight);
+                    }
+
+                    // Cost: Override > Weight Ratio
+                    if (variant.costOverride != null && variant.costOverride > 0) {
+                        finalCost = parseFloat(variant.costOverride);
+                    } else if (baseWeight > 0 && vWeight > 0) {
+                        finalCost = (parseFloat(product.cost) || 0) * (vWeight / baseWeight);
+                    }
+
+                    const varMargin = calculateMargin(finalPrice, finalCost);
+
+                    let varStratList = 0, varStratNet = 0, varStratMargin = 0;
+                    if (previewTier.tier && pricingStrategy) {
+                        let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
+                        varStratList = calculateListPrice(finalCost, groupName, pricingStrategy.listMultipliers);
+                        varStratNet = calculateNetPrice(varStratList, previewTier.group, previewTier.tier, groupName, pricingStrategy);
+                        varStratMargin = calculateMargin(varStratNet, finalCost);
+                    } else { varStratMargin = varMargin; }
+
+                    return (
+                        <tr key={variant.id} style={{ backgroundColor: '#fbfdf8', borderLeft: '3px solid var(--border-strong)' }}>
+                            {isVarEditing ? (
+                                <>
+                                    <td colSpan="4" style={{ ...styles.td, paddingLeft: '2rem' }}>
+                                        <span style={{ color: 'var(--text-muted)', fontWeight: 'bold' }}>↳ {variant.gauge} Gauge Variant</span>
+                                    </td>
+                                    <td style={{ ...styles.td, textAlign: 'right' }}>
+                                        <input type="number" name="costOverride" value={editVariantFormData.costOverride || ''} placeholder="Auto" onChange={handleVariantInputChange} style={{ ...styles.input, width: '80px', textAlign: 'right' }} />
+                                    </td>
+                                    <td style={styles.td}></td>
+                                    <td style={{ ...styles.td, textAlign: 'right' }}>
+                                        <input type="number" name="priceOverride" value={editVariantFormData.priceOverride || ''} placeholder="Auto" onChange={handleVariantInputChange} style={{ ...styles.input, width: '80px', textAlign: 'right' }} />
+                                    </td>
+                                    <td style={styles.td}></td>
+                                    {previewTier.tier && <><td colSpan="3" style={styles.td}>-</td></>}
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                                        <button onClick={() => handleVariantSaveClick(variant.id)} style={styles.actionTextBtn}>Save</button>
+                                        <button onClick={handleVariantCancelEdit} style={styles.dangerTextBtn}>Cancel</button>
+                                    </td>
+                                </>
+                            ) : (
+                                <>
+                                    <td style={{ ...styles.td, paddingLeft: '2rem' }} colSpan="3">
+                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>↳ Variant: {variant.gauge} Gauge</span>
+                                    </td>
+                                    <td style={{ ...styles.td, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                        Weight: {vWeight.toFixed(2)} lbs/ft
+                                    </td>
+                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500', color: variant.costOverride ? 'var(--dark-blue)' : 'var(--text-muted)' }}>{formatCurrency(finalCost)}</td>
+                                    <td style={{ ...styles.td, textAlign: 'right', color: 'var(--text-muted)' }}>-</td>
+                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold', color: variant.priceOverride ? 'var(--dark-blue)' : 'var(--text-muted)' }}>{formatCurrency(finalPrice)}</td>
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                                        <span style={varMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varMargin)}</span>
+                                    </td>
+                                    {previewTier.tier && (
+                                        <>
+                                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500', backgroundColor: '#e2e8f0' }}>{formatCurrency(varStratList)}</td>
+                                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold', color: 'var(--primary-color)', backgroundColor: '#e2e8f0' }}>{formatCurrency(varStratNet)}</td>
+                                            <td style={{ ...styles.td, textAlign: 'right', backgroundColor: '#e2e8f0' }}>
+                                                <span style={varStratMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varStratMargin)}</span>
+                                            </td>
+                                        </>
+                                    )}
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                                        <button onClick={() => handleVariantEditClick(variant)} style={{ ...styles.actionTextBtn, fontSize: '0.8rem' }}>Override</button>
+                                    </td>
+                                </>
+                            )}
+                        </tr>
+                    )
+                })}
+            </React.Fragment>
         );
     };
 
@@ -160,8 +293,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end', flex: '1', justifyContent: 'flex-end' }}>
                         <div style={styles.filterGroup}>
-                            <label style={{...styles.label, color: 'var(--primary-color)'}}>Strategy Projection</label>
-                            <select style={{...styles.input, backgroundColor: 'var(--primary-light)', borderColor: '#bfdbfe', fontWeight: 'bold', color: 'var(--dark-blue)'}} value={`${previewTier.group}|${previewTier.tier}`} onChange={(e) => {
+                            <label style={{ ...styles.label, color: 'var(--primary-color)' }}>Strategy Projection</label>
+                            <select style={{ ...styles.input, backgroundColor: 'var(--primary-light)', borderColor: '#bfdbfe', fontWeight: 'bold', color: 'var(--dark-blue)' }} value={`${previewTier.group}|${previewTier.tier}`} onChange={(e) => {
                                 const [g, t] = e.target.value.split('|'); setPreviewTier({ group: g, tier: t });
                             }}>
                                 <option value="|">-- Active Real-world Data --</option>
@@ -200,22 +333,22 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     <table style={styles.table}>
                         <thead>
                             <tr style={{ backgroundColor: 'var(--bg-page)' }}>
-                                <th style={{...styles.th, width: '12%'}}>Category</th>
-                                <th style={{...styles.th, width: '8%'}}>Vendor</th>
-                                <th style={{...styles.th, width: '10%'}}>SKU</th>
-                                <th style={{...styles.th, width: '22%'}}>Asset Name</th>
-                                {!isManager && <th style={{...styles.th, textAlign: 'right', width: '8%'}}>Cost</th>}
-                                {!isManager && <th style={{...styles.th, textAlign: 'right', width: '8%'}}>Unit</th>}
-                                <th style={{...styles.th, textAlign: 'right', width: '8%'}}>List Price</th>
-                                <th style={{...styles.th, textAlign: 'center', width: '8%'}}>Margin</th>
+                                <th style={{ ...styles.th, width: '12%' }}>Category</th>
+                                <th style={{ ...styles.th, width: '8%' }}>Vendor</th>
+                                <th style={{ ...styles.th, width: '10%' }}>SKU</th>
+                                <th style={{ ...styles.th, width: '22%' }}>Asset Name</th>
+                                {!isManager && <th style={{ ...styles.th, textAlign: 'right', width: '8%' }}>Cost</th>}
+                                {!isManager && <th style={{ ...styles.th, textAlign: 'right', width: '8%' }}>Unit</th>}
+                                <th style={{ ...styles.th, textAlign: 'right', width: '8%' }}>List Price</th>
+                                <th style={{ ...styles.th, textAlign: 'center', width: '8%' }}>Margin</th>
                                 {previewTier.tier && (
                                     <>
-                                        <th style={{...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', width: '9%'}}>Proj. List</th>
-                                        {!isManager && <th style={{...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', color: 'var(--primary-color)', width: '9%'}}>Proj. Net</th>}
-                                        {!isManager && <th style={{...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', width: '8%'}}>Strat. Margin</th>}
+                                        <th style={{ ...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', width: '9%' }}>Proj. List</th>
+                                        {!isManager && <th style={{ ...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', color: 'var(--primary-color)', width: '9%' }}>Proj. Net</th>}
+                                        {!isManager && <th style={{ ...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', width: '8%' }}>Strat. Margin</th>}
                                     </>
                                 )}
-                                {!isManager && <th style={{...styles.th, textAlign: 'center'}}>Actions</th>}
+                                {!isManager && <th style={{ ...styles.th, textAlign: 'center' }}>Actions</th>}
                             </tr>
                         </thead>
                         <tbody>

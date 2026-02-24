@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { formatCurrency, formatPercent } from '../utils/pricingEngine';
+import { useAuth } from '../contexts/AuthContext';
 
 const SalesDataManager = ({ customers, salesTransactions = [], categories, onDeleteCustomer, onDeleteCategory, onBatchDeleteSales, onUpdateSale, onAddSale, onDeleteSale }) => {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [deleteId, setDeleteId] = useState(null);
     const [deleteCategory, setDeleteCategory] = useState(null);
     const [viewMode, setViewMode] = useState('category'); // 'category' | 'customer'
@@ -141,12 +144,12 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                     </div>
 
                     <div style={styles.headerActions}>
-                        {viewMode === 'customer' && selectedId && (
+                        {canEdit && viewMode === 'customer' && selectedId && (
                             <button onClick={() => setDeleteId(selectedId)} style={styles.dangerBtn}>
                                 Clear Sales Data
                             </button>
                         )}
-                        {viewMode === 'category' && selectedId && onDeleteCategory && (
+                        {canEdit && viewMode === 'category' && selectedId && onDeleteCategory && (
                             <button onClick={() => setDeleteCategory(selectedId)} style={styles.dangerBtn}>
                                 Clear Category Data
                             </button>
@@ -204,7 +207,7 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                                 <div style={styles.statLabel}>Total spend for <strong style={{color: '#0f172a'}}>{selectedId}</strong></div>
                                 <div style={styles.statValue}>{formatCurrency(stats.total)}</div>
                             </div>
-                            {onAddSale && (
+                            {canEdit && onAddSale && (
                                 <button 
                                     onClick={() => {
                                         setNewSale({ customerName: viewMode === 'customer' ? selectedId : '', category: viewMode === 'category' ? selectedId : '', amount: 0, cogs: 0 });
@@ -269,12 +272,14 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                                                                                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: '500' }}>{formatCurrency(tx.amount)}</td>
                                                                                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right', color: '#64748b' }}>{formatCurrency(tx.cogs || 0)}</td>
                                                                                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
-                                                                                        <button 
-                                                                                            onClick={() => setEditTx(tx)}
-                                                                                            style={{ color: '#2563EB', fontWeight: '600', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                                                                        >
-                                                                                            Edit
-                                                                                        </button>
+                                                                                        {canEdit && (
+                                                                                            <button 
+                                                                                                onClick={() => setEditTx(tx)}
+                                                                                                style={{ color: '#2563EB', fontWeight: '600', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                                                                            >
+                                                                                                Edit
+                                                                                            </button>
+                                                                                        )}
                                                                                     </td>
                                                                                 </tr>
                                                                             ))}
@@ -326,10 +331,10 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
-                                <button onClick={() => { if (onDeleteSale) onDeleteSale(editTx.id); setEditTx(null); }} style={styles.dangerBtn}>Delete Record</button>
+                                {canEdit && <button onClick={() => { if (onDeleteSale) onDeleteSale(editTx.id); setEditTx(null); }} style={styles.dangerBtn}>Delete Record</button>}
                                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                                     <button onClick={() => setEditTx(null)} style={styles.outlineBtn}>Cancel</button>
-                                    <button onClick={() => { if (onUpdateSale) onUpdateSale(editTx.id, { amount: editTx.amount, category: editTx.category, cogs: editTx.cogs }); setEditTx(null); }} style={styles.primaryBtn}>Save Changes</button>
+                                    {canEdit && <button onClick={() => { if (onUpdateSale) onUpdateSale(editTx.id, { amount: editTx.amount, category: editTx.category, cogs: editTx.cogs }); setEditTx(null); }} style={styles.primaryBtn}>Save Changes</button>}
                                 </div>
                             </div>
                         </div>

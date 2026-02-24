@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { calculateCategoryMargin, formatCurrency, formatPercent, getCategoryGroup } from '../utils/pricingEngine';
+import { useAuth } from '../contexts/AuthContext';
 
 const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDeleteCategory, onRestoreDefaults, onSwapCategories }) => {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [editingId, setEditingId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
     const [showAddForm, setShowAddForm] = useState(false);
@@ -119,23 +122,25 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                     </div>
 
                     <div style={styles.headerActions}>
-                        {categories.length === 0 && (
+                        {canEdit && categories.length === 0 && (
                             <button onClick={onRestoreDefaults} style={styles.primaryBtn}>
                                 ⟳ Load Default Categories
                             </button>
                         )}
-                        <button 
-                            onClick={() => setShowAddForm(!showAddForm)}
-                            style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
-                        >
-                            {showAddForm ? 'Cancel Creation' : '+ Add Category'}
-                        </button>
+                        {canEdit && (
+                            <button 
+                                onClick={() => setShowAddForm(!showAddForm)}
+                                style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
+                            >
+                                {showAddForm ? 'Cancel Creation' : '+ Add Category'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 <div style={styles.card}>
                     {/* Add Form Insert */}
-                    {showAddForm && (
+                    {showAddForm && canEdit && (
                         <div style={{ padding: '2rem', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', backgroundColor: '#f8fafc' }}>
                             <form onSubmit={handleAdd} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
                                 <div><label style={styles.inputLabel}>Category Name</label><input type="text" name="name" style={styles.inputField} value={newCategory.name} onChange={handleChange} autoFocus required /></div>
@@ -182,7 +187,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                             const margin = calculateCategoryMargin(cat);
                                             const totalRevenue = categories.reduce((sum, c) => sum + (c.revenue || 0), 0);
                                             const salesMix = totalRevenue > 0 ? (cat.revenue || 0) / totalRevenue : 0;
-                                            const isEditing = editingId === cat.id;
+                                            const isEditing = editingId === cat.id && canEdit;
 
                                             // Swap Logic
                                             const canMoveUp = index > 0;
@@ -229,11 +234,11 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                                 </span>
                                                             </td>
                                                             <td style={{...styles.td, display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center'}}>
-                                                                <button style={styles.actionTextBtn} onClick={() => handleEditClick(cat)}>Edit</button>
-                                                                <button style={styles.dangerTextBtn} onClick={() => onDeleteCategory(cat.id)}>Delete</button>
+                                                                {canEdit && <button style={styles.actionTextBtn} onClick={() => handleEditClick(cat)}>Edit</button>}
+                                                                {canEdit && <button style={styles.dangerTextBtn} onClick={() => onDeleteCategory(cat.id)}>Delete</button>}
 
                                                                 {/* Reordering Arrows (Premium SVGs) */}
-                                                                {onSwapCategories && (
+                                                                {canEdit && onSwapCategories && (
                                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginLeft: '0.5rem', borderLeft: '1px solid #e2e8f0', paddingLeft: '0.5rem' }}>
                                                                         <button
                                                                             type="button"

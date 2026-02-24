@@ -1,6 +1,9 @@
 import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminSettings = ({ globalSettings, onUpdateSetting }) => {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     // Premium SaaS UI Variables
     const styles = {
         pageWrapper: { width: '100%', minHeight: '100%' },
@@ -52,6 +55,7 @@ const AdminSettings = ({ globalSettings, onUpdateSetting }) => {
                                     value={globalSettings.global_multiplier || 1.5}
                                     onChange={(e) => onUpdateSetting('global_multiplier', parseFloat(e.target.value))}
                                     style={styles.inputField}
+                                    disabled={!canEdit}
                                 />
                                 <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#94a3b8' }}>x</span>
                             </div>

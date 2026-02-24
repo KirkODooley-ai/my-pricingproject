@@ -6,6 +6,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
     const { user } = useAuth();
     const isManager = user?.role === 'manager';
     const isAnalyst = user?.role === 'analyst';
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
 
     // UI State
     const [activeTab, setActiveTab] = useState('markup'); // 'markup' | 'discounts'
@@ -141,7 +142,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                             <button style={styles.tabBtn(activeTab === 'discounts')} onClick={() => setActiveTab('discounts')}>Tier Discounts</button>
                         </div>
 
-                        {!isManager && (
+                        {!isManager && canEdit && (
                             <button
                                 onClick={onSave}
                                 style={{...styles.primaryBtn, backgroundColor: isAnalyst ? '#f59e0b' : '#2563EB', display: 'flex', alignItems: 'center', gap: '0.5rem'}}
@@ -304,7 +305,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                     </button>
                                 </div>
 
-                                {!isManager && (
+                                {!isManager && canEdit && (
                                     <button onClick={handleAutoCalculate} style={{...styles.outlineBtn, borderColor: '#cbd5e1', color: '#0f172a'}}>
                                         ⚡ Auto-Align to Historic Data
                                     </button>

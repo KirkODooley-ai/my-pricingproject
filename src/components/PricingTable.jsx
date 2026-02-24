@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {} }) => {
     const { user } = useAuth();
     const isManager = user?.role === 'manager';
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [editingId, setEditingId] = useState(null);
     const [activeCategory, setActiveCategory] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -131,7 +132,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
         return (
             <React.Fragment key={product.id}>
             <tr style={{ backgroundColor: isExpanded ? '#fafbfc' : 'transparent'}}>
-                {isEditing ? (
+                {isEditing && canEdit ? (
                     <>
                         <td style={styles.td}><select name="category" value={editFormData.category} onChange={handleInputChange} style={styles.inputField}>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></td>
                         <td style={styles.td}><input type="text" name="itemCode" value={editFormData.itemCode} onChange={handleInputChange} style={{...styles.inputField, width: '90px'}} /></td>
@@ -177,8 +178,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                             </>
                         )}
                         <td style={{...styles.td, textAlign: 'center'}}>
-                            <button onClick={() => handleEditClick(product)} style={styles.actionTextBtn}>Edit</button>
-                            <button onClick={() => onDeleteProduct(product.id)} style={styles.dangerTextBtn}>Delete</button>
+                            {canEdit && (
+                                <>
+                                    <button onClick={() => handleEditClick(product)} style={styles.actionTextBtn}>Edit</button>
+                                    <button onClick={() => onDeleteProduct(product.id)} style={styles.dangerTextBtn}>Delete</button>
+                                </>
+                            )}
                         </td>
                     </>
                 )}
@@ -210,7 +215,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     
                     return (
                         <tr key={variant.id} style={{ backgroundColor: '#f8fafc', borderLeft: '3px solid #cbd5e1' }}>
-                            {isVarEditing ? (
+                            {isVarEditing && canEdit ? (
                                 <>
                                     <td colSpan="3" style={{...styles.td, paddingLeft: '3rem'}}>
                                         <span style={{color: '#64748b', fontWeight: '500'}}>↳ {variant.gauge} Gauge Variant</span>
@@ -246,7 +251,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                         </>
                                     )}
                                     <td style={{...styles.td, textAlign: 'center'}}>
-                                        <button onClick={() => handleVariantEditClick(variant)} style={{...styles.actionTextBtn, fontSize: '0.8rem'}}>Override</button>
+                                        {canEdit && <button onClick={() => handleVariantEditClick(variant)} style={{...styles.actionTextBtn, fontSize: '0.8rem'}}>Override</button>}
                                     </td>
                                 </>
                             )}
@@ -270,7 +275,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     </div>
 
                     <div style={styles.headerActions}>
-                        {!isManager && (
+                        {!isManager && canEdit && (
                             <button 
                                 onClick={() => setShowAddForm(!showAddForm)}
                                 style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
@@ -336,7 +341,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         </div>
 
                         {/* Add Form Insert */}
-                        {showAddForm && (
+                        {showAddForm && canEdit && (
                             <div style={{ padding: '2rem', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', backgroundColor: '#f8fafc' }}>
                                 <form onSubmit={handleAddSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'end' }}>
                                     <div><label style={styles.inputLabel}>Categorization</label><select style={styles.inputField} value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}><option value="">Select Category</option>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div>

@@ -7,8 +7,11 @@ import {
     getListMultiplier,
     formatPercent
 } from '../utils/pricingEngine';
+import { useAuth } from '../contexts/AuthContext';
 
 const MarginAlerts = ({ strategy, setStrategy, categories }) => {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [sortConfig, setSortConfig] = useState({ key: 'marginDiff', direction: 'ascending' });
 
     // Handler: Recalibrate (Set Net Margin to Floor + 3%)
@@ -201,7 +204,7 @@ const MarginAlerts = ({ strategy, setStrategy, categories }) => {
                                         <td style={{...styles.td, textAlign: 'center'}}>
                                             {row.type === 'LIST_PRICE' ? (
                                                 <button disabled style={styles.disabledBtn}>Maxed (1.0x)</button>
-                                            ) : (
+                                            ) : canEdit ? (
                                                 <button
                                                     onClick={() => handleRecalibrate(row)}
                                                     style={styles.primaryBtn}
@@ -211,6 +214,8 @@ const MarginAlerts = ({ strategy, setStrategy, categories }) => {
                                                 >
                                                     <span style={{fontSize: '1rem'}}>🔧</span> Recalibrate
                                                 </button>
+                                            ) : (
+                                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>—</span>
                                             )}
                                         </td>
                                     </tr>

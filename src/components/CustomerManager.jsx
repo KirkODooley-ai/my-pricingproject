@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { calculateTier, formatCurrency, CUSTOMER_GROUPS } from '../utils/pricingEngine';
+import { useAuth } from '../contexts/AuthContext';
 
 const getTierBadgeStyles = (tierName) => {
     const name = (tierName || '').toLowerCase();
@@ -13,6 +14,8 @@ const getTierBadgeStyles = (tierName) => {
 };
 
 const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteCustomer }) => {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [activeTab, setActiveTab] = useState(CUSTOMER_GROUPS.DEALER);
     const [showAddForm, setShowAddForm] = useState(false);
     
@@ -111,12 +114,14 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                     </div>
 
                     <div style={styles.headerActions}>
-                        <button 
-                            onClick={() => setShowAddForm(!showAddForm)}
-                            style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
-                        >
-                            {showAddForm ? 'Cancel Creation' : '+ New Customer'}
-                        </button>
+                        {canEdit && (
+                            <button 
+                                onClick={() => setShowAddForm(!showAddForm)}
+                                style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
+                            >
+                                {showAddForm ? 'Cancel Creation' : '+ New Customer'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -153,7 +158,7 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                         </div>
 
                         {/* Add Form Insert */}
-                        {showAddForm && (
+                        {showAddForm && canEdit && (
                             <div style={{ padding: '2rem', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', backgroundColor: '#f8fafc' }}>
                                 <form onSubmit={handleAdd} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'end' }}>
                                     <div style={{ gridColumn: 'span 2' }}>
@@ -213,6 +218,7 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                                 <tr key={customer.id}>
                                                     <td style={{...styles.td, fontWeight: '500'}}>{customer.name}</td>
                                                     <td style={{...styles.td, textAlign: 'center'}}>
+                                                        {canEdit ? (
                                                         <select
                                                             value={customer.territory || 'Other'}
                                                             onChange={(e) => onUpdateCustomer(customer.id, { territory: e.target.value })}
@@ -235,6 +241,9 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                                             <option value="ON">ON</option>
                                                             <option value="Other">Other</option>
                                                         </select>
+                                                        ) : (
+                                                            <span style={{ fontWeight: '500', color: '#475569' }}>{customer.territory || 'Other'}</span>
+                                                        )}
                                                     </td>
                                                     <td style={{...styles.td, textAlign: 'right', fontWeight: '600'}}>{formatCurrency(customer.annualSpend)}</td>
                                                     <td style={styles.td}>
@@ -243,12 +252,14 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                                         </span>
                                                     </td>
                                                     <td style={{...styles.td, textAlign: 'center'}}>
-                                                        <button 
-                                                            style={styles.dangerTextBtn}
-                                                            onClick={() => onDeleteCustomer(customer.id)}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        {canEdit && (
+                                                            <button 
+                                                                style={styles.dangerTextBtn}
+                                                                onClick={() => onDeleteCustomer(customer.id)}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             );

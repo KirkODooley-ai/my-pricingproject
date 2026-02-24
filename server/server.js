@@ -27,6 +27,14 @@ const authenticateToken = (req, res, next) => {
         next();
     });
 };
+
+// [NEW] Master Gate: Block POST/PUT/PATCH/DELETE if can_edit is false (Admins bypass)
+const requireCanEdit = (req, res, next) => {
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+    if (req.user?.role === 'admin') return next();
+    if (req.user?.can_edit === true) return next();
+    return res.status(403).json({ error: 'You do not have permission to make changes.' });
+};
 // [NEW] Login Route
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
@@ -44,13 +52,15 @@ app.post('/api/auth/login', async (req, res) => {
             if (user.role === 'admin' && perms.length === 0) {
                 perms = ['view_costs', 'edit_pricing', 'submit_proposals', 'approve_proposals', 'manage_users', 'view_all_regions', 'view_variance_report', 'view_margin_alerts', 'view_transition_analysis', 'import_data'];
             }
-            // Create Token (include permissions so backend can enforce granular checks)
+            // can_edit: Admins always true; others use DB value (default false if column missing)
+            const canEdit = user.role === 'admin' || user.can_edit === true;
+            // Create Token (include can_edit for backend middleware)
             const token = jwt.sign(
-                { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms },
+                { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms, can_edit: canEdit },
                 JWT_SECRET,
                 { expiresIn: '8h' }
             );
-            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms } });
+            res.json({ token, user: { id: user.id, username: user.username, role: user.role, region: user.region, permissions: perms, can_edit: canEdit } });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -174,7 +184,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
 });
 // SAVE DATA
 // [NEW] Proposal Submission (Analyst)
-app.post('/api/proposals', authenticateToken, async (req, res) => {
+app.post('/api/proposals', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         if (req.user.role !== 'analyst') return res.status(403).json({ error: 'Only analysts can submit proposals' });
         const { type, data } = req.body;
@@ -188,7 +198,7 @@ app.post('/api/proposals', authenticateToken, async (req, res) => {
     }
 });
 // [NEW] Proposal Approval (Admin)
-app.post('/api/proposals/:id/approve', authenticateToken, async (req, res) => {
+app.post('/api/proposals/:id/approve', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can approve proposals' });
         const { id } = req.params;
@@ -209,7 +219,7 @@ app.post('/api/proposals/:id/approve', authenticateToken, async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-app.post('/api/save/:type', authenticateToken, async (req, res) => {
+app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) => {
     const { type } = req.params;
     const user = req.user;
     // RBAC: Manager cannot save global strategy
@@ -410,7 +420,7 @@ app.post('/api/save/:type', authenticateToken, async (req, res) => {
 });
 // RESET DATA
 // RESET DATA with BACKUP
-app.post('/api/reset', async (req, res) => {
+app.post('/api/reset', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         // 1. Create System-Wide Backup
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -500,7 +510,7 @@ app.get('/api/settings', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-app.post('/api/settings', async (req, res) => {
+app.post('/api/settings', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         const { key, value } = req.body;
         if (!key || value === undefined) {
@@ -526,7 +536,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
         let result;
         try {
             result = await query(
-                'SELECT id, username, role, region, is_active as "isActive", permissions, created_at as "createdAt" FROM users ORDER BY username'
+                'SELECT id, username, role, region, is_active as "isActive", permissions, COALESCE(can_edit, false) as "canEdit", created_at as "createdAt" FROM users ORDER BY username'
             );
             // Ensure permissions is always an array (pg returns JSONB parsed; handle null/string)
             result.rows = result.rows.map(r => {
@@ -536,11 +546,11 @@ app.get('/api/users', authenticateToken, async (req, res) => {
                 return { ...r, permissions: perms };
             });
         } catch (colErr) {
-            if (colErr.message && (colErr.message.includes('is_active') || colErr.message.includes('permissions'))) {
+            if (colErr.message && (colErr.message.includes('is_active') || colErr.message.includes('permissions') || colErr.message.includes('can_edit'))) {
                 result = await query(
                     'SELECT id, username, role, region, created_at as "createdAt" FROM users ORDER BY username'
                 );
-                result.rows = result.rows.map(r => ({ ...r, isActive: true, permissions: [] }));
+                result.rows = result.rows.map(r => ({ ...r, isActive: true, permissions: [], canEdit: r.role === 'admin' }));
             } else throw colErr;
         }
         res.json(result.rows);
@@ -550,22 +560,23 @@ app.get('/api/users', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/users', authenticateToken, async (req, res) => {
+app.post('/api/users', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can create users' });
-        const { username, password, role, region, permissions } = req.body;
+        const { username, password, role, region, permissions, canEdit } = req.body;
         if (!username || !password || !role) {
             return res.status(400).json({ error: 'Username, password, and role are required' });
         }
         const password_hash = await bcrypt.hash(password, 10);
         const permsJson = JSON.stringify(Array.isArray(permissions) ? permissions : []);
+        const canEditVal = role === 'admin' ? true : !!canEdit;
         try {
             await query(
-                'INSERT INTO users (username, password_hash, role, region, permissions) VALUES ($1, $2, $3, $4, $5::jsonb)',
-                [username.trim(), password_hash, role, region || null, permsJson]
+                'INSERT INTO users (username, password_hash, role, region, permissions, can_edit) VALUES ($1, $2, $3, $4, $5::jsonb, $6)',
+                [username.trim(), password_hash, role, region || null, permsJson, canEditVal]
             );
         } catch (colErr) {
-            if (colErr.message && colErr.message.includes('permissions')) {
+            if (colErr.message && (colErr.message.includes('permissions') || colErr.message.includes('can_edit'))) {
                 await query(
                     'INSERT INTO users (username, password_hash, role, region) VALUES ($1, $2, $3, $4)',
                     [username.trim(), password_hash, role, region || null]
@@ -582,11 +593,11 @@ app.post('/api/users', authenticateToken, async (req, res) => {
 });
 
 // PATCH user (update role, region, permissions, password, is_active)
-app.patch('/api/users/:id', authenticateToken, async (req, res) => {
+app.patch('/api/users/:id', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can update users' });
         const { id } = req.params;
-        const { username, password, role, region, permissions, isActive } = req.body;
+        const { username, password, role, region, permissions, isActive, canEdit } = req.body;
 
         const updates = [];
         const values = [];
@@ -597,6 +608,7 @@ app.patch('/api/users/:id', authenticateToken, async (req, res) => {
         if (region !== undefined) { updates.push(`region = $${idx++}`); values.push(region || null); }
         if (permissions !== undefined) { updates.push(`permissions = $${idx++}::jsonb`); values.push(JSON.stringify(Array.isArray(permissions) ? permissions : [])); }
         if (isActive !== undefined) { updates.push(`is_active = $${idx++}`); values.push(!!isActive); }
+        if (canEdit !== undefined) { updates.push(`can_edit = $${idx++}`); values.push(role === 'admin' ? true : !!canEdit); }
         if (password !== undefined && password !== '') {
             const password_hash = await bcrypt.hash(password, 10);
             updates.push(`password_hash = $${idx++}`);
@@ -625,7 +637,7 @@ app.patch('/api/users/:id', authenticateToken, async (req, res) => {
             await query(fullQuery, values);
         } catch (colErr) {
             const msg = colErr.message || '';
-            if (msg.includes('updated_at') || msg.includes('permissions') || msg.includes('is_active')) {
+            if (msg.includes('updated_at') || msg.includes('permissions') || msg.includes('is_active') || msg.includes('can_edit')) {
                 if (fallbackUpdates.length === 0) {
                     return res.status(400).json({
                         error: 'User management upgrade required. Run: npm run migrate:users'
@@ -648,7 +660,7 @@ app.patch('/api/users/:id', authenticateToken, async (req, res) => {
 });
 
 // DELETE user (requires MANAGE_USERS permission or admin role)
-app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+app.delete('/api/users/:id', authenticateToken, requireCanEdit, async (req, res) => {
     try {
         const canManage = req.user.role === 'admin' || (Array.isArray(req.user.permissions) && req.user.permissions.includes('manage_users'));
         if (!canManage) return res.status(403).json({ error: 'manage_users permission required to delete users' });

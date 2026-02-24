@@ -38,7 +38,8 @@ const UserManagement = () => {
         role: 'analyst',
         region: 'National',
         permissions: [],
-        isActive: true
+        isActive: true,
+        canEdit: false
     });
 
     const loadUsers = async () => {
@@ -79,7 +80,8 @@ const UserManagement = () => {
             role: u.role,
             region: u.region || 'National',
             permissions: Array.isArray(u.permissions) ? [...u.permissions] : [],
-            isActive: u.isActive !== false
+            isActive: u.isActive !== false,
+            canEdit: u.role === 'admin' || u.canEdit === true
         });
         setError('');
         setShowForm(true);
@@ -89,7 +91,7 @@ const UserManagement = () => {
     const closeEdit = () => {
         setEditingUser(null);
         setShowForm(false);
-        setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true });
+        setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], isActive: true, canEdit: false });
         setError('');
     };
 
@@ -112,7 +114,8 @@ const UserManagement = () => {
                     role: form.role,
                     region: form.region === 'National' ? null : form.region,
                     permissions: form.permissions,
-                    isActive: form.isActive
+                    isActive: form.isActive,
+                    canEdit: form.canEdit
                 };
                 if (form.password) payload.password = form.password;
                 await api.updateUser(editingUser.id, payload);
@@ -123,9 +126,10 @@ const UserManagement = () => {
                     password: form.password,
                     role: form.role,
                     region: form.region === 'National' ? null : form.region,
-                    permissions: form.permissions
+                    permissions: form.permissions,
+                    canEdit: form.canEdit
                 });
-                setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [] });
+                setForm({ username: '', password: '', role: 'analyst', region: 'National', permissions: [], canEdit: false });
                 setShowForm(false);
             }
             await loadUsers();
@@ -279,6 +283,25 @@ const UserManagement = () => {
                                         {REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                     </select>
                                 </div>
+                            </div>
+
+                            <div style={{ marginBottom: '2rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: form.role === 'admin' ? 'default' : 'pointer', padding: '1rem', backgroundColor: form.canEdit ? '#ecfdf5' : '#f8fafc', border: `1px solid ${form.canEdit ? '#a7f3d0' : '#e2e8f0'}`, borderRadius: '8px', opacity: form.role === 'admin' ? 0.8 : 1 }}>
+                                    <input 
+                                        type="checkbox" 
+                                        name="canEdit" 
+                                        checked={form.role === 'admin' ? true : form.canEdit} 
+                                        onChange={handleChange} 
+                                        disabled={form.role === 'admin'}
+                                        style={{ width: '1.2rem', height: '1.2rem', cursor: form.role === 'admin' ? 'default' : 'pointer' }}
+                                    />
+                                    <div>
+                                        <span style={{ display: 'block', fontWeight: '600', color: '#0f172a', fontSize: '0.95rem' }}>Can Edit Data</span>
+                                        <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b' }}>
+                                            {form.role === 'admin' ? 'Admins always have edit access.' : 'Allow user to add, edit, delete, and import data.'}
+                                        </span>
+                                    </div>
+                                </label>
                             </div>
 
                             <div style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>

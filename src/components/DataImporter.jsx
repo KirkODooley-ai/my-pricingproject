@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { CUSTOMER_GROUPS } from '../utils/pricingEngine';
+import { useAuth } from '../contexts/AuthContext';
 
 const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, categories = [], fullState, onRestoreState, onClearData }) => {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [importType, setImportType] = useState('products');
     const [status, setStatus] = useState('');
     const [fileName, setFileName] = useState('');
@@ -456,6 +459,7 @@ const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, cate
                 </div>
 
                 {/* Import Controls Card */}
+                {canEdit && (
                 <div style={{...styles.card, borderTop: '4px solid #3b82f6'}}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginBottom: '2.5rem', alignItems: 'flex-end', paddingBottom: '2rem', borderBottom: '1px solid #f1f5f9' }}>
                         <div>
@@ -584,6 +588,7 @@ const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, cate
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* Debugging Info (Collapsed by default visually, but rendered if exists) */}
                 {(debugInfo || mappingDebug) && (
@@ -668,6 +673,7 @@ const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, cate
                 )}
 
                 {/* Data Cleanup Section (Danger Zone) */}
+                {canEdit && (
                 <div style={{ marginTop: '3rem', paddingTop: '2.5rem', borderTop: '1px solid #e2e8f0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                         <h4 style={{ color: '#0f172a', fontSize: '1.1rem', margin: 0, fontWeight: '700' }}>Data Reset Tools</h4>
@@ -718,6 +724,7 @@ const DataImporter = ({ onImportProducts, onImportCustomers, onImportSales, cate
                         </div>
                     )}
                 </div>
+                )}
             </div>
         </div>
     );

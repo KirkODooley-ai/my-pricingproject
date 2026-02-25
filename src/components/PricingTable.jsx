@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS } from '../utils/pricingEngine';
+import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {} }) => {
@@ -148,12 +148,15 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
         let stratList = 0, stratNet = 0, stratMargin = 0;
         const currentMargin = calculateMargin(product.price, product.cost);
-        const floor = product.marginFloor != null ? product.marginFloor : 0.20;
+        const catGroup = getCategoryGroup(product.category || '');
+        const floor = getEffectiveMarginFloor(product, catGroup);
 
         if (previewTier.tier && pricingStrategy) {
             let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
             stratList = calculateListPrice(product.cost, groupName, pricingStrategy.listMultipliers);
-            stratNet = calculateNetPrice(stratList, previewTier.group, previewTier.tier, groupName, pricingStrategy);
+            stratNet = calculateNetPrice(stratList, previewTier.group, previewTier.tier, groupName, pricingStrategy, {
+                cost: product.cost, product, categoryGroup: catGroup
+            });
             stratMargin = calculateMargin(stratNet, product.cost);
         } else { stratMargin = currentMargin; }
 
@@ -222,7 +225,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                 <td style={{...styles.td, textAlign: 'right', fontWeight: '500', backgroundColor: '#f8fafc'}}>{formatCurrency(stratList)}</td>
                                 <td style={{...styles.td, textAlign: 'right', fontWeight: '600', color: '#2563EB', backgroundColor: '#f8fafc'}}>{formatCurrency(stratNet)}</td>
                                 <td style={{...styles.td, textAlign: 'center', backgroundColor: '#f8fafc'}}>
-                                    <span style={stratMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(stratMargin)}</span>
+                                    <span style={stratMargin < floor ? styles.badgeRed : styles.badgeGreen}>{formatPercent(stratMargin)}</span>
                                 </td>
                             </>
                         )}
@@ -255,10 +258,13 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     const varMargin = calculateMargin(finalPrice, finalCost);
                     
                     let varStratList = 0, varStratNet = 0, varStratMargin = 0;
+                    const varFloor = getEffectiveMarginFloor(product, getCategoryGroup(product.category || ''));
                     if (previewTier.tier && pricingStrategy) {
                         let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
                         varStratList = calculateListPrice(finalCost, groupName, pricingStrategy.listMultipliers);
-                        varStratNet = calculateNetPrice(varStratList, previewTier.group, previewTier.tier, groupName, pricingStrategy);
+                        varStratNet = calculateNetPrice(varStratList, previewTier.group, previewTier.tier, groupName, pricingStrategy, {
+                            cost: finalCost, product, categoryGroup: getCategoryGroup(product.category || '')
+                        });
                         varStratMargin = calculateMargin(varStratNet, finalCost);
                     } else { varStratMargin = varMargin; }
                     
@@ -290,13 +296,13 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                     <td style={{...styles.td, color: '#64748b', fontSize: '0.85rem'}}>Weight: {vWeight.toFixed(2)} lbs/ft</td>
                                     <td style={{...styles.td, textAlign: 'right', fontWeight: '500', color: variant.costOverride ? '#0f172a' : '#94a3b8'}}>{formatCurrency(finalCost)}</td>
                                     <td style={{...styles.td, textAlign: 'right', fontWeight: '600', color: variant.priceOverride ? '#0f172a' : '#94a3b8'}}>{formatCurrency(finalPrice)}</td>
-                                    <td style={{...styles.td, textAlign: 'center'}}><span style={varMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varMargin)}</span></td>
+                                    <td style={{...styles.td, textAlign: 'center'}}><span style={varMargin < varFloor ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varMargin)}</span></td>
                                     
                                     {previewTier.tier && (
                                         <>
                                             <td style={{...styles.td, textAlign: 'right', fontWeight: '500', backgroundColor: '#e2e8f0'}}>{formatCurrency(varStratList)}</td>
                                             <td style={{...styles.td, textAlign: 'right', fontWeight: '600', color: '#2563EB', backgroundColor: '#e2e8f0'}}>{formatCurrency(varStratNet)}</td>
-                                            <td style={{...styles.td, textAlign: 'center', backgroundColor: '#e2e8f0'}}><span style={varStratMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varStratMargin)}</span></td>
+                                            <td style={{...styles.td, textAlign: 'center', backgroundColor: '#e2e8f0'}}><span style={varStratMargin < varFloor ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varStratMargin)}</span></td>
                                         </>
                                     )}
                                     <td style={{...styles.td, textAlign: 'center'}}>

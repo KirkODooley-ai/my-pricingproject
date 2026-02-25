@@ -275,32 +275,45 @@ export const calculateListPrice = (baseCost, groupName, multipliers) => {
 }
 
 /**
+ * Returns the effective margin floor for a product.
+ * Uses product-specific marginFloor/margin_floor if set; otherwise falls back to
+ * hard-coded defaults (20% Rolled Goods, 40% Fasteners) via getMarginFloor.
+ * @param {Object} [product] - Product with marginFloor, margin_floor, category
+ * @param {string} [categoryGroup] - Category group name (e.g. 'Large Rolled Panel', 'Fasteners')
+ * @param {number} [tierIndex] - Tier index for getMarginFloor fallback
+ * @param {number} [totalTiers] - Total tiers for getMarginFloor fallback
+ * @returns {number} Effective margin floor (0–1)
+ */
+export const getEffectiveMarginFloor = (product, categoryGroup, tierIndex = 0, totalTiers = 6) => {
+    const dbFloor = product?.marginFloor ?? product?.margin_floor
+    if (dbFloor != null && dbFloor !== '') {
+        const n = parseFloat(dbFloor)
+        if (!Number.isNaN(n)) return n
+    }
+    return getMarginFloor(categoryGroup || getCategoryGroup(product?.category || ''), tierIndex, totalTiers)
+}
+
+/**
  * Calculates the Net Dealer Cost based on List Price and Tier Discount.
+ * If cost and product/categoryGroup are provided, enforces margin floor: the returned price
+ * will not go below cost / (1 - marginFloor), so margin never drops below the floor.
  * @param {number} listPrice 
  * @param {string} customerGroup - 'Dealer' or 'Commercial'
  * @param {string} tierName - e.g. 'Authorized Obsidian'
  * @param {string} productGroup - e.g. 'Fasteners' or 'Default'
  * @param {Object} strategy - Full pricingStrategy object
+ * @param {Object} [options] - Optional: { cost, product, categoryGroup } to enforce margin floor
  */
-export const calculateNetPrice = (listPrice, customerGroup, tierName, productGroup, strategy) => {
+export const calculateNetPrice = (listPrice, customerGroup, tierName, productGroup, strategy, options) => {
     // 1. Find the Tier Config
-    const tierConfig = strategy.tierMultipliers[customerGroup]?.[tierName]
+    const tierConfig = strategy?.tierMultipliers?.[customerGroup]?.[tierName]
 
     // 2. Determine Discount Multiplier (Default to 1.0/No Discount if missing)
     let discountMultiplier = 1.0
     if (tierConfig) {
-        // [NEW] Check for Variant/Product Specific Key first (if passed in productGroup)
-        // If productGroup is "Category:Gauge", it checks that first.
-        // If not found, it checks "Category".
-        // HOWEVER, caller usually passes "Category". 
-        // We should encourage passing correct key or handling lookup here?
-        // Since productGroup is just a string key, we rely on Caller to pass "FC36:29" if they want variant lookup.
-        // But if they pass "FC36:29" and it's missing, we must fallback to "FC36".
-
         if (tierConfig[productGroup] !== undefined) {
             discountMultiplier = tierConfig[productGroup]
-        } else if (productGroup.includes(':')) {
-            // Fallback to Base Category
+        } else if (productGroup && productGroup.includes(':')) {
             const [cat] = productGroup.split(':')
             discountMultiplier = tierConfig[cat] ?? tierConfig['Default'] ?? 1.0
         } else {
@@ -308,7 +321,19 @@ export const calculateNetPrice = (listPrice, customerGroup, tierName, productGro
         }
     }
 
-    return listPrice * discountMultiplier
+    let netPrice = listPrice * discountMultiplier
+
+    // 3. Enforce product-specific margin floor: lock price at floor if discount would go below
+    if (options && typeof options.cost === 'number' && options.cost >= 0) {
+        const catGroup = options.categoryGroup || (options.product?.category ? getCategoryGroup(options.product.category) : 'Parts')
+        const floor = getEffectiveMarginFloor(options.product || {}, catGroup)
+        const minPrice = calculatePriceFromMargin(options.cost, floor)
+        if (minPrice > 0 && netPrice < minPrice) {
+            netPrice = minPrice
+        }
+    }
+
+    return netPrice
 }
 
 // [NEW] Phase 17: Fastener Sub-Category Logic

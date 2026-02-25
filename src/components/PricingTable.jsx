@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS } from '../utils/pricingEngine';
+import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, isGaugeEnabledCategory } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {}, marginRules = [] }) => {
@@ -132,7 +132,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
     const renderProductRow = (product) => {
         const isEditing = editingId === product.id;
         const variants = productVariants.filter(v => v.productId === product.id).sort((a,b) => b.gauge - a.gauge);
-        const hasVariants = variants.length > 0;
+        const isGaugeLine = isGaugeEnabledCategory(product.category);
+        const hasVariants = variants.length > 0 && isGaugeLine;
         const isExpanded = expandedProducts.has(product.id);
 
         let stratList = 0, stratNet = 0, stratMargin = 0;

@@ -352,6 +352,12 @@ export const calculateNetPrice = (listPrice, customerGroup, tierName, productGro
     return netPrice
 }
 
+/** Steel profile lines that use gauge variants (FA, FC36, I9, II6, FR). All others are single-variation. */
+export const GAUGE_ENABLED_CATEGORIES = ['FA', 'FC36', 'I9', 'II6', 'FR']
+
+export const isGaugeEnabledCategory = (category) =>
+    category && GAUGE_ENABLED_CATEGORIES.includes(String(category).trim())
+
 // [NEW] Phase 17: Fastener Sub-Category Logic
 export const FASTENER_TYPES = [
     'Pan Socket Type S', // Specific first

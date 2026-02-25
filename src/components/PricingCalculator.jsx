@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { calculateMargin, formatCurrency, formatPercent } from '../utils/pricingEngine';
+import { calculateMargin, formatCurrency, formatPercent, isGaugeEnabledCategory } from '../utils/pricingEngine';
 
 const PricingCalculator = ({ products, productVariants = [] }) => {
     // --- Mode State ---
@@ -49,8 +49,21 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
         return Array.from(map.values()).sort((a, b) => b.gauge - a.gauge);
     }, [selectedProduct, relevantVariants]);
 
+    const isGaugeProduct = selectedProduct && isGaugeEnabledCategory(selectedProduct.category);
+
     const productMetrics = useMemo(() => {
-        if (!selectedProduct || !selectedGauge) return null;
+        if (!selectedProduct) return null;
+
+        // Non-gauge products: single variation, use product cost/price directly
+        if (!isGaugeProduct) {
+            const price = parseFloat(selectedProduct.price) || 0;
+            const cost = parseFloat(selectedProduct.cost) || 0;
+            const margin = calculateMargin(price, cost);
+            return { price, cost, margin, weight: null, gauge: null };
+        }
+
+        // Gauge products: require gauge selection
+        if (!selectedGauge) return null;
 
         const option = allGaugeOptions.find(o => o.gauge === parseInt(selectedGauge));
         if (!option) return null;
@@ -75,7 +88,7 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
         const margin = calculateMargin(finalPrice, finalCost);
 
         return { price: finalPrice, cost: finalCost, margin, weight: weight, gauge: option.gauge };
-    }, [selectedProduct, selectedGauge, allGaugeOptions]);
+    }, [selectedProduct, selectedGauge, allGaugeOptions, isGaugeProduct]);
 
     const currentMetrics = useMemo(() => {
         if (mode !== 'portfolio') return { revenue: 0, cost: 0, margin: 0 };
@@ -229,30 +242,32 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
                                 </select>
                             </div>
 
-                            <div style={{ width: '320px' }}>
-                                <label style={styles.inputLabel}>Thickness Specification Target</label>
-                                <select
-                                    style={{
-                                        ...styles.inputField, 
-                                        height: '48px', 
-                                        fontWeight: '600',
-                                        backgroundColor: selectedProductId ? '#ffffff' : '#f1f5f9',
-                                        borderColor: selectedProductId ? '#3b82f6' : '#cbd5e1',
-                                        color: selectedProductId ? '#1e3a8a' : '#94a3b8',
-                                        cursor: selectedProductId ? 'pointer' : 'not-allowed'
-                                    }}
-                                    value={selectedGauge}
-                                    onChange={e => setSelectedGauge(e.target.value)}
-                                    disabled={!selectedProductId}
-                                >
-                                    <option value="">{selectedProductId ? 'Select Gauge...' : 'Requires Profile...'}</option>
-                                    {allGaugeOptions.map(opt => (
-                                        <option key={opt.gauge} value={opt.gauge}>
-                                            {opt.gauge} Gauge ({opt.weight.toFixed(3)} lbs/ft)
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {isGaugeProduct && (
+                                <div style={{ width: '320px' }}>
+                                    <label style={styles.inputLabel}>Thickness Specification Target</label>
+                                    <select
+                                        style={{
+                                            ...styles.inputField, 
+                                            height: '48px', 
+                                            fontWeight: '600',
+                                            backgroundColor: selectedProductId ? '#ffffff' : '#f1f5f9',
+                                            borderColor: selectedProductId ? '#3b82f6' : '#cbd5e1',
+                                            color: selectedProductId ? '#1e3a8a' : '#94a3b8',
+                                            cursor: selectedProductId ? 'pointer' : 'not-allowed'
+                                        }}
+                                        value={selectedGauge}
+                                        onChange={e => setSelectedGauge(e.target.value)}
+                                        disabled={!selectedProductId}
+                                    >
+                                        <option value="">{selectedProductId ? 'Select Gauge...' : 'Requires Profile...'}</option>
+                                        {allGaugeOptions.map(opt => (
+                                            <option key={opt.gauge} value={opt.gauge}>
+                                                {opt.gauge} Gauge ({opt.weight?.toFixed?.(3) ?? '—'} lbs/ft)
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                         {productMetrics ? (
@@ -272,8 +287,14 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
                                 <div style={{...styles.statCard, backgroundColor: '#f8fafc'}}>
                                     <span style={styles.statMetricLabel}>Configuration Active</span>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem' }}>
-                                        <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>{productMetrics.gauge} Gauge</span>
-                                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Variant Wt/ft: {productMetrics.weight?.toFixed(3)} lbs</span>
+                                        {productMetrics.gauge != null ? (
+                                            <>
+                                                <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>{productMetrics.gauge} Gauge</span>
+                                                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Variant Wt/ft: {productMetrics.weight?.toFixed(3)} lbs</span>
+                                            </>
+                                        ) : (
+                                            <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#64748b' }}>Single Variation</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -281,7 +302,13 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
                             <div style={{ textAlign: 'center', padding: '6rem 2rem', backgroundColor: '#ffffff', borderRadius: '12px', border: '2px dashed #cbd5e1', color: '#64748b' }}>
                                 <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>📊</div>
                                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Awaiting Selection</h3>
-                                <p style={{ margin: 0, fontSize: '0.95rem' }}>{selectedProductId ? "Select a gauge thickness to compute exact financials." : "Select a product profile to begin price modeling."}</p>
+                                <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                                    {!selectedProductId
+                                        ? "Select a product profile to begin price modeling."
+                                        : isGaugeProduct
+                                            ? "Select a gauge thickness to compute exact financials."
+                                            : "Product selected. Metrics shown above."}
+                                </p>
                             </div>
                         )}
                     </div>

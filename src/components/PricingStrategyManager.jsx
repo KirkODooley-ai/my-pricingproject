@@ -12,7 +12,6 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
     const [activeTab, setActiveTab] = useState('markup'); // 'markup' | 'discounts'
     const [discountActiveGroup, setDiscountActiveGroup] = useState(CUSTOMER_GROUPS.DEALER);
     const [expandedFasteners, setExpandedFasteners] = useState(false);
-    const [expandedMarkupCats, setExpandedMarkupCats] = useState({});
 
     // Gauge options per category - matches Admin/Product pages (only FA, FC36, I9, II6, FR, 12" Forma Loc, 16" Forma Loc)
     const categoryVariantsMap = React.useMemo(() => {
@@ -172,76 +171,74 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                 {cats.sort().map(catName => {
                                                     const variants = categoryVariantsMap[catName] || [];
                                                     const hasVariants = variants.length > 0;
-                                                    const isExpanded = expandedMarkupCats[catName];
 
                                                     return (
                                                         <React.Fragment key={catName}>
-                                                            <tr>
-                                                                <td style={{...styles.td, fontWeight: '500'}}>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                                        {hasVariants ? (
-                                                                            <button
-                                                                                onClick={() => setExpandedMarkupCats(prev => ({ ...prev, [catName]: !prev[catName] }))}
-                                                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#64748b', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
-                                                                            >
-                                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                                                            </button>
-                                                                        ) : (<div style={{ width: '16px' }}></div>)}
+                                                            {hasVariants ? (
+                                                                <>
+                                                                    {/* Gauged category: parent row is header only */}
+                                                                    <tr style={{ backgroundColor: '#f8fafc' }}>
+                                                                        <td colSpan="3" style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0'}}>
+                                                                            {catName}
+                                                                        </td>
+                                                                    </tr>
+                                                                    {/* Explicit sub-rows for every gauge */}
+                                                                    {variants.map(gauge => {
+                                                                        const variantKey = `${catName}:${gauge}`;
+                                                                        const explicitVal = strategy.listMultipliers[variantKey];
+                                                                        const fallbackVal = strategy.listMultipliers[catName] || 1.5;
+                                                                        const currentVal = explicitVal !== undefined ? explicitVal : fallbackVal;
+                                                                        const isOverridden = explicitVal !== undefined;
 
-                                                                        <span>{catName}</span>
-
-                                                                        {catName === 'Fasteners' && (
-                                                                            <button style={styles.actionTextBtn} onClick={() => setExpandedFasteners(!expandedFasteners)}>
-                                                                                {expandedFasteners ? 'Hide Spec' : 'Expand Spec'}
-                                                                            </button>
-                                                                        )}
-                                                                        {hasVariants && !isExpanded && (
-                                                                            <span onClick={() => setExpandedMarkupCats(prev => ({ ...prev, [catName]: !prev[catName] }))} style={{ fontSize: '0.75rem', color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.15rem 0.5rem', borderRadius: '999px', cursor: 'pointer', fontWeight: '600' }}>
-                                                                                + {variants.length} Gauges
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
-                                                                <td style={{...styles.td, textAlign: 'right'}}>
-                                                                    <input
-                                                                        type="number" step="0.05"
-                                                                        style={{...styles.inputField, width: '100px', textAlign: 'right', fontWeight: '500'}}
-                                                                        value={strategy.listMultipliers[catName] || 1.5}
-                                                                        onChange={(e) => handleListMultiplierChange(catName, e.target.value)}
-                                                                        disabled={isManager}
-                                                                    />
-                                                                </td>
-                                                                <td style={{...styles.td, textAlign: 'right', color: '#2563EB', fontWeight: '600'}}>
-                                                                    ${(100 * (strategy.listMultipliers[catName] || 1.5)).toFixed(2)}
-                                                                </td>
-                                                            </tr>
-
-                                                            {/* Variants */}
-                                                            {hasVariants && isExpanded && variants.map(gauge => {
-                                                                const variantKey = `${catName}:${gauge}`;
-                                                                const explicitVal = strategy.listMultipliers[variantKey];
-                                                                const defaultVal = strategy.listMultipliers[catName] || 1.5;
-                                                                const currentVal = explicitVal !== undefined ? explicitVal : defaultVal;
-                                                                const isOverridden = explicitVal !== undefined;
-
-                                                                return (
-                                                                    <tr key={variantKey} style={{ backgroundColor: '#fafbfc' }}>
-                                                                        <td style={{...styles.td, paddingLeft: '3rem', fontSize: '0.85rem', color: '#64748b', borderLeft: '3px solid #cbd5e1'}}>↳ {gauge} Gauge Variation</td>
+                                                                        return (
+                                                                            <tr key={variantKey} style={{ backgroundColor: '#ffffff' }}>
+                                                                                <td style={{...styles.td, paddingLeft: '3rem', fontSize: '0.9rem', color: '#334155', borderLeft: '3px solid #cbd5e1'}}>↳ {gauge} Gauge</td>
+                                                                                <td style={{...styles.td, textAlign: 'right'}}>
+                                                                                    <input
+                                                                                        type="number" step="0.05"
+                                                                                        style={{...styles.inputField, width: '100px', textAlign: 'right', backgroundColor: isOverridden ? '#fffbeb' : '#ffffff', borderColor: isOverridden ? '#fcd34d' : '#cbd5e1'}}
+                                                                                        value={currentVal}
+                                                                                        onChange={(e) => handleListMultiplierChange(variantKey, e.target.value)}
+                                                                                        disabled={isManager}
+                                                                                    />
+                                                                                </td>
+                                                                                <td style={{...styles.td, textAlign: 'right', color: isOverridden ? '#d97706' : '#2563EB', fontWeight: '600'}}>
+                                                                                    ${(100 * currentVal).toFixed(2)}
+                                                                                </td>
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    {/* Non-gauged: parent row has inputs */}
+                                                                    <tr>
+                                                                        <td style={{...styles.td, fontWeight: '500'}}>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                                                <div style={{ width: '16px' }}></div>
+                                                                                <span>{catName}</span>
+                                                                                {catName === 'Fasteners' && (
+                                                                                    <button style={styles.actionTextBtn} onClick={() => setExpandedFasteners(!expandedFasteners)}>
+                                                                                        {expandedFasteners ? 'Hide Spec' : 'Expand Spec'}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        </td>
                                                                         <td style={{...styles.td, textAlign: 'right'}}>
                                                                             <input
                                                                                 type="number" step="0.05"
-                                                                                style={{...styles.inputField, width: '100px', textAlign: 'right', backgroundColor: isOverridden ? '#fffbeb' : '#ffffff', borderColor: isOverridden ? '#fcd34d' : '#cbd5e1'}}
-                                                                                value={currentVal}
-                                                                                onChange={(e) => handleListMultiplierChange(variantKey, e.target.value)}
+                                                                                style={{...styles.inputField, width: '100px', textAlign: 'right', fontWeight: '500'}}
+                                                                                value={strategy.listMultipliers[catName] || 1.5}
+                                                                                onChange={(e) => handleListMultiplierChange(catName, e.target.value)}
                                                                                 disabled={isManager}
                                                                             />
                                                                         </td>
-                                                                        <td style={{...styles.td, textAlign: 'right', color: isOverridden ? '#d97706' : '#2563EB', fontWeight: '500'}}>
-                                                                            ${(100 * currentVal).toFixed(2)}
+                                                                        <td style={{...styles.td, textAlign: 'right', color: '#2563EB', fontWeight: '600'}}>
+                                                                            ${(100 * (strategy.listMultipliers[catName] || 1.5)).toFixed(2)}
                                                                         </td>
                                                                     </tr>
-                                                                );
-                                                            })}
+                                                                </>
+                                                            )}
 
                                                             {/* Fasteners */}
                                                             {catName === 'Fasteners' && expandedFasteners && FASTENER_TYPES.map(type => {
@@ -322,8 +319,6 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
 
 // Transposed Table
 const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, strategy, onChange, categoryVariantsMap, isManager, styles }) => {
-    const [expandedCats, setExpandedCats] = React.useState({});
-
     return (
         <div style={{ overflowX: 'auto' }}>
             <table style={{...styles.table, borderTop: 'none'}}>
@@ -351,69 +346,68 @@ const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, 
                             {cats.sort().map(catName => {
                                 const variants = categoryVariantsMap[catName] || [];
                                 const hasVariants = variants.length > 0;
-                                const isExpanded = expandedCats[catName];
 
                                 return (
                                     <React.Fragment key={catName}>
-                                        <tr>
-                                            <td style={{...styles.td, fontWeight: '500', position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', borderRight: '1px solid #e2e8f0'}}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    {hasVariants ? (
-                                                        <button
-                                                            onClick={() => setExpandedCats(prev => ({ ...prev, [catName]: !prev[catName] }))}
-                                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#64748b', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
-                                                        >
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                                        </button>
-                                                    ) : (<div style={{ width: '16px' }}></div>)}
-
-                                                    <span>{catName}</span>
-                                                    {hasVariants && !isExpanded && (
-                                                        <span onClick={() => setExpandedCats(prev => ({ ...prev, [catName]: !prev[catName] }))} style={{ fontSize: '0.75rem', color: '#64748b', backgroundColor: '#f1f5f9', padding: '0.15rem 0.5rem', borderRadius: '999px', cursor: 'pointer', fontWeight: '600', marginLeft: 'auto' }}>
-                                                            + {variants.length}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            {tiers.map(tier => {
-                                                const val = strategy.tierMultipliers[groupType]?.[tier.name]?.[catName]
-                                                    ?? strategy.tierMultipliers[groupType]?.[tier.name]?.['Default']
-                                                    ?? 0.0;
-
-                                                return (
-                                                    <td key={tier.name} style={{...styles.td, textAlign: 'center'}}>
-                                                        <input
-                                                            type="number" step="0.01" max="1.0" min="0.0"
-                                                            style={{
-                                                                ...styles.inputField, width: '80px', textAlign: 'center', padding: '0.4rem',
-                                                                backgroundColor: val > 0 ? '#ecfdf5' : '#ffffff',
-                                                                borderColor: val > 0 ? '#34d399' : '#cbd5e1',
-                                                                color: val > 0 ? '#065f46' : '#0f172a',
-                                                                fontWeight: val > 0 ? '600' : '400'
-                                                            }}
-                                                            value={val}
-                                                            onChange={(e) => onChange(groupType, tier.name, catName, e.target.value)}
-                                                            disabled={isManager}
-                                                        />
+                                        {hasVariants ? (
+                                            <>
+                                                {/* Gauged category: parent row is header only */}
+                                                <tr style={{ backgroundColor: '#f8fafc' }}>
+                                                    <td colSpan={tiers.length + 1} style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f8fafc', borderRight: '1px solid #e2e8f0'}}>
+                                                        {catName}
                                                     </td>
-                                                );
-                                            })}
-                                        </tr>
+                                                </tr>
+                                                {/* Explicit sub-rows for every gauge with ↳ */}
+                                                {variants.map(gauge => {
+                                                    const variantKey = `${catName}:${gauge}`;
+                                                    return (
+                                                        <tr key={variantKey} style={{ backgroundColor: '#ffffff' }}>
+                                                            <td style={{...styles.td, paddingLeft: '3rem', fontSize: '0.9rem', color: '#334155', borderLeft: '3px solid #cbd5e1', position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', borderRight: '1px solid #e2e8f0'}}>
+                                                                ↳ {gauge} Gauge
+                                                            </td>
+                                                            {tiers.map(tier => {
+                                                                const explicitVal = strategy.tierMultipliers[groupType]?.[tier.name]?.[variantKey];
+                                                                const catVal = strategy.tierMultipliers[groupType]?.[tier.name]?.[catName]
+                                                                    ?? strategy.tierMultipliers[groupType]?.[tier.name]?.['Default'] ?? 0.0;
 
-                                        {hasVariants && isExpanded && variants.map(gauge => {
-                                            const variantKey = `${catName}:${gauge}`;
-                                            return (
-                                                <tr key={variantKey} style={{ backgroundColor: '#fafbfc' }}>
-                                                    <td style={{...styles.td, paddingLeft: '3rem', fontSize: '0.85rem', color: '#64748b', borderLeft: '3px solid #cbd5e1', position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#fafbfc', borderRight: '1px solid #e2e8f0'}}>
-                                                        ↳ {gauge} Gauge
+                                                                const displayVal = explicitVal !== undefined ? explicitVal : catVal;
+                                                                const isOverridden = explicitVal !== undefined && explicitVal !== catVal;
+
+                                                                return (
+                                                                    <td key={tier.name} style={{...styles.td, textAlign: 'center'}}>
+                                                                        <input
+                                                                            type="number" step="0.01" max="1.0" min="0.0"
+                                                                            style={{
+                                                                                ...styles.inputField, width: '80px', textAlign: 'center', padding: '0.4rem',
+                                                                                backgroundColor: isOverridden ? '#fffbeb' : (displayVal > 0 ? '#ecfdf5' : '#ffffff'),
+                                                                                borderColor: isOverridden ? '#fcd34d' : (displayVal > 0 ? '#34d399' : '#cbd5e1'),
+                                                                                color: isOverridden ? '#b45309' : (displayVal > 0 ? '#065f46' : '#475569')
+                                                                            }}
+                                                                            value={displayVal}
+                                                                            onChange={(e) => onChange(groupType, tier.name, variantKey, e.target.value)}
+                                                                            disabled={isManager}
+                                                                        />
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </>
+                                        ) : (
+                                            <>
+                                                {/* Non-gauged: parent row has inputs */}
+                                                <tr>
+                                                    <td style={{...styles.td, fontWeight: '500', position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#ffffff', borderRight: '1px solid #e2e8f0'}}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                            <div style={{ width: '16px' }}></div>
+                                                            <span>{catName}</span>
+                                                        </div>
                                                     </td>
                                                     {tiers.map(tier => {
-                                                        const explicitVal = strategy.tierMultipliers[groupType]?.[tier.name]?.[variantKey];
-                                                        const catVal = strategy.tierMultipliers[groupType]?.[tier.name]?.[catName]
-                                                            ?? strategy.tierMultipliers[groupType]?.[tier.name]?.['Default'] ?? 0.0;
-
-                                                        const displayVal = explicitVal !== undefined ? explicitVal : catVal;
-                                                        const isOverridden = explicitVal !== undefined && explicitVal !== catVal;
+                                                        const val = strategy.tierMultipliers[groupType]?.[tier.name]?.[catName]
+                                                            ?? strategy.tierMultipliers[groupType]?.[tier.name]?.['Default']
+                                                            ?? 0.0;
 
                                                         return (
                                                             <td key={tier.name} style={{...styles.td, textAlign: 'center'}}>
@@ -421,21 +415,21 @@ const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, 
                                                                     type="number" step="0.01" max="1.0" min="0.0"
                                                                     style={{
                                                                         ...styles.inputField, width: '80px', textAlign: 'center', padding: '0.4rem',
-                                                                        backgroundColor: isOverridden ? '#fffbeb' : '#ffffff',
-                                                                        borderColor: isOverridden ? '#fcd34d' : '#cbd5e1',
-                                                                        color: isOverridden ? '#b45309' : '#475569'
+                                                                        backgroundColor: val > 0 ? '#ecfdf5' : '#ffffff',
+                                                                        borderColor: val > 0 ? '#34d399' : '#cbd5e1',
+                                                                        color: val > 0 ? '#065f46' : '#0f172a',
+                                                                        fontWeight: val > 0 ? '600' : '400'
                                                                     }}
-                                                                    value={displayVal}
-                                                                    onChange={(e) => onChange(groupType, tier.name, variantKey, e.target.value)}
-                                                                    placeholder={catVal}
+                                                                    value={val}
+                                                                    onChange={(e) => onChange(groupType, tier.name, catName, e.target.value)}
                                                                     disabled={isManager}
                                                                 />
                                                             </td>
                                                         );
                                                     })}
                                                 </tr>
-                                            );
-                                        })}
+                                            </>
+                                        )}
                                     </React.Fragment>
                                 );
                             })}

@@ -355,6 +355,9 @@ export const calculateNetPrice = (listPrice, customerGroup, tierName, productGro
 /** Steel profile lines that use gauge variants (FA, FC36, I9, II6, FR). All others are single-variation. */
 export const GAUGE_ENABLED_CATEGORIES = ['FA', 'FC36', 'I9', 'II6', 'FR']
 
+/** Product lines shown in Gauge-Specific margin rules (steel profiles + Forma Loc). */
+export const MARGIN_GAUGE_SPECIFIC_CATEGORIES = ['FA', 'FC36', 'I9', 'II6', 'FR', '12" Forma Loc', '16" Forma Loc']
+
 export const isGaugeEnabledCategory = (category) =>
     category && GAUGE_ENABLED_CATEGORIES.includes(String(category).trim())
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { MARGIN_GAUGE_SPECIFIC_CATEGORIES } from '../utils/pricingEngine';
 
 const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules, products = [], productVariants = [], categories = [] }) => {
     const { user } = useAuth();
@@ -30,10 +31,24 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
         return map;
     }, [products, productVariants, categories]);
 
-    const categoriesWithGauges = useMemo(() =>
-        Object.keys(gaugesPerCategory).filter(c => gaugesPerCategory[c]?.length > 0).sort((a, b) => a.localeCompare(b)),
-        [gaugesPerCategory]
+    const gaugeSpecificCategories = useMemo(() =>
+        [...MARGIN_GAUGE_SPECIFIC_CATEGORIES].sort((a, b) => a.localeCompare(b)),
+        []
     );
+
+    const gaugesForGaugeSpecific = useMemo(() => {
+        const map = {};
+        gaugeSpecificCategories.forEach(cat => {
+            const gauges = gaugesPerCategory[cat];
+            map[cat] = gauges?.length ? gauges : [24, 26, 29];
+        });
+        return map;
+    }, [gaugesPerCategory, gaugeSpecificCategories]);
+
+    const generalCategories = useMemo(() => {
+        const gaugeSet = new Set(MARGIN_GAUGE_SPECIFIC_CATEGORIES);
+        return allCategories.filter(c => !gaugeSet.has(c)).sort((a, b) => a.localeCompare(b));
+    }, [allCategories]);
 
     useEffect(() => {
         const map = {};
@@ -57,18 +72,9 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     };
     const handleSaveGuardrails = async () => {
         const rules = [];
-        // Blanket rules: every category
-        allCategories.forEach(target => {
-            const r = getRule(target, null);
-            const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
-            const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
-            if (floor != null || ceiling != null) {
-                rules.push({ targetName: target, gauge: null, marginFloor: floor ?? 0.2, marginCeiling: ceiling });
-            }
-        });
-        // Gauge-specific rules: only categories that use gauges
-        categoriesWithGauges.forEach(target => {
-            (gaugesPerCategory[target] || []).forEach(g => {
+        // Gauge-specific rules: FA, FC36, I9, II6, FR, 12" Forma Loc, 16" Forma Loc
+        gaugeSpecificCategories.forEach(target => {
+            (gaugesForGaugeSpecific[target] || []).forEach(g => {
                 const r = getRule(target, g);
                 const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
                 const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
@@ -76,6 +82,15 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                     rules.push({ targetName: target, gauge: g, marginFloor: floor ?? 0.2, marginCeiling: ceiling });
                 }
             });
+        });
+        // General category rules (Floor/Ceiling only, no gauge)
+        generalCategories.forEach(target => {
+            const r = getRule(target, null);
+            const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
+            const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
+            if (floor != null || ceiling != null) {
+                rules.push({ targetName: target, gauge: null, marginFloor: floor ?? 0.2, marginCeiling: ceiling });
+            }
         });
         try {
             await onSaveMarginRules(rules);
@@ -187,12 +202,48 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                         </div>
                     </div>
 
+                    {/* Gauge-Specific Rules (top priority) */}
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Blanket Rules (apply to all gauges)</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gauge-Specific Rules</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+                            {gaugeSpecificCategories.map(target => (
+                                <div key={target} style={{ padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#92400e', marginBottom: '0.75rem' }}>{target}</div>
+                                    {(gaugesForGaugeSpecific[target] || []).map(g => (
+                                        <div key={`${target}-${g}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                            <span style={{ width: '28px', fontSize: '0.85rem', fontWeight: '600', color: '#64748b' }}>{g}ga</span>
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                placeholder="0.20"
+                                                value={getRule(target, g).marginFloor}
+                                                onChange={e => setRule(target, g, 'marginFloor', e.target.value)}
+                                                disabled={!canEdit}
+                                                style={{...styles.inputField, width: '65px', fontSize: '0.85rem'}}
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                placeholder="—"
+                                                value={getRule(target, g).marginCeiling}
+                                                onChange={e => setRule(target, g, 'marginCeiling', e.target.value)}
+                                                disabled={!canEdit}
+                                                style={{...styles.inputField, width: '65px', fontSize: '0.85rem'}}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* General Category Rules */}
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>General Category Rules</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                            {allCategories.length === 0 ? (
-                                <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.9rem' }}>No categories found. Add products or categories first.</div>
-                            ) : allCategories.map(target => (
+                            {generalCategories.length === 0 ? (
+                                <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.9rem' }}>No general categories found.</div>
+                            ) : generalCategories.map(target => (
                                 <div key={target} style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                                     <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>{target}</div>
                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -229,42 +280,6 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                             ))}
                         </div>
                     </div>
-
-                    {categoriesWithGauges.length > 0 && (
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gauge-Specific Rules (override blanket)</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-                            {categoriesWithGauges.map(target => (
-                                <div key={target} style={{ padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#92400e', marginBottom: '0.75rem' }}>{target} by Gauge</div>
-                                    {(gaugesPerCategory[target] || []).map(g => (
-                                        <div key={`${target}-${g}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                            <span style={{ width: '28px', fontSize: '0.85rem', fontWeight: '600', color: '#64748b' }}>{g}ga</span>
-                                            <input
-                                                type="number"
-                                                step="0.001"
-                                                placeholder="0.20"
-                                                value={getRule(target, g).marginFloor}
-                                                onChange={e => setRule(target, g, 'marginFloor', e.target.value)}
-                                                disabled={!canEdit}
-                                                style={{...styles.inputField, width: '65px', fontSize: '0.85rem'}}
-                                            />
-                                            <input
-                                                type="number"
-                                                step="0.001"
-                                                placeholder="—"
-                                                value={getRule(target, g).marginCeiling}
-                                                onChange={e => setRule(target, g, 'marginCeiling', e.target.value)}
-                                                disabled={!canEdit}
-                                                style={{...styles.inputField, width: '65px', fontSize: '0.85rem'}}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    )}
 
                     {canEdit && (
                         <button

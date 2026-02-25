@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier } from '../utils/pricingEngine';
+import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier, MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransactions, customers, products = [], productVariants = [], onSave }) => {
@@ -14,26 +14,15 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
     const [expandedFasteners, setExpandedFasteners] = useState(false);
     const [expandedMarkupCats, setExpandedMarkupCats] = useState({});
 
-    // Parse Variants
+    // Gauge options per category - matches Admin/Product pages (only FA, FC36, I9, II6, FR, 12" Forma Loc, 16" Forma Loc)
     const categoryVariantsMap = React.useMemo(() => {
         const map = {};
-        productVariants.forEach(variant => {
-            const product = products.find(p => p.id === variant.productId);
-            if (product && product.categoryId) {
-                const cat = categories.find(c => c.id === product.categoryId);
-                const catName = cat ? cat.name : product.categoryId;
-
-                if (catName) {
-                    if (!map[catName]) map[catName] = new Set();
-                    if (variant.gauge) map[catName].add(variant.gauge);
-                }
-            }
-        });
-        Object.keys(map).forEach(k => {
-            map[k] = Array.from(map[k]).sort((a, b) => parseFloat(b) - parseFloat(a));
+        MARGIN_GAUGE_SPECIFIC_CATEGORIES.forEach(catName => {
+            const gauges = GAUGES_PER_MARGIN_CATEGORY[catName];
+            map[catName] = Array.isArray(gauges) ? [...gauges].sort((a, b) => b - a) : [];
         });
         return map;
-    }, [products, productVariants, categories]);
+    }, []);
 
     const handleListMultiplierChange = (group, value) => {
         if (isManager) return;

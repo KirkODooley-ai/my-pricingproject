@@ -112,6 +112,17 @@ export const api = {
         }
     },
 
+    async saveMarginRules(rules) {
+        const res = await fetch(`${API_URL}/margin-rules`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(rules)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || 'Failed to save margin rules');
+        return json;
+    },
+
     // Admin-only helper: update per-product margin bounds (and optionally cost/price)
     async updateProductBounds(id, { marginFloor, marginCeiling, price, cost }) {
         const res = await fetch(`${API_URL}/admin/products/${id}`, {

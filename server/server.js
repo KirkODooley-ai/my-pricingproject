@@ -173,6 +173,16 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         } catch (e) {
             result.settings = [];
         }
+        // 8b. Margin Rules (Product Line + Gauge level)
+        try {
+            const mrRes = await query(`
+                SELECT id, target_name as "targetName", gauge, margin_floor as "marginFloor", margin_ceiling as "marginCeiling"
+                FROM margin_rules ORDER BY target_name, gauge NULLS FIRST
+            `);
+            result.marginRules = mrRes.rows;
+        } catch (e) {
+            result.marginRules = [];
+        }
         // 9. Proposals (Admins Only)
         if (isAdmin) {
             const proposalsRes = await query(`
@@ -537,6 +547,43 @@ app.post('/api/settings', authenticateToken, requireCanEdit, async (req, res) =>
     } catch (e) {
         console.error("Settings Update Error:", e);
         res.status(500).json({ error: e.message });
+    }
+});
+
+// Margin Rules (Product Line + Gauge level) - Admin only
+app.post('/api/margin-rules', authenticateToken, requireCanEdit, async (req, res) => {
+    const client = await import('./db.js').then(m => m.getClient());
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can update margin rules.' });
+        }
+        const data = Array.isArray(req.body) ? req.body : req.body.rules || [];
+        await client.query('BEGIN');
+        for (const r of data) {
+            const targetName = r.targetName || r.target_name || r.target;
+            const gauge = r.gauge != null && r.gauge !== '' ? parseInt(r.gauge, 10) : null;
+            const floor = r.marginFloor != null && r.marginFloor !== '' ? parseFloat(r.marginFloor) : 0.2;
+            const ceiling = r.marginCeiling != null && r.marginCeiling !== '' ? parseFloat(r.marginCeiling) : null;
+            if (!targetName) continue;
+            const up = await client.query(`
+                UPDATE margin_rules SET margin_floor = $1, margin_ceiling = $2, updated_at = CURRENT_TIMESTAMP
+                WHERE target_name = $3 AND (gauge IS NOT DISTINCT FROM $4)
+            `, [floor, ceiling, targetName, gauge]);
+            if (up.rowCount === 0) {
+                await client.query(`
+                    INSERT INTO margin_rules (target_name, gauge, margin_floor, margin_ceiling)
+                    VALUES ($1, $2, $3, $4)
+                `, [targetName, gauge, floor, ceiling]);
+            }
+        }
+        await client.query('COMMIT');
+        res.json({ success: true });
+    } catch (e) {
+        await client.query('ROLLBACK').catch(() => {});
+        console.error("Margin Rules Update Error:", e);
+        res.status(500).json({ error: e.message });
+    } finally {
+        client.release();
     }
 });
 

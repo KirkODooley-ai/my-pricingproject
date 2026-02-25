@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
-const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {} }) => {
+const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {}, marginRules = [] }) => {
     const { user } = useAuth();
     const isManager = user?.role === 'manager';
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
@@ -48,20 +48,11 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
         const parsedCost = parseFloat(editFormData.cost) || 0;
         const parsedPrice = parseFloat(editFormData.price) || 0;
         const margin = parsedPrice > 0 ? (parsedPrice - parsedCost) / parsedPrice : 0;
-
-        const floor = editFormData.marginFloor != null && editFormData.marginFloor !== ''
-            ? parseFloat(editFormData.marginFloor)
-            : null;
-        const ceiling = editFormData.marginCeiling != null && editFormData.marginCeiling !== ''
-            ? parseFloat(editFormData.marginCeiling)
-            : null;
+        const catGroup = getCategoryGroup(editFormData.category || '');
+        const floor = getEffectiveMarginFloor(editFormData, catGroup, marginRules);
 
         if (floor != null && !Number.isNaN(floor) && margin < floor) {
             alert(`Price would result in a margin (${(margin * 100).toFixed(1)}%) below the floor of ${(floor * 100).toFixed(1)}%. Please increase the price or lower the floor.`);
-            return;
-        }
-        if (ceiling != null && !Number.isNaN(ceiling) && margin > ceiling) {
-            alert(`Price would result in a margin (${(margin * 100).toFixed(1)}%) above the ceiling of ${(ceiling * 100).toFixed(1)}%. Please decrease the price or raise the ceiling.`);
             return;
         }
 
@@ -69,9 +60,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
             ...editFormData,
             unitCost: parseFloat(editFormData.unitCost) || 0,
             cost: parsedCost,
-            price: parsedPrice,
-            marginFloor: floor,
-            marginCeiling: ceiling
+            price: parsedPrice
         });
         setEditingId(null);
     };
@@ -149,13 +138,13 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
         let stratList = 0, stratNet = 0, stratMargin = 0;
         const currentMargin = calculateMargin(product.price, product.cost);
         const catGroup = getCategoryGroup(product.category || '');
-        const floor = getEffectiveMarginFloor(product, catGroup);
+        const floor = getEffectiveMarginFloor(product, catGroup, marginRules);
 
         if (previewTier.tier && pricingStrategy) {
             let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
             stratList = calculateListPrice(product.cost, groupName, pricingStrategy.listMultipliers);
             stratNet = calculateNetPrice(stratList, previewTier.group, previewTier.tier, groupName, pricingStrategy, {
-                cost: product.cost, product, categoryGroup: catGroup
+                cost: product.cost, product, categoryGroup: catGroup, marginRules
             });
             stratMargin = calculateMargin(stratNet, product.cost);
         } else { stratMargin = currentMargin; }
@@ -220,42 +209,6 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 )}
             </tr>
 
-            {isEditing && canEdit && !isManager && (
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                    <td colSpan={previewTier.tier ? 10 : 7} style={{...styles.td, padding: '1.25rem 1.5rem'}}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manager Price Guardrails</div>
-                            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <div>
-                                    <label style={{...styles.inputLabel, marginBottom: '0.25rem'}}>Margin Floor</label>
-                                    <input
-                                        type="number"
-                                        step="0.001"
-                                        name="marginFloor"
-                                        placeholder="0.20"
-                                        value={editFormData.marginFloor ?? ''}
-                                        onChange={handleInputChange}
-                                        style={{...styles.inputField, width: '90px', textAlign: 'right', fontSize: '0.9rem'}}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{...styles.inputLabel, marginBottom: '0.25rem'}}>Margin Ceiling</label>
-                                    <input
-                                        type="number"
-                                        step="0.001"
-                                        name="marginCeiling"
-                                        placeholder="—"
-                                        value={editFormData.marginCeiling ?? ''}
-                                        onChange={handleInputChange}
-                                        style={{...styles.inputField, width: '90px', textAlign: 'right', fontSize: '0.9rem'}}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            )}
-
             {hasVariants && isExpanded && variants.map(variant => {
                     const isVarEditing = editingVariantId === variant.id;
                     const baseWeight = parseFloat(product.weight_lbs_ft) || 2.0;
@@ -273,12 +226,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     const varMargin = calculateMargin(finalPrice, finalCost);
                     
                     let varStratList = 0, varStratNet = 0, varStratMargin = 0;
-                    const varFloor = getEffectiveMarginFloor(product, getCategoryGroup(product.category || ''));
+                    const varFloor = getEffectiveMarginFloor(product, getCategoryGroup(product.category || ''), marginRules);
                     if (previewTier.tier && pricingStrategy) {
                         let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
                         varStratList = calculateListPrice(finalCost, groupName, pricingStrategy.listMultipliers);
                         varStratNet = calculateNetPrice(varStratList, previewTier.group, previewTier.tier, groupName, pricingStrategy, {
-                            cost: finalCost, product, categoryGroup: getCategoryGroup(product.category || '')
+                            cost: finalCost, product, categoryGroup: getCategoryGroup(product.category || ''), marginRules, gauge: variant.gauge
                         });
                         varStratMargin = calculateMargin(varStratNet, finalCost);
                     } else { varStratMargin = varMargin; }

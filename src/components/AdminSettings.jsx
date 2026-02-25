@@ -1,10 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-const AdminSettings = ({ globalSettings, onUpdateSetting }) => {
+const PRODUCT_LINES = ['Fasteners', 'FC36', 'I9', 'II6', 'FR', 'FA'];
+const GAUGES = [24, 26, 29];
+
+const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules }) => {
     const { user } = useAuth();
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
+    const [guardrailDraft, setGuardrailDraft] = useState({});
+
+    useEffect(() => {
+        const map = {};
+        (marginRules || []).forEach(r => {
+            const key = `${r.targetName || r.target_name}|${r.gauge == null ? 'blanket' : r.gauge}`;
+            map[key] = {
+                marginFloor: r.marginFloor ?? r.margin_floor ?? '',
+                marginCeiling: r.marginCeiling ?? r.margin_ceiling ?? ''
+            };
+        });
+        setGuardrailDraft(map);
+    }, [marginRules]);
     // Premium SaaS UI Variables
+    const getRule = (targetName, gauge) => {
+        const key = `${targetName}|${gauge ?? 'blanket'}`;
+        return guardrailDraft[key] || { marginFloor: '', marginCeiling: '' };
+    };
+    const setRule = (targetName, gauge, field, value) => {
+        const key = `${targetName}|${gauge ?? 'blanket'}`;
+        setGuardrailDraft(prev => ({ ...prev, [key]: { ...(prev[key] || {}), [field]: value } }));
+    };
+    const handleSaveGuardrails = async () => {
+        const rules = [];
+        // Blanket rules
+        PRODUCT_LINES.forEach(target => {
+            const r = getRule(target, null);
+            const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
+            const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
+            if (floor != null || ceiling != null) {
+                rules.push({ targetName: target, gauge: null, marginFloor: floor ?? 0.2, marginCeiling: ceiling });
+            }
+        });
+        // Gauge-specific rules (product lines FC36, I9, II6, FR, FA)
+        ['FC36', 'I9', 'II6', 'FR', 'FA'].forEach(target => {
+            GAUGES.forEach(g => {
+                const r = getRule(target, g);
+                const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
+                const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
+                if (floor != null || ceiling != null) {
+                    rules.push({ targetName: target, gauge: g, marginFloor: floor ?? 0.2, marginCeiling: ceiling });
+                }
+            });
+        });
+        try {
+            await onSaveMarginRules(rules);
+            alert('Margin guardrails saved.');
+        } catch (e) {
+            alert('Failed to save: ' + e.message);
+        }
+    };
+
     const styles = {
         pageWrapper: { width: '100%', minHeight: '100%' },
         container: { maxWidth: '1000px', margin: '0 auto', padding: '2.5rem', width: '100%', fontFamily: 'var(--font-base)' },
@@ -93,6 +147,103 @@ const AdminSettings = ({ globalSettings, onUpdateSetting }) => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Margin Guardrails */}
+                <div style={{...styles.card, borderTop: '4px solid #059669', marginTop: '2rem'}}>
+                    <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+                            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>Margin Guardrails</h3>
+                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Set floor and ceiling by Product Line and Gauge</p>
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Blanket Rules (apply to all gauges)</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                            {PRODUCT_LINES.map(target => (
+                                <div key={target} style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>{target}</div>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.7rem', color: '#64748b' }}>Floor</label>
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                min="0"
+                                                max="1"
+                                                placeholder="0.20"
+                                                value={getRule(target, null).marginFloor}
+                                                onChange={e => setRule(target, null, 'marginFloor', e.target.value)}
+                                                disabled={!canEdit}
+                                                style={{...styles.inputField, width: '70px', fontSize: '0.9rem', marginLeft: '4px'}}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '0.7rem', color: '#64748b' }}>Ceiling</label>
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                min="0"
+                                                max="1"
+                                                placeholder="—"
+                                                value={getRule(target, null).marginCeiling}
+                                                onChange={e => setRule(target, null, 'marginCeiling', e.target.value)}
+                                                disabled={!canEdit}
+                                                style={{...styles.inputField, width: '70px', fontSize: '0.9rem', marginLeft: '4px'}}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gauge-Specific Rules (override blanket)</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+                            {['FC36', 'I9', 'II6', 'FR', 'FA'].map(target => (
+                                <div key={target} style={{ padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#92400e', marginBottom: '0.75rem' }}>{target} by Gauge</div>
+                                    {GAUGES.map(g => (
+                                        <div key={`${target}-${g}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                            <span style={{ width: '28px', fontSize: '0.85rem', fontWeight: '600', color: '#64748b' }}>{g}ga</span>
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                placeholder="0.20"
+                                                value={getRule(target, g).marginFloor}
+                                                onChange={e => setRule(target, g, 'marginFloor', e.target.value)}
+                                                disabled={!canEdit}
+                                                style={{...styles.inputField, width: '65px', fontSize: '0.85rem'}}
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                placeholder="—"
+                                                value={getRule(target, g).marginCeiling}
+                                                onChange={e => setRule(target, g, 'marginCeiling', e.target.value)}
+                                                disabled={!canEdit}
+                                                style={{...styles.inputField, width: '65px', fontSize: '0.85rem'}}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {canEdit && (
+                        <button
+                            onClick={handleSaveGuardrails}
+                            style={{ padding: '0.6rem 1.25rem', backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                        >
+                            Save Margin Guardrails
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

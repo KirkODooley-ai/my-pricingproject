@@ -52,6 +52,7 @@ function App() {
         if (data.pricingStrategy) setPricingStrategy(data.pricingStrategy)
         if (data.customerAliases) setCustomerAliases(data.customerAliases)
         if (data.productVariants) setProductVariants(data.productVariants) // [NEW] Phase 18 variants
+        if (data.marginRules) setMarginRules(data.marginRules)
 
         // [NEW] Load Settings
         if (data.settings) {
@@ -76,6 +77,8 @@ function App() {
 
   // [NEW] Decoupled Sales Data Store
   const [salesTransactions, setSalesTransactions] = useState([])
+
+  const [marginRules, setMarginRules] = useState([])
 
   // [NEW] Global Settings Store
   const [globalSettings, setGlobalSettings] = useState({
@@ -669,6 +672,7 @@ function App() {
             <PricingTable
               products={products}
               categories={categories}
+              marginRules={marginRules}
               onUpdateProduct={handleUpdateProduct}
               onAddProduct={handleAddProduct}
               onDeleteProduct={handleDeleteProduct}
@@ -742,7 +746,12 @@ function App() {
         {activeTab === 'users' && user.role === 'admin' && <UserManagement />}
 
         {activeTab === 'settings' && user.role === 'admin' && (
-             <AdminSettings globalSettings={globalSettings} onUpdateSetting={handleUpdateSetting} />
+             <AdminSettings
+               globalSettings={globalSettings}
+               onUpdateSetting={handleUpdateSetting}
+               marginRules={marginRules}
+               onSaveMarginRules={(rules) => { setMarginRules(rules); api.saveMarginRules(rules); }}
+             />
         )}
 
 

@@ -275,22 +275,38 @@ export const calculateListPrice = (baseCost, groupName, multipliers) => {
 }
 
 /**
- * Returns the effective margin floor for a product.
- * Uses product-specific marginFloor/margin_floor if set; otherwise falls back to
- * hard-coded defaults (20% Rolled Goods, 40% Fasteners) via getMarginFloor.
- * @param {Object} [product] - Product with marginFloor, margin_floor, category
- * @param {string} [categoryGroup] - Category group name (e.g. 'Large Rolled Panel', 'Fasteners')
+ * Returns the effective margin floor for a product from margin_rules (Product Line + Gauge).
+ * Lookup order: 1) target_name + gauge (exact), 2) target_name + NULL (blanket), 3) getMarginFloor fallback.
+ * @param {Object} [product] - Product with category, gauge
+ * @param {string} [categoryGroup] - Category group (for getMarginFloor fallback)
+ * @param {Array} [marginRules] - [{ targetName, gauge, marginFloor }] from margin_rules
+ * @param {number} [gauge] - Optional gauge override (e.g. from variant)
  * @param {number} [tierIndex] - Tier index for getMarginFloor fallback
  * @param {number} [totalTiers] - Total tiers for getMarginFloor fallback
  * @returns {number} Effective margin floor (0–1)
  */
-export const getEffectiveMarginFloor = (product, categoryGroup, tierIndex = 0, totalTiers = 6) => {
-    const dbFloor = product?.marginFloor ?? product?.margin_floor
-    if (dbFloor != null && dbFloor !== '') {
-        const n = parseFloat(dbFloor)
-        if (!Number.isNaN(n)) return n
+export const getEffectiveMarginFloor = (product, categoryGroup, marginRules = [], gauge, tierIndex = 0, totalTiers = 6) => {
+    const target = product?.category || ''
+    const g = gauge != null ? gauge : (product?.gauge != null ? product.gauge : null)
+    const rules = Array.isArray(marginRules) ? marginRules : []
+
+    // 1. Exact match: target_name + gauge
+    if (target && g != null) {
+        const exact = rules.find(r => (r.targetName || r.target_name) === target && (r.gauge != null ? r.gauge === g : false))
+        if (exact && (exact.marginFloor ?? exact.margin_floor) != null) {
+            const n = parseFloat(exact.marginFloor ?? exact.margin_floor)
+            if (!Number.isNaN(n)) return n
+        }
     }
-    return getMarginFloor(categoryGroup || getCategoryGroup(product?.category || ''), tierIndex, totalTiers)
+    // 2. Blanket match: target_name, gauge NULL
+    if (target) {
+        const blanket = rules.find(r => (r.targetName || r.target_name) === target && (r.gauge == null || r.gauge === ''))
+        if (blanket && (blanket.marginFloor ?? blanket.margin_floor) != null) {
+            const n = parseFloat(blanket.marginFloor ?? blanket.margin_floor)
+            if (!Number.isNaN(n)) return n
+        }
+    }
+    return getMarginFloor(categoryGroup || getCategoryGroup(target), tierIndex, totalTiers)
 }
 
 /**
@@ -323,10 +339,10 @@ export const calculateNetPrice = (listPrice, customerGroup, tierName, productGro
 
     let netPrice = listPrice * discountMultiplier
 
-    // 3. Enforce product-specific margin floor: lock price at floor if discount would go below
+    // 3. Enforce margin floor from margin_rules: lock price at floor if discount would go below
     if (options && typeof options.cost === 'number' && options.cost >= 0) {
         const catGroup = options.categoryGroup || (options.product?.category ? getCategoryGroup(options.product.category) : 'Parts')
-        const floor = getEffectiveMarginFloor(options.product || {}, catGroup)
+        const floor = getEffectiveMarginFloor(options.product || {}, catGroup, options.marginRules || [], options.gauge)
         const minPrice = calculatePriceFromMargin(options.cost, floor)
         if (minPrice > 0 && netPrice < minPrice) {
             netPrice = minPrice

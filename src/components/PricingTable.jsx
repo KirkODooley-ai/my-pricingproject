@@ -45,7 +45,34 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
     const handleEditClick = (product) => { setEditingId(product.id); setEditFormData({ ...product }); };
     const handleCancelEdit = () => { setEditingId(null); setEditFormData({}); };
     const handleSaveClick = (id) => {
-        onUpdateProduct(id, { ...editFormData, unitCost: parseFloat(editFormData.unitCost) || 0, cost: parseFloat(editFormData.cost) || 0, price: parseFloat(editFormData.price) || 0 });
+        const parsedCost = parseFloat(editFormData.cost) || 0;
+        const parsedPrice = parseFloat(editFormData.price) || 0;
+        const margin = parsedPrice > 0 ? (parsedPrice - parsedCost) / parsedPrice : 0;
+
+        const floor = editFormData.marginFloor != null && editFormData.marginFloor !== ''
+            ? parseFloat(editFormData.marginFloor)
+            : null;
+        const ceiling = editFormData.marginCeiling != null && editFormData.marginCeiling !== ''
+            ? parseFloat(editFormData.marginCeiling)
+            : null;
+
+        if (floor != null && !Number.isNaN(floor) && margin < floor) {
+            alert(`Price would result in a margin (${(margin * 100).toFixed(1)}%) below the floor of ${(floor * 100).toFixed(1)}%. Please increase the price or lower the floor.`);
+            return;
+        }
+        if (ceiling != null && !Number.isNaN(ceiling) && margin > ceiling) {
+            alert(`Price would result in a margin (${(margin * 100).toFixed(1)}%) above the ceiling of ${(ceiling * 100).toFixed(1)}%. Please decrease the price or raise the ceiling.`);
+            return;
+        }
+
+        onUpdateProduct(id, {
+            ...editFormData,
+            unitCost: parseFloat(editFormData.unitCost) || 0,
+            cost: parsedCost,
+            price: parsedPrice,
+            marginFloor: floor,
+            marginCeiling: ceiling
+        });
         setEditingId(null);
     };
     
@@ -121,6 +148,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
         let stratList = 0, stratNet = 0, stratMargin = 0;
         const currentMargin = calculateMargin(product.price, product.cost);
+        const floor = product.marginFloor != null ? product.marginFloor : 0.20;
 
         if (previewTier.tier && pricingStrategy) {
             let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
@@ -139,7 +167,28 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         <td style={styles.td}><input type="text" name="name" value={editFormData.name} onChange={handleInputChange} style={styles.inputField} autoFocus /></td>
                         <td style={styles.td}><input type="number" name="cost" value={editFormData.cost} onChange={handleInputChange} style={{...styles.inputField, width: '80px', textAlign: 'right'}} /></td>
                         <td style={styles.td}><input type="number" name="price" value={editFormData.price} onChange={handleInputChange} style={{...styles.inputField, width: '80px', textAlign: 'right'}} /></td>
-                        <td style={styles.td}>-</td>
+                        <td style={styles.td}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    name="marginFloor"
+                                    placeholder="Floor (0.20)"
+                                    value={editFormData.marginFloor ?? ''}
+                                    onChange={handleInputChange}
+                                    style={{...styles.inputField, width: '90px', textAlign: 'right', fontSize: '0.8rem'}}
+                                />
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    name="marginCeiling"
+                                    placeholder="Ceiling"
+                                    value={editFormData.marginCeiling ?? ''}
+                                    onChange={handleInputChange}
+                                    style={{...styles.inputField, width: '90px', textAlign: 'right', fontSize: '0.8rem'}}
+                                />
+                            </div>
+                        </td>
                         {previewTier.tier && <><td colSpan="3" style={styles.td}>-</td></>}
                         <td style={{...styles.td, textAlign: 'center'}}>
                             <button onClick={() => handleSaveClick(product.id)} style={styles.actionTextBtn}>Save</button>
@@ -166,7 +215,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         <td style={{...styles.td, textAlign: 'right', fontWeight: '500'}}>{formatCurrency(product.cost)}</td>
                         <td style={{...styles.td, textAlign: 'right', fontWeight: '600'}}>{formatCurrency(product.price)}</td>
                         <td style={{...styles.td, textAlign: 'center'}}>
-                            <span style={currentMargin < 0.2 ? styles.badgeRed : styles.badgeGreen}>{formatPercent(currentMargin)}</span>
+                            <span style={currentMargin < floor ? styles.badgeRed : styles.badgeGreen}>{formatPercent(currentMargin)}</span>
                         </td>
                         {previewTier.tier && (
                             <>

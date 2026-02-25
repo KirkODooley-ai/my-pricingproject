@@ -112,6 +112,20 @@ export const api = {
         }
     },
 
+    // Admin-only helper: update per-product margin bounds (and optionally cost/price)
+    async updateProductBounds(id, { marginFloor, marginCeiling, price, cost }) {
+        const res = await fetch(`${API_URL}/admin/products/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ marginFloor, marginCeiling, price, cost })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(json.error || 'Failed to update product margins');
+        }
+        return json;
+    },
+
     async fetchUsers() {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         if (res.status === 403) throw new Error('Access denied');

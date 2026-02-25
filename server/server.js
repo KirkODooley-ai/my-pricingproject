@@ -86,7 +86,8 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             ? `p.id, p.name, p.description, p.vendor, 
                p.price, p.item_code as "itemCode", p.category_id as "categoryId", 
                p.sub_category as "subCategory", p.unit_price as "unitPrice", 
-               p.bag_units as "bagUnits", p.sell_unit as "sellUnit", 
+               p.bag_units as "bagUnits", p.sell_unit as "sellUnit",
+               p.margin_floor as "marginFloor", p.margin_ceiling as "marginCeiling",
                c.name as category`
             : `p.id, p.name, p.description, p.vendor, p.cost, p.price,
                p.item_code as "itemCode", p.category_id as "categoryId",
@@ -94,6 +95,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
                p.unit_price as "unitPrice", p.bag_units as "bagUnits",
                p.bag_cost as "bagCost", p.sell_unit as "sellUnit",
                p.imported_margin as "importedMargin",
+               p.margin_floor as "marginFloor", p.margin_ceiling as "marginCeiling",
                c.name as category`;
         const productsRes = await query(`
             SELECT ${productFields}
@@ -252,8 +254,8 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
                     if (catRes.rows.length > 0) catId = catRes.rows[0].id;
                 }
                 await client.query(`
-                    INSERT INTO products (id, item_code, name, description, category_id, vendor, cost, price, unit_cost, unit_price, bag_units, bag_cost, sell_unit, imported_margin)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    INSERT INTO products (id, item_code, name, description, category_id, vendor, cost, price, unit_cost, unit_price, bag_units, bag_cost, sell_unit, imported_margin, margin_floor, margin_ceiling)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                     ON CONFLICT (id) DO UPDATE SET
                         item_code = EXCLUDED.item_code,
                         name = EXCLUDED.name,
@@ -268,6 +270,8 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
                         bag_cost = EXCLUDED.bag_cost,
                         sell_unit = EXCLUDED.sell_unit,
                         imported_margin = EXCLUDED.imported_margin,
+                        margin_floor = EXCLUDED.margin_floor,
+                        margin_ceiling = EXCLUDED.margin_ceiling,
                         updated_at = CURRENT_TIMESTAMP
                 `, [
                     item.id,
@@ -283,7 +287,9 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
                     item.bagUnits || item.bag_units,
                     item.bagCost || item.bag_cost,
                     item.sellUnit || item.sell_unit,
-                    item.importedMargin || item.imported_margin
+                    item.importedMargin || item.imported_margin,
+                    item.marginFloor ?? item.margin_floor ?? null,
+                    item.marginCeiling ?? item.margin_ceiling ?? null
                 ]);
             }
         }
@@ -530,6 +536,87 @@ app.post('/api/settings', authenticateToken, requireCanEdit, async (req, res) =>
         res.json({ success: true, key, value });
     } catch (e) {
         console.error("Settings Update Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Admin-only: Update per-product margin bounds (and optionally price) with server-side validation
+app.put('/api/admin/products/:id', authenticateToken, requireCanEdit, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can update product margin bounds.' });
+        }
+
+        const { id } = req.params;
+        const {
+            marginFloor,
+            marginCeiling,
+            price,
+            cost,
+        } = req.body;
+
+        // Load current product to derive missing values
+        const currentRes = await query(
+            'SELECT cost, price, margin_floor, margin_ceiling FROM products WHERE id = $1',
+            [id]
+        );
+        if (currentRes.rowCount === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        const current = currentRes.rows[0];
+
+        const newCost = typeof cost === 'number' ? cost : (typeof cost === 'string' ? parseFloat(cost) : current.cost || 0);
+        const newPrice = typeof price === 'number' ? price : (typeof price === 'string' ? parseFloat(price) : current.price || 0);
+
+        const newMarginFloor = marginFloor !== undefined && marginFloor !== null
+            ? Number(marginFloor)
+            : current.margin_floor;
+        const newMarginCeiling = marginCeiling !== undefined && marginCeiling !== null
+            ? Number(marginCeiling)
+            : current.margin_ceiling;
+
+        if (newPrice <= 0 || newCost < 0) {
+            return res.status(400).json({ error: 'Invalid cost or price values.' });
+        }
+
+        const margin = (newPrice - newCost) / newPrice;
+
+        if (newMarginFloor != null && margin < newMarginFloor) {
+            return res.status(400).json({
+                error: 'Price would result in margin below configured floor.',
+                details: { margin, marginFloor: newMarginFloor }
+            });
+        }
+
+        if (newMarginCeiling != null && margin > newMarginCeiling) {
+            return res.status(400).json({
+                error: 'Price would result in margin above configured ceiling.',
+                details: { margin, marginCeiling: newMarginCeiling }
+            });
+        }
+
+        await query(
+            `
+            UPDATE products
+            SET margin_floor = $1,
+                margin_ceiling = $2,
+                cost = $3,
+                price = $4,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $5
+            `,
+            [
+                newMarginFloor,
+                newMarginCeiling,
+                newCost,
+                newPrice,
+                id
+            ]
+        );
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Admin Product Update Error:', e);
         res.status(500).json({ error: e.message });
     }
 });

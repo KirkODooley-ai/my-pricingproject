@@ -1,13 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-const PRODUCT_LINES = ['Fasteners', 'FC36', 'I9', 'II6', 'FR', 'FA'];
-const GAUGES = [24, 26, 29];
-
-const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules }) => {
+const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules, products = [], productVariants = [], categories = [] }) => {
     const { user } = useAuth();
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [guardrailDraft, setGuardrailDraft] = useState({});
+
+    // Dynamic: all unique categories from products table + categories table
+    const allCategories = useMemo(() => {
+        const fromProducts = (products || []).map(p => (p.category || '').trim()).filter(Boolean);
+        const fromCats = (categories || []).map(c => (c.name || '').trim()).filter(Boolean);
+        return [...new Set([...fromProducts, ...fromCats])].sort((a, b) => a.localeCompare(b));
+    }, [products, categories]);
+
+    // Categories that actually use gauges (have products with variants that have gauge)
+    const gaugesPerCategory = useMemo(() => {
+        const map = {};
+        (productVariants || []).forEach(v => {
+            if (v.gauge == null) return;
+            const product = (products || []).find(p => p.id === v.productId);
+            const catName = (product?.category || '').trim() || (product?.categoryId && (categories || []).find(c => c.id === product.categoryId))?.name;
+            if (!catName) return;
+            if (!map[catName]) map[catName] = new Set();
+            map[catName].add(parseInt(v.gauge, 10));
+        });
+        Object.keys(map).forEach(k => {
+            map[k] = Array.from(map[k]).sort((a, b) => a - b);
+        });
+        return map;
+    }, [products, productVariants, categories]);
+
+    const categoriesWithGauges = useMemo(() =>
+        Object.keys(gaugesPerCategory).filter(c => gaugesPerCategory[c]?.length > 0).sort((a, b) => a.localeCompare(b)),
+        [gaugesPerCategory]
+    );
 
     useEffect(() => {
         const map = {};
@@ -31,8 +57,8 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     };
     const handleSaveGuardrails = async () => {
         const rules = [];
-        // Blanket rules
-        PRODUCT_LINES.forEach(target => {
+        // Blanket rules: every category
+        allCategories.forEach(target => {
             const r = getRule(target, null);
             const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
             const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
@@ -40,9 +66,9 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                 rules.push({ targetName: target, gauge: null, marginFloor: floor ?? 0.2, marginCeiling: ceiling });
             }
         });
-        // Gauge-specific rules (product lines FC36, I9, II6, FR, FA)
-        ['FC36', 'I9', 'II6', 'FR', 'FA'].forEach(target => {
-            GAUGES.forEach(g => {
+        // Gauge-specific rules: only categories that use gauges
+        categoriesWithGauges.forEach(target => {
+            (gaugesPerCategory[target] || []).forEach(g => {
                 const r = getRule(target, g);
                 const floor = r.marginFloor !== '' && r.marginFloor != null ? r.marginFloor : null;
                 const ceiling = r.marginCeiling !== '' && r.marginCeiling != null ? r.marginCeiling : null;
@@ -164,7 +190,9 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                     <div style={{ marginBottom: '1.5rem' }}>
                         <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Blanket Rules (apply to all gauges)</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                            {PRODUCT_LINES.map(target => (
+                            {allCategories.length === 0 ? (
+                                <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.9rem' }}>No categories found. Add products or categories first.</div>
+                            ) : allCategories.map(target => (
                                 <div key={target} style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                                     <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>{target}</div>
                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -202,13 +230,14 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                         </div>
                     </div>
 
+                    {categoriesWithGauges.length > 0 && (
                     <div style={{ marginBottom: '1.5rem' }}>
                         <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gauge-Specific Rules (override blanket)</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-                            {['FC36', 'I9', 'II6', 'FR', 'FA'].map(target => (
+                            {categoriesWithGauges.map(target => (
                                 <div key={target} style={{ padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
                                     <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#92400e', marginBottom: '0.75rem' }}>{target} by Gauge</div>
-                                    {GAUGES.map(g => (
+                                    {(gaugesPerCategory[target] || []).map(g => (
                                         <div key={`${target}-${g}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                             <span style={{ width: '28px', fontSize: '0.85rem', fontWeight: '600', color: '#64748b' }}>{g}ga</span>
                                             <input
@@ -235,6 +264,7 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                             ))}
                         </div>
                     </div>
+                    )}
 
                     {canEdit && (
                         <button

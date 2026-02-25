@@ -751,6 +751,9 @@ function App() {
                onUpdateSetting={handleUpdateSetting}
                marginRules={marginRules}
                onSaveMarginRules={(rules) => { setMarginRules(rules); api.saveMarginRules(rules); }}
+               products={products}
+               productVariants={productVariants}
+               categories={categories}
              />
         )}
 

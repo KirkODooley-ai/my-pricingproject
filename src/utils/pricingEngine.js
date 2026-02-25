@@ -358,6 +358,17 @@ export const GAUGE_ENABLED_CATEGORIES = ['FA', 'FC36', 'I9', 'II6', 'FR']
 /** Product lines shown in Gauge-Specific margin rules (steel profiles + Forma Loc). */
 export const MARGIN_GAUGE_SPECIFIC_CATEGORIES = ['FA', 'FC36', 'I9', 'II6', 'FR', '12" Forma Loc', '16" Forma Loc']
 
+/** Exact gauge options per profile for Margin Guardrails. No dynamic fallback. */
+export const GAUGES_PER_MARGIN_CATEGORY = {
+    'FC36': [26, 29],
+    'I9': [24, 26, 29],
+    '12" Forma Loc': [26, 29],
+    '16" Forma Loc': [26, 29],
+    'FR': [24, 26],
+    'FA': [24, 26],
+    'II6': [24, 26, 29]
+}
+
 export const isGaugeEnabledCategory = (category) =>
     category && GAUGE_ENABLED_CATEGORIES.includes(String(category).trim())
 

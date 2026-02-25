@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { MARGIN_GAUGE_SPECIFIC_CATEGORIES } from '../utils/pricingEngine';
+import { MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
 
 const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules, products = [], productVariants = [], categories = [] }) => {
     const { user } = useAuth();
@@ -14,23 +14,6 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
         return [...new Set([...fromProducts, ...fromCats])].sort((a, b) => a.localeCompare(b));
     }, [products, categories]);
 
-    // Categories that actually use gauges (have products with variants that have gauge)
-    const gaugesPerCategory = useMemo(() => {
-        const map = {};
-        (productVariants || []).forEach(v => {
-            if (v.gauge == null) return;
-            const product = (products || []).find(p => p.id === v.productId);
-            const catName = (product?.category || '').trim() || (product?.categoryId && (categories || []).find(c => c.id === product.categoryId))?.name;
-            if (!catName) return;
-            if (!map[catName]) map[catName] = new Set();
-            map[catName].add(parseInt(v.gauge, 10));
-        });
-        Object.keys(map).forEach(k => {
-            map[k] = Array.from(map[k]).sort((a, b) => a - b);
-        });
-        return map;
-    }, [products, productVariants, categories]);
-
     const gaugeSpecificCategories = useMemo(() =>
         [...MARGIN_GAUGE_SPECIFIC_CATEGORIES].sort((a, b) => a.localeCompare(b)),
         []
@@ -39,11 +22,10 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     const gaugesForGaugeSpecific = useMemo(() => {
         const map = {};
         gaugeSpecificCategories.forEach(cat => {
-            const gauges = gaugesPerCategory[cat];
-            map[cat] = gauges?.length ? gauges : [24, 26, 29];
+            map[cat] = GAUGES_PER_MARGIN_CATEGORY[cat] || [];
         });
         return map;
-    }, [gaugesPerCategory, gaugeSpecificCategories]);
+    }, [gaugeSpecificCategories]);
 
     const generalCategories = useMemo(() => {
         const gaugeSet = new Set(MARGIN_GAUGE_SPECIFIC_CATEGORIES);

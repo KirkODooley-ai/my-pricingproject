@@ -170,27 +170,28 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         <td style={styles.td}><input type="text" name="name" value={editFormData.name} onChange={handleInputChange} style={styles.inputField} autoFocus /></td>
                         <td style={styles.td}><input type="number" name="cost" value={editFormData.cost} onChange={handleInputChange} style={{...styles.inputField, width: '80px', textAlign: 'right'}} /></td>
                         <td style={styles.td}><input type="number" name="price" value={editFormData.price} onChange={handleInputChange} style={{...styles.inputField, width: '80px', textAlign: 'right'}} /></td>
+                        <td style={styles.td}>-</td>
                         <td style={styles.td}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <input
-                                    type="number"
-                                    step="0.001"
-                                    name="marginFloor"
-                                    placeholder="Floor (0.20)"
-                                    value={editFormData.marginFloor ?? ''}
-                                    onChange={handleInputChange}
-                                    style={{...styles.inputField, width: '90px', textAlign: 'right', fontSize: '0.8rem'}}
-                                />
-                                <input
-                                    type="number"
-                                    step="0.001"
-                                    name="marginCeiling"
-                                    placeholder="Ceiling"
-                                    value={editFormData.marginCeiling ?? ''}
-                                    onChange={handleInputChange}
-                                    style={{...styles.inputField, width: '90px', textAlign: 'right', fontSize: '0.8rem'}}
-                                />
-                            </div>
+                            <input
+                                type="number"
+                                step="0.001"
+                                name="marginFloor"
+                                placeholder="0.20"
+                                value={editFormData.marginFloor ?? ''}
+                                onChange={handleInputChange}
+                                style={{...styles.inputField, width: '70px', textAlign: 'right', fontSize: '0.85rem'}}
+                            />
+                        </td>
+                        <td style={styles.td}>
+                            <input
+                                type="number"
+                                step="0.001"
+                                name="marginCeiling"
+                                placeholder="—"
+                                value={editFormData.marginCeiling ?? ''}
+                                onChange={handleInputChange}
+                                style={{...styles.inputField, width: '70px', textAlign: 'right', fontSize: '0.85rem'}}
+                            />
                         </td>
                         {previewTier.tier && <><td colSpan="3" style={styles.td}>-</td></>}
                         <td style={{...styles.td, textAlign: 'center'}}>
@@ -219,6 +220,12 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                         <td style={{...styles.td, textAlign: 'right', fontWeight: '600'}}>{formatCurrency(product.price)}</td>
                         <td style={{...styles.td, textAlign: 'center'}}>
                             <span style={currentMargin < floor ? styles.badgeRed : styles.badgeGreen}>{formatPercent(currentMargin)}</span>
+                        </td>
+                        <td style={{...styles.td, textAlign: 'right', color: '#64748b', fontSize: '0.85rem'}}>
+                            {product.marginFloor != null ? formatPercent(product.marginFloor) : '—'}
+                        </td>
+                        <td style={{...styles.td, textAlign: 'right', color: '#64748b', fontSize: '0.85rem'}}>
+                            {product.marginCeiling != null ? formatPercent(product.marginCeiling) : '—'}
                         </td>
                         {previewTier.tier && (
                             <>
@@ -281,7 +288,9 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                     <td style={{...styles.td, textAlign: 'right'}}>
                                         <input type="number" name="priceOverride" value={editVariantFormData.priceOverride || ''} placeholder="Auto" onChange={handleVariantInputChange} style={{...styles.inputField, width: '80px', textAlign: 'right'}} />
                                     </td>
-                                    <td style={styles.td}></td>
+                                    <td style={styles.td}>-</td>
+                                    <td style={styles.td}>-</td>
+                                    <td style={styles.td}>-</td>
                                     {previewTier.tier && <><td colSpan="3" style={styles.td}>-</td></>}
                                     <td style={{...styles.td, textAlign: 'center'}}>
                                         <button onClick={() => handleVariantSaveClick(variant.id)} style={styles.actionTextBtn}>Save</button>
@@ -297,7 +306,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                     <td style={{...styles.td, textAlign: 'right', fontWeight: '500', color: variant.costOverride ? '#0f172a' : '#94a3b8'}}>{formatCurrency(finalCost)}</td>
                                     <td style={{...styles.td, textAlign: 'right', fontWeight: '600', color: variant.priceOverride ? '#0f172a' : '#94a3b8'}}>{formatCurrency(finalPrice)}</td>
                                     <td style={{...styles.td, textAlign: 'center'}}><span style={varMargin < varFloor ? styles.badgeRed : styles.badgeGreen}>{formatPercent(varMargin)}</span></td>
-                                    
+                                    <td style={{...styles.td, textAlign: 'right', color: '#94a3b8', fontSize: '0.85rem'}}>—</td>
+                                    <td style={{...styles.td, textAlign: 'right', color: '#94a3b8', fontSize: '0.85rem'}}>—</td>
                                     {previewTier.tier && (
                                         <>
                                             <td style={{...styles.td, textAlign: 'right', fontWeight: '500', backgroundColor: '#e2e8f0'}}>{formatCurrency(varStratList)}</td>
@@ -420,6 +430,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                                         {!isManager && <th style={{...styles.th, textAlign: 'right', width: '8%'}}>Cost</th>}
                                         <th style={{...styles.th, textAlign: 'right', width: '8%'}}>List Price</th>
                                         <th style={{...styles.th, textAlign: 'center', width: '8%'}}>Margin</th>
+                                        <th style={{...styles.th, textAlign: 'center', width: '12%'}} colSpan={2}>Margin Limits</th>
                                         {previewTier.tier && (
                                             <>
                                                 <th style={{...styles.th, textAlign: 'right', backgroundColor: '#f8fafc', width: '9%'}}>Proj. List</th>

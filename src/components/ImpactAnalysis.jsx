@@ -75,23 +75,29 @@ const ImpactAnalysis = ({ customers, salesTransactions }) => {
         return groups;
     }, [customers, salesTransactions]);
 
-    // --- 2. Chart Logic ---
+    // --- 2. Chart Logic: One bubble per tier per group (matches Dealer/Commercial Breakdown tables) ---
     const chartData = useMemo(() => {
         const points = [];
         let maxRev = 0;
 
-        Object.keys(tierData).forEach(group => {
-            Object.values(tierData[group]).forEach(tier => {
-                if (tier.totalRevenue > 0) {
-                    points.push({
-                        label: `${tier.name} (${group})`,
-                        x: tier.totalRevenue,
-                        y: tier.avgMargin,
-                        size: tier.customers.length,
-                        group
-                    });
-                    if (tier.totalRevenue > maxRev) maxRev = tier.totalRevenue;
-                }
+        [CUSTOMER_GROUPS.DEALER, CUSTOMER_GROUPS.COMMERCIAL].forEach(group => {
+            const groupTiers = tierData[group];
+            if (!groupTiers) return;
+            (TIER_RULES[group] || []).concat({ name: 'Unassigned' }).forEach(rule => {
+                const tierName = rule.name;
+                const tier = groupTiers[tierName];
+                if (!tier || tier.totalRevenue <= 0) return;
+                const shortLabel = tierName.replace('Authorized ', '').replace(' Partner', '');
+                points.push({
+                    label: `${group} - ${shortLabel}`,
+                    fullTierName: tierName,
+                    group,
+                    x: tier.totalRevenue,
+                    y: tier.avgMargin,
+                    size: tier.customers.length,
+                    totalRevenue: tier.totalRevenue
+                });
+                if (tier.totalRevenue > maxRev) maxRev = tier.totalRevenue;
             });
         });
         return { points, maxRev: maxRev || 1 };
@@ -154,16 +160,18 @@ const ImpactAnalysis = ({ customers, salesTransactions }) => {
                             {chartData.points.map((pt, idx) => {
                                 const xPos = (pt.x / (chartData.maxRev * 1.1)) * 100;
                                 const yPos = (pt.y / 0.6) * 100; 
-                                const size = Math.max(16, Math.min(50, 12 + Math.log2(pt.size) * 6));
+                                const size = Math.max(16, Math.min(50, 12 + Math.log2(Math.max(1, pt.size)) * 6));
                                 const isDealer = pt.group === CUSTOMER_GROUPS.DEALER;
                                 const color = isDealer ? 'rgba(37, 99, 235, 0.85)' : 'rgba(5, 150, 105, 0.85)'; // Blue / Green
                                 const borderColor = isDealer ? '#1d4ed8' : '#047857';
 
                                 if (isNaN(xPos) || isNaN(yPos) || yPos > 100 || xPos > 100) return null;
 
+                                const tooltipText = `${pt.label}\nRevenue: ${formatCurrency(pt.totalRevenue)}\nMargin: ${formatPercent(pt.y)}\nCustomers: ${pt.size}`;
+
                                 return (
-                                    <div key={idx}
-                                        title={`${pt.label}\nRevenue: ${formatCurrency(pt.x)}\nMargin: ${formatPercent(pt.y)}\nCustomers: ${pt.size}`}
+                                    <div key={`${pt.group}-${pt.fullTierName}-${idx}`}
+                                        title={tooltipText}
                                         style={{
                                             position: 'absolute',
                                             left: `${xPos}%`,
@@ -197,7 +205,7 @@ const ImpactAnalysis = ({ customers, salesTransactions }) => {
                                             pointerEvents: 'none',
                                             boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                         }}>
-                                            {pt.label.split(' ')[0]}
+                                            {pt.label}
                                         </span>
                                     </div>
                                 );

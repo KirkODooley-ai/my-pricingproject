@@ -56,15 +56,19 @@
 }
 
 .sidebar-wordmark {
-  padding: 1rem 1.25rem;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
   background: #ffffff;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 
 .sidebar-wordmark-img {
-  height: 28px;
-  width: auto;
+  width: 80%;
+  max-width: 180px;
+  height: auto;
   display: block;
   object-fit: contain;
 }

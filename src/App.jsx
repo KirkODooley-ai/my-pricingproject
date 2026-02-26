@@ -22,9 +22,8 @@ import { DEFAULT_CATEGORIES, getCategoryGroup } from './utils/pricingEngine'
 import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
-// Forma Steel branding - white logo for dark sidebar, wordmark for light section
+// Forma Steel branding - white logo for dark sidebar; wordmark served from /public/forma-steel-wordmark.png
 import logoSidebar from '../Assests and Branding/Logos/Forma-Primary-Logo-RGB-White.png'
-import wordmarkFormaSteel from '../Assests and Branding/Logos/forma-steel-wordmark.png'
 
 function App() {
   const { user, logout } = useAuth();

@@ -22,9 +22,8 @@ import { DEFAULT_CATEGORIES, getCategoryGroup } from './utils/pricingEngine'
 import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
-// Forma Steel branding - white logo for dark sidebar, black wordmark above nav
+// Forma Steel branding - white logo for dark sidebar; wordmark as text (image path not in Docker context)
 import logoSidebar from '../Assests and Branding/Logos/Forma-Primary-Logo-RGB-White.png'
-import wordmarkBlack from '../Assests and Branding/Logos/Forma-Wordmark-RGB-Black.png'
 
 function App() {
   const { user, logout } = useAuth();
@@ -539,7 +538,7 @@ function App() {
         </div>
 
         <div className="sidebar-wordmark">
-          <img src={wordmarkBlack} alt="Forma Steel" className="sidebar-wordmark-img" />
+          <span className="sidebar-wordmark-text">FORMA STEEL</span>
         </div>
 
         <nav className="nav-section">

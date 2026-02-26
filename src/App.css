@@ -62,11 +62,14 @@
   flex-shrink: 0;
 }
 
-.sidebar-wordmark-img {
-  height: 28px;
-  width: auto;
+.sidebar-wordmark-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #2d2d2d;
+  text-transform: uppercase;
   display: block;
-  object-fit: contain;
+  font-family: inherit;
 }
 
 /* === Navigation Section === */

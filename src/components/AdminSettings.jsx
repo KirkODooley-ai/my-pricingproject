@@ -14,6 +14,7 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [guardrailDraft, setGuardrailDraft] = useState({});
     const [laborRateDraft, setLaborRateDraft] = useState({});
+    const [activeTab, setActiveTab] = useState('pricing');
 
     // Dynamic: all unique categories from products table + categories table
     const allCategories = useMemo(() => {
@@ -109,34 +110,92 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     };
 
     const styles = {
-        pageWrapper: { width: '100%', minHeight: '100%' },
-        container: { maxWidth: '1000px', margin: '0 auto', padding: '2.5rem', width: '100%', fontFamily: 'var(--font-base)' },
-        headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid #e2e8f0' },
-        headerText: { fontSize: '1.85rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em', margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' },
-        subText: { color: '#64748b', fontSize: '1.05rem', margin: 0 },
-        
+        pageWrapper: { width: '100%', minHeight: '100%', fontFamily: 'var(--font-base)' },
+        layout: { display: 'flex', minHeight: '100%', alignItems: 'flex-start' },
+        sidebar: {
+            width: '260px',
+            flexShrink: 0,
+            position: 'sticky',
+            top: 0,
+            backgroundColor: '#ffffff',
+            borderRight: '1px solid #e2e8f0',
+            padding: '1.25rem 0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.25rem'
+        },
+        tabButton: (isActive) => ({
+            padding: '0.85rem 1.25rem',
+            border: 'none',
+            borderLeft: isActive ? '4px solid #3363AF' : '4px solid transparent',
+            backgroundColor: isActive ? '#DCE5F2' : 'transparent',
+            color: isActive ? '#0A2245' : '#1F1F1F',
+            fontWeight: isActive ? '600' : '500',
+            fontSize: '0.95rem',
+            textAlign: 'left',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
+            outline: 'none',
+            marginLeft: 0
+        }),
+        content: { flex: 1, minWidth: 0, maxWidth: '1400px', padding: '2rem 2.5rem', overflow: 'auto' },
+        headerRow: { marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #e2e8f0' },
+        headerText: { fontSize: '1.75rem', fontWeight: '700', color: '#0A2245', letterSpacing: '-0.02em', margin: '0 0 0.5rem 0' },
+        subText: { color: '#1F1F1F', fontSize: '1rem', margin: 0, opacity: 0.8 },
         card: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', padding: '2.5rem', marginBottom: '2rem' },
-        
-        inputField: { padding: '0.75rem 1rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '1.1rem', color: '#0f172a', backgroundColor: '#ffffff', outline: 'none', fontWeight: '700', width: '140px', textAlign: 'center' },
-        label: { display: 'block', marginBottom: '1rem', fontWeight: '600', color: '#475569', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+        inputField: { padding: '0.75rem 1rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '1.1rem', color: '#1F1F1F', backgroundColor: '#ffffff', outline: 'none', fontWeight: '700', width: '140px', textAlign: 'center' },
+        label: { display: 'block', marginBottom: '1rem', fontWeight: '600', color: '#1F1F1F', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
     };
 
     return (
         <div style={styles.pageWrapper}>
-            <div style={styles.container}>
-                {/* Header */}
-                <div style={styles.headerRow}>
-                    <div>
-                        <h2 style={styles.headerText}>
-                            <span style={{ fontSize: '1.6rem', color: '#475569' }}>⚙️</span> System Settings
-                        </h2>
-                        <p style={styles.subText}>Configure global system preferences and root pricing parameters.</p>
+            <style>{`
+                .admin-settings-tab:hover { background-color: #f1f5f9 !important; }
+                .admin-settings-tab[data-active="true"]:hover { background-color: #DCE5F2 !important; }
+            `}</style>
+            <div style={styles.layout}>
+                {/* Sidebar Navigation */}
+                <aside style={styles.sidebar}>
+                    <div style={{ padding: '0 1.25rem 0.75rem', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Configuration
                     </div>
+                    <button
+                        className="admin-settings-tab"
+                        data-active={activeTab === 'pricing'}
+                        onClick={() => setActiveTab('pricing')}
+                        style={styles.tabButton(activeTab === 'pricing')}
+                    >
+                        Global Pricing
+                    </button>
+                    <button
+                        className="admin-settings-tab"
+                        data-active={activeTab === 'margins'}
+                        onClick={() => setActiveTab('margins')}
+                        style={styles.tabButton(activeTab === 'margins')}
+                    >
+                        Margin Guardrails
+                    </button>
+                    <button
+                        className="admin-settings-tab"
+                        data-active={activeTab === 'labor'}
+                        onClick={() => setActiveTab('labor')}
+                        style={styles.tabButton(activeTab === 'labor')}
+                    >
+                        Labor Rates
+                    </button>
+                </aside>
+
+                {/* Content Area */}
+                <main style={styles.content}>
+                <div style={styles.headerRow}>
+                    <h2 style={styles.headerText}>System Settings</h2>
+                    <p style={styles.subText}>Configure global system preferences and root pricing parameters.</p>
                 </div>
 
-                <div style={{...styles.card, borderTop: '4px solid #3b82f6'}}>
+                {activeTab === 'pricing' && (
+                <div style={{...styles.card, borderTop: '4px solid #3363AF'}}>
                     <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#DCE5F2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3363AF' }}>
                             <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                         <div>
@@ -170,9 +229,9 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                                 <div style={{ fontSize: '1.1rem', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span style={{ color: '#0f172a', fontWeight: '600' }}>Base List Price</span> 
                                     <span style={{ color: '#94a3b8' }}>=</span> 
-                                    <span style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '600', color: '#2563eb' }}>Cost</span> 
+                                    <span style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '600', color: '#3363AF' }}>Cost</span> 
                                     <span style={{ color: '#94a3b8' }}>×</span> 
-                                    <span style={{ backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '700', color: '#059669' }}>{globalSettings.global_multiplier || 1.5}</span>
+                                    <span style={{ backgroundColor: '#DCE5F2', border: '1px solid #3363AF', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '700', color: '#3363AF' }}>{globalSettings.global_multiplier || 1.5}</span>
                                 </div>
                             </div>
                         </div>
@@ -197,11 +256,12 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                         </div>
                     </div>
                 </div>
+                )}
 
-                {/* Margin Guardrails */}
-                <div style={{...styles.card, borderTop: '4px solid #059669', marginTop: '2rem'}}>
+                {activeTab === 'margins' && (
+                <div style={{...styles.card, borderTop: '4px solid #3363AF'}}>
                     <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#DCE5F2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3363AF' }}>
                             <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         </div>
                         <div>
@@ -210,9 +270,9 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                         </div>
                     </div>
 
-                    {/* Gauge-Specific Rules (top priority) */}
+                    {/* Steel Profiles / Gauge-Specific Rules (top priority) */}
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gauge-Specific Rules</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#0A2245', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Steel Profiles (Gauge-Specific Rules)</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
                             {gaugeSpecificCategories.map(target => (
                                 <div key={target} style={{ padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
@@ -292,17 +352,18 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                     {canEdit && (
                         <button
                             onClick={handleSaveGuardrails}
-                            style={{ padding: '0.6rem 1.25rem', backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                            style={{ padding: '0.6rem 1.25rem', backgroundColor: '#3363AF', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
                         >
                             Save Margin Guardrails
                         </button>
                     )}
                 </div>
+                )}
 
-                {/* Labor Rate Management */}
-                <div style={{...styles.card, borderTop: '4px solid #8b5cf6', marginTop: '2rem'}}>
+                {activeTab === 'labor' && (
+                <div style={{...styles.card, borderTop: '4px solid #3363AF'}}>
                     <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#DCE5F2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3363AF' }}>
                             <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                         </div>
                         <div>
@@ -337,12 +398,14 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                     {canEdit && onSaveLaborRates && (
                         <button
                             onClick={saveLaborRates}
-                            style={{ padding: '0.6rem 1.25rem', backgroundColor: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                            style={{ padding: '0.6rem 1.25rem', backgroundColor: '#3363AF', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
                         >
                             Save Labor Rates
                         </button>
                     )}
                 </div>
+                )}
+                </main>
             </div>
         </div>
     );

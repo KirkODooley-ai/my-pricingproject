@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { calculateCategoryMargin, formatCurrency, formatPercent, getCategoryGroup } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
-const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDeleteCategory, onRestoreDefaults, onSwapCategories }) => {
+const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDeleteCategory, onRestoreDefaults, onSwapCategories, laborRates = {} }) => {
     const { user } = useAuth();
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [editingId, setEditingId] = useState(null);
@@ -32,13 +32,25 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
     const handleSaveClick = (id) => {
         const rev = parseFloat(editFormData.revenue) || 0;
         const labPct = (parseFloat(editFormData.laborPercentage) || 0) / 100;
-        const calculatedLaborCost = rev * labPct;
+        const totalFootage = parseFloat(editFormData.totalFootage ?? editFormData.total_footage) || 0;
+        const quantity = parseFloat(editFormData.quantity) || 0;
+        const groupName = getCategoryGroup(editFormData.name || '');
+        const rate = laborRates[groupName];
+
+        let calculatedLaborCost = 0;
+        if (rate != null && rate !== '' && (totalFootage > 0 || quantity > 0)) {
+            calculatedLaborCost = (totalFootage / Math.max(1, quantity)) * (parseFloat(rate) || 0);
+        } else {
+            calculatedLaborCost = rev * labPct;
+        }
 
         onUpdateCategory(id, {
             ...editFormData,
             revenue: rev,
             materialCost: parseFloat(editFormData.materialCost) || 0,
             laborPercentage: labPct,
+            totalFootage,
+            quantity,
             laborCost: calculatedLaborCost
         });
         setEditingId(null);
@@ -166,6 +178,8 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                     <th style={{...styles.th, width: '10%', textAlign: 'center'}}>Sales Mix</th>
                                     <th style={{...styles.th, width: '12%', textAlign: 'right'}}>Material Cost</th>
                                     <th style={{...styles.th, width: '10%', textAlign: 'center'}}>Labor %</th>
+                                    <th style={{...styles.th, width: '10%', textAlign: 'right'}}>Total Ft</th>
+                                    <th style={{...styles.th, width: '8%', textAlign: 'center'}}>Qty</th>
                                     <th style={{...styles.th, width: '12%', textAlign: 'right'}}>Labor Cost</th>
                                     <th style={{...styles.th, width: '12%', textAlign: 'center'}}>Total Margin</th>
                                     <th style={{...styles.th, width: '12%', textAlign: 'center'}}>Actions</th>
@@ -180,7 +194,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                 return (
                                     <tbody key={groupName}>
                                         <tr style={styles.groupRow}>
-                                            <td colSpan={8} style={styles.groupText}>{groupName}</td>
+                                            <td colSpan={10} style={styles.groupText}>{groupName}</td>
                                         </tr>
 
                                         {groupCats.map((cat, index) => {
@@ -213,7 +227,17 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                                 />
                                                             </td>
                                                             <td style={styles.td}><input type="number" step="0.5" name="laborPercentage" value={editFormData.laborPercentage || 0} onChange={handleEditChange} style={{...styles.inputField, textAlign: 'center'}} /></td>
-                                                            <td style={{...styles.td, textAlign: 'right', color: '#94a3b8'}}>{formatCurrency((parseFloat(editFormData.revenue) || 0) * (parseFloat(editFormData.laborPercentage) / 100 || 0))}</td>
+                                                            <td style={styles.td}><input type="number" name="totalFootage" value={editFormData.totalFootage ?? editFormData.total_footage ?? ''} onChange={handleEditChange} placeholder="0" style={{...styles.inputField, textAlign: 'right'}} /></td>
+                                                            <td style={styles.td}><input type="number" name="quantity" value={editFormData.quantity ?? ''} onChange={handleEditChange} placeholder="0" style={{...styles.inputField, textAlign: 'center'}} /></td>
+                                                            <td style={{...styles.td, textAlign: 'right', color: '#94a3b8'}}>
+                                                                {(() => {
+                                                                    const tf = parseFloat(editFormData.totalFootage ?? editFormData.total_footage) || 0;
+                                                                    const q = parseFloat(editFormData.quantity) || 0;
+                                                                    const r = laborRates[getCategoryGroup(editFormData.name || '')];
+                                                                    const labCost = (r != null && r !== '' && (tf > 0 || q > 0)) ? (tf / Math.max(1, q)) * (parseFloat(r) || 0) : (parseFloat(editFormData.revenue) || 0) * (parseFloat(editFormData.laborPercentage || 0) / 100 || 0);
+                                                                    return formatCurrency(labCost ?? 0);
+                                                                })()}
+                                                            </td>
                                                             <td style={styles.td}>-</td>
                                                             <td style={{...styles.td, textAlign: 'center'}}>
                                                                 <button style={styles.actionTextBtn} onClick={() => handleSaveClick(cat.id)}>Save</button>
@@ -227,7 +251,9 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                             <td style={{...styles.td, textAlign: 'center'}}><span style={styles.badgeBlue}>{formatPercent(salesMix)}</span></td>
                                                             <td style={{...styles.td, textAlign: 'right'}}>{formatCurrency(cat.materialCost)}</td>
                                                             <td style={{...styles.td, textAlign: 'center', color: cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500'}}>{cat.laborPercentage ? formatPercent(cat.laborPercentage) : '-'}</td>
-                                                            <td style={{...styles.td, textAlign: 'right', color: '#64748b'}}>{formatCurrency(cat.laborCost)}</td>
+                                                            <td style={{...styles.td, textAlign: 'right', color: '#64748b'}}>{(cat.totalFootage ?? cat.total_footage ?? 0) ? Number(cat.totalFootage ?? cat.total_footage).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '-'}</td>
+                                                            <td style={{...styles.td, textAlign: 'center', color: '#64748b'}}>{(cat.quantity ?? 0) ? String(cat.quantity) : '-'}</td>
+                                                            <td style={{...styles.td, textAlign: 'right', color: '#64748b'}}>{formatCurrency(cat.laborCost ?? 0)}</td>
                                                             <td style={{...styles.td, textAlign: 'center'}}>
                                                                 <span style={margin < 0.2 ? styles.badgeRed : styles.badgeGreen}>
                                                                     {formatPercent(margin)}

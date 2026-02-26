@@ -103,12 +103,13 @@ export const TIER_RULES = {
 // --- Formatting ---
 
 export const formatCurrency = (value, precision = 2) => {
+    const n = typeof value === 'number' && !isNaN(value) ? value : (parseFloat(value) || 0);
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
         minimumFractionDigits: precision,
         maximumFractionDigits: precision,
-    }).format(value)
+    }).format(n)
 }
 
 export const formatPercent = (value) => {

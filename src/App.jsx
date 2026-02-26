@@ -18,7 +18,7 @@ import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
 
-import { DEFAULT_CATEGORIES } from './utils/pricingEngine'
+import { DEFAULT_CATEGORIES, getCategoryGroup } from './utils/pricingEngine'
 import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
@@ -300,10 +300,21 @@ function App() {
           updates.materialCost = aggregatedCogs
         }
 
-        // 2c. Sync Labor Cost
-        if (cat.laborPercentage !== undefined) {
-          const derivedLaborCost = salesRevenue * (parseFloat(cat.laborPercentage) || 0)
-          const currentLaborCost = parseFloat(cat.laborCost) || 0
+        // 2c. Sync Labor Cost: (Total Footage / Quantity) * Category Labor Rate, else fallback to revenue * laborPercentage
+        const laborRates = globalSettings?.labor_rates || {}
+        const groupName = getCategoryGroup(cat.name)
+        const laborRate = laborRates[groupName]
+        const totalFootage = parseFloat(cat.totalFootage ?? cat.total_footage) || 0
+        const quantity = parseFloat(cat.quantity) || 0
+
+        let derivedLaborCost = 0
+        if (laborRate != null && laborRate !== '' && (totalFootage > 0 || quantity > 0)) {
+          derivedLaborCost = (totalFootage / Math.max(1, quantity)) * (parseFloat(laborRate) || 0)
+        } else if (cat.laborPercentage !== undefined && cat.laborPercentage != null) {
+          derivedLaborCost = salesRevenue * (parseFloat(cat.laborPercentage) || 0)
+        }
+        const currentLaborCost = parseFloat(cat.laborCost) || 0
+        if (derivedLaborCost > 0 || currentLaborCost > 0) {
           if (Math.abs(currentLaborCost - derivedLaborCost) > 0.01) {
             shouldUpdate = true
             updates.laborCost = derivedLaborCost
@@ -319,7 +330,7 @@ function App() {
 
       return hasChanges ? newCats : prevCats
     })
-  }, [salesTransactions, isHydrated]) // depend on salesTransactions now!
+  }, [salesTransactions, isHydrated, globalSettings?.labor_rates]) // depend on salesTransactions and labor rates
 
 
   // --- Handlers ---
@@ -474,6 +485,12 @@ function App() {
     setGlobalSettings(prev => ({ ...prev, [key]: value }));
     // Persist immediately
     api.saveSetting(key, value);
+  }
+
+  // [NEW] Save Labor Rates (stored in settings as labor_rates key)
+  const handleSaveLaborRates = async (rates) => {
+    setGlobalSettings(prev => ({ ...prev, labor_rates: rates }));
+    await api.saveSetting('labor_rates', rates);
   }
 
   // [NEW] Reordering Logic (Category Swap)
@@ -692,6 +709,7 @@ function App() {
         {activeTab === 'categories' && (
           <CategoryManager
             categories={categories}
+            laborRates={globalSettings.labor_rates || {}}
             onAddCategory={handleAddCategory}
             onUpdateCategory={(id, updates) => {
               setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
@@ -754,6 +772,8 @@ function App() {
                onUpdateSetting={handleUpdateSetting}
                marginRules={marginRules}
                onSaveMarginRules={(rules) => { setMarginRules(rules); api.saveMarginRules(rules); }}
+               laborRates={globalSettings.labor_rates || {}}
+               onSaveLaborRates={handleSaveLaborRates}
                products={products}
                productVariants={productVariants}
                categories={categories}

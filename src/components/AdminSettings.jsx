@@ -2,10 +2,18 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
 
-const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules, products = [], productVariants = [], categories = [] }) => {
+const LABOR_RATE_GROUPS = [
+    'Large Rolled Panel',
+    'Small Rolled Panels',
+    'Cladding Series',
+    'Parts'
+];
+
+const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSaveMarginRules, laborRates = {}, onSaveLaborRates, products = [], productVariants = [], categories = [] }) => {
     const { user } = useAuth();
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [guardrailDraft, setGuardrailDraft] = useState({});
+    const [laborRateDraft, setLaborRateDraft] = useState({});
 
     // Dynamic: all unique categories from products table + categories table
     const allCategories = useMemo(() => {
@@ -31,6 +39,10 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
         const gaugeSet = new Set(MARGIN_GAUGE_SPECIFIC_CATEGORIES);
         return allCategories.filter(c => !gaugeSet.has(c)).sort((a, b) => a.localeCompare(b));
     }, [allCategories]);
+
+    useEffect(() => {
+        setLaborRateDraft(laborRates || {});
+    }, [laborRates]);
 
     useEffect(() => {
         const map = {};
@@ -79,6 +91,20 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
             alert('Margin guardrails saved.');
         } catch (e) {
             alert('Failed to save: ' + e.message);
+        }
+    };
+
+    const saveLaborRates = async () => {
+        try {
+            const rates = {};
+            LABOR_RATE_GROUPS.forEach(g => {
+                const v = laborRateDraft[g];
+                rates[g] = (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(v) || 0);
+            });
+            await onSaveLaborRates(rates);
+            alert('Labor rates saved.');
+        } catch (e) {
+            alert('Failed to save labor rates: ' + e.message);
         }
     };
 
@@ -269,6 +295,51 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                             style={{ padding: '0.6rem 1.25rem', backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
                         >
                             Save Margin Guardrails
+                        </button>
+                    )}
+                </div>
+
+                {/* Labor Rate Management */}
+                <div style={{...styles.card, borderTop: '4px solid #8b5cf6', marginTop: '2rem'}}>
+                    <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}>
+                            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>Labor Rate Management</h3>
+                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Set labor rates ($/foot) by Category Group for Labor Cost calculation</p>
+                        </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                        {LABOR_RATE_GROUPS.map(groupName => (
+                            <div key={groupName} style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>{groupName}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>$</span>
+                                    <input
+                                        type="number"
+                                        step="0.001"
+                                        min="0"
+                                        placeholder="0.00"
+                                        value={laborRateDraft[groupName] ?? ''}
+                                        onChange={e => setLaborRateDraft(prev => ({ ...prev, [groupName]: e.target.value === '' ? '' : parseFloat(e.target.value) || 0 }))}
+                                        disabled={!canEdit}
+                                        style={{...styles.inputField, width: '100px', fontSize: '0.95rem'}}
+                                    />
+                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ft</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem', padding: '0.75rem 1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <strong style={{ color: '#475569' }}>Formula:</strong> Labor Cost = (Total Footage / Quantity) × Category Labor Rate
+                    </div>
+                    {canEdit && onSaveLaborRates && (
+                        <button
+                            onClick={saveLaborRates}
+                            style={{ padding: '0.6rem 1.25rem', backgroundColor: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                        >
+                            Save Labor Rates
                         </button>
                     )}
                 </div>

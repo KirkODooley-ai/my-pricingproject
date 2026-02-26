@@ -34,11 +34,19 @@ const ImpactAnalysis = ({ customers, salesTransactions }) => {
         groups[CUSTOMER_GROUPS.DEALER]['Unassigned'] = { name: 'Unassigned', customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 };
         groups[CUSTOMER_GROUPS.COMMERCIAL]['Unassigned'] = { name: 'Unassigned', customers: [], totalRevenue: 0, totalCOGS: 0, totalProfit: 0, avgMargin: 0 };
 
+        const normalizeGroup = (g) => {
+            const s = (g || '').toString().trim().toLowerCase();
+            if (s === 'dealer') return CUSTOMER_GROUPS.DEALER;
+            if (s === 'commercial' || s.includes('commercial')) return CUSTOMER_GROUPS.COMMERCIAL;
+            if (groups[g]) return g;
+            return null;
+        };
+
         if (Array.isArray(customers)) {
             customers.forEach(cust => {
                 if (!cust) return;
                 const stats = aggregateCustomerStats(cust, salesTransactions);
-                const groupKey = groups[cust.group] ? cust.group : 'Other';
+                const groupKey = normalizeGroup(cust.group) || 'Other';
                 const effectiveSpend = Math.max(cust.annualSpend || 0, stats.revenue);
 
                 let tierName = 'Unassigned';
@@ -158,14 +166,15 @@ const ImpactAnalysis = ({ customers, salesTransactions }) => {
 
                             {/* Plot Points */}
                             {chartData.points.map((pt, idx) => {
-                                const xPos = (pt.x / (chartData.maxRev * 1.1)) * 100;
-                                const yPos = (pt.y / 0.6) * 100; 
+                                const xPos = Math.min(100, (pt.x / (chartData.maxRev * 1.1)) * 100);
+                                const yPosRaw = (pt.y / 0.6) * 100;
+                                const yPos = Math.max(0, Math.min(100, yPosRaw));
                                 const size = Math.max(16, Math.min(50, 12 + Math.log2(Math.max(1, pt.size)) * 6));
                                 const isDealer = pt.group === CUSTOMER_GROUPS.DEALER;
                                 const color = isDealer ? 'rgba(37, 99, 235, 0.85)' : 'rgba(5, 150, 105, 0.85)'; // Blue / Green
                                 const borderColor = isDealer ? '#1d4ed8' : '#047857';
 
-                                if (isNaN(xPos) || isNaN(yPos) || yPos > 100 || xPos > 100) return null;
+                                if (isNaN(xPos) || isNaN(yPos)) return null;
 
                                 const tooltipText = `${pt.label}\nRevenue: ${formatCurrency(pt.totalRevenue)}\nMargin: ${formatPercent(pt.y)}\nCustomers: ${pt.size}`;
 

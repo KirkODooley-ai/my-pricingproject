@@ -538,7 +538,7 @@ function App() {
         </div>
 
         <div className="sidebar-wordmark">
-          <span className="sidebar-wordmark-text">FORMA STEEL</span>
+          <img src="/Forma-Wordmark-RGB-Black.png" alt="Forma Steel" className="sidebar-wordmark-img" />
         </div>
 
         <nav className="nav-section">

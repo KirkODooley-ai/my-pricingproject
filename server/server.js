@@ -107,12 +107,13 @@ app.get('/api/data', authenticateToken, async (req, res) => {
         // RBAC: Managers cannot see material_cost
         const catFields = isManager
             ? `id, name, revenue`
-            : `id, name, revenue, material_cost as "materialCost",
-               COALESCE(total_footage, 0) as "totalFootage",
-               COALESCE(quantity, 0) as "quantity",
-               COALESCE(labor_percentage, 0) as "laborPercentage",
-               COALESCE(labor_cost, 0) as "laborCost"`;
-        const catRes = await query(`SELECT ${catFields} FROM categories ORDER BY id`);
+            : `id, name, revenue, material_cost as "materialCost"`;
+        let catRes;
+        try {
+            catRes = await query(`SELECT ${catFields}, COALESCE(total_footage, 0) as "totalFootage", COALESCE(quantity, 0) as "quantity", COALESCE(labor_percentage, 0) as "laborPercentage", COALESCE(labor_cost, 0) as "laborCost" FROM categories ORDER BY id`);
+        } catch (e) {
+            catRes = await query(`SELECT ${catFields} FROM categories ORDER BY id`);
+        }
         result.categories = catRes.rows;
         // 3. Customers
         const custRes = await query(`
@@ -329,28 +330,40 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
         }
         else if (type === 'categories') {
             for (const item of data) {
-                await client.query(`
-                    INSERT INTO categories (id, name, revenue, material_cost, total_footage, quantity, labor_percentage, labor_cost)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                    ON CONFLICT (id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        revenue = EXCLUDED.revenue,
-                        material_cost = EXCLUDED.material_cost,
-                        total_footage = COALESCE(EXCLUDED.total_footage, 0),
-                        quantity = COALESCE(EXCLUDED.quantity, 0),
-                        labor_percentage = COALESCE(EXCLUDED.labor_percentage, 0),
-                        labor_cost = COALESCE(EXCLUDED.labor_cost, 0),
-                        updated_at = CURRENT_TIMESTAMP
-                `, [
-                    item.id,
-                    item.name,
-                    item.revenue || 0,
-                    item.materialCost || item.material_cost || 0,
-                    item.totalFootage ?? item.total_footage ?? 0,
-                    item.quantity ?? 0,
-                    item.laborPercentage ?? item.labor_percentage ?? 0,
-                    item.laborCost ?? item.labor_cost ?? 0
-                ]);
+                try {
+                    await client.query(`
+                        INSERT INTO categories (id, name, revenue, material_cost, total_footage, quantity, labor_percentage, labor_cost)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        ON CONFLICT (id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            revenue = EXCLUDED.revenue,
+                            material_cost = EXCLUDED.material_cost,
+                            total_footage = COALESCE(EXCLUDED.total_footage, 0),
+                            quantity = COALESCE(EXCLUDED.quantity, 0),
+                            labor_percentage = COALESCE(EXCLUDED.labor_percentage, 0),
+                            labor_cost = COALESCE(EXCLUDED.labor_cost, 0),
+                            updated_at = CURRENT_TIMESTAMP
+                    `, [
+                        item.id,
+                        item.name,
+                        item.revenue || 0,
+                        item.materialCost || item.material_cost || 0,
+                        item.totalFootage ?? item.total_footage ?? 0,
+                        item.quantity ?? 0,
+                        item.laborPercentage ?? item.labor_percentage ?? 0,
+                        item.laborCost ?? item.labor_cost ?? 0
+                    ]);
+                } catch (e) {
+                    await client.query(`
+                        INSERT INTO categories (id, name, revenue, material_cost)
+                        VALUES ($1, $2, $3, $4)
+                        ON CONFLICT (id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            revenue = EXCLUDED.revenue,
+                            material_cost = EXCLUDED.material_cost,
+                            updated_at = CURRENT_TIMESTAMP
+                    `, [item.id, item.name, item.revenue || 0, item.materialCost || item.material_cost || 0]);
+                }
             }
         }
         else if (type === 'salesTransactions') {

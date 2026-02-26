@@ -22,8 +22,9 @@ import { DEFAULT_CATEGORIES, getCategoryGroup } from './utils/pricingEngine'
 import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
-// Forma Steel branding - white logo for dark sidebar
+// Forma Steel branding - white logo for dark sidebar, wordmark for light section
 import logoSidebar from '../Assests and Branding/Logos/Forma-Primary-Logo-RGB-White.png'
+import wordmarkFormaSteel from '../Assests and Branding/Logos/forma-steel-wordmark.png'
 
 function App() {
   const { user, logout } = useAuth();
@@ -535,6 +536,10 @@ function App() {
           <img src={logoSidebar} alt="Forma Steel" className="sidebar-logo" />
           <h1 className="app-title">Pricing Strategy</h1>
           <p className="app-subtitle">Creative Solutions in Steel</p>
+        </div>
+
+        <div className="sidebar-wordmark">
+          <img src="/forma-steel-wordmark.png" alt="Forma Steel" className="sidebar-wordmark-img" />
         </div>
 
         <nav className="nav-section">

@@ -55,6 +55,20 @@
   letter-spacing: 0.02em;
 }
 
+.sidebar-wordmark {
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.sidebar-wordmark-img {
+  height: 28px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
 /* === Navigation Section === */
 .nav-section {
   display: flex;

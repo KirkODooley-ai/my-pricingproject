@@ -94,10 +94,13 @@ const SalesAnalysis = ({ customers, salesTransactions = [], customerAliases = {}
         setLinkTarget({ variantName });
     };
 
-    const confirmLink = (canonicalName) => {
-        if (onUpdateAlias && linkTarget) {
-            onUpdateAlias(linkTarget.variantName, canonicalName);
+    const confirmLink = async (canonicalName) => {
+        if (!onUpdateAlias || !linkTarget) return;
+        try {
+            await onUpdateAlias(linkTarget.variantName, canonicalName);
             setLinkTarget(null);
+        } catch (e) {
+            // Error shown by parent
         }
     };
 
@@ -155,6 +158,7 @@ const SalesAnalysis = ({ customers, salesTransactions = [], customerAliases = {}
                             style={{ width: '100%', padding: '0.75rem 1rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '1rem', color: '#0f172a', marginBottom: '2rem', outline: 'none' }}
                             onChange={(e) => { if (e.target.value) confirmLink(e.target.value); }}
                             defaultValue=""
+                            disabled={!onUpdateAlias}
                         >
                             <option value="" disabled>-- Select Canonical Customer --</option>
                             {safeCustomers.sort((a, b) => a.name.localeCompare(b.name)).map(c => (

@@ -12,6 +12,16 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
     const [activeTab, setActiveTab] = useState('markup'); // 'markup' | 'discounts'
     const [discountActiveGroup, setDiscountActiveGroup] = useState(CUSTOMER_GROUPS.DEALER);
     const [expandedFasteners, setExpandedFasteners] = useState(false);
+    const [expandedMarkupRows, setExpandedMarkupRows] = useState(() => new Set());
+
+    const toggleMarkupExpand = (catName) => {
+        setExpandedMarkupRows(prev => {
+            const next = new Set(prev);
+            if (next.has(catName)) next.delete(catName);
+            else next.add(catName);
+            return next;
+        });
+    };
 
     // Gauge options per category - matches Admin/Product pages (only FA, FC36, I9, II6, FR, 12" Forma Loc, 16" Forma Loc)
     const categoryVariantsMap = React.useMemo(() => {
@@ -176,14 +186,26 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                         <React.Fragment key={catName}>
                                                             {hasVariants ? (
                                                                 <>
-                                                                    {/* Gauged category: parent row is header only */}
-                                                                    <tr style={{ backgroundColor: '#f8fafc' }}>
+                                                                    {/* Gauged category: parent row with expand toggle */}
+                                                                    <tr style={{ backgroundColor: expandedMarkupRows.has(catName) ? '#fafbfc' : '#f8fafc' }}>
                                                                         <td colSpan="3" style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0'}}>
-                                                                            {catName}
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                                <button
+                                                                                    onClick={() => toggleMarkupExpand(catName)}
+                                                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563EB', fontSize: '0.75rem', padding: 0 }}
+                                                                                    title={expandedMarkupRows.has(catName) ? 'Collapse' : 'Expand'}
+                                                                                >
+                                                                                    {expandedMarkupRows.has(catName) ? '▼' : '▶'}
+                                                                                </button>
+                                                                                <span>{catName}</span>
+                                                                                {!expandedMarkupRows.has(catName) && (
+                                                                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>+ {variants.length} gauges</span>
+                                                                                )}
+                                                                            </div>
                                                                         </td>
                                                                     </tr>
-                                                                    {/* Explicit sub-rows for every gauge */}
-                                                                    {variants.map(gauge => {
+                                                                    {/* Explicit sub-rows for every gauge (only when expanded) */}
+                                                                    {expandedMarkupRows.has(catName) && variants.map(gauge => {
                                                                         const variantKey = `${catName}:${gauge}`;
                                                                         const explicitVal = strategy.listMultipliers[variantKey];
                                                                         const fallbackVal = strategy.listMultipliers[catName] || 1.5;
@@ -319,6 +341,17 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
 
 // Transposed Table
 const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, strategy, onChange, categoryVariantsMap, isManager, styles }) => {
+    const [expandedRows, setExpandedRows] = React.useState(() => new Set());
+
+    const toggleExpand = (catName) => {
+        setExpandedRows(prev => {
+            const next = new Set(prev);
+            if (next.has(catName)) next.delete(catName);
+            else next.add(catName);
+            return next;
+        });
+    };
+
     return (
         <div style={{ overflowX: 'auto' }}>
             <table style={{...styles.table, borderTop: 'none'}}>
@@ -351,14 +384,26 @@ const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, 
                                     <React.Fragment key={catName}>
                                         {hasVariants ? (
                                             <>
-                                                {/* Gauged category: parent row is header only */}
-                                                <tr style={{ backgroundColor: '#f8fafc' }}>
-                                                    <td colSpan={tiers.length + 1} style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f8fafc', borderRight: '1px solid #e2e8f0'}}>
-                                                        {catName}
+                                                {/* Gauged category: parent row with expand toggle */}
+                                                <tr style={{ backgroundColor: expandedRows.has(catName) ? '#fafbfc' : '#f8fafc' }}>
+                                                    <td colSpan={tiers.length + 1} style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 5, backgroundColor: expandedRows.has(catName) ? '#fafbfc' : '#f8fafc', borderRight: '1px solid #e2e8f0'}}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <button
+                                                                onClick={() => toggleExpand(catName)}
+                                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563EB', fontSize: '0.75rem', padding: 0 }}
+                                                                title={expandedRows.has(catName) ? 'Collapse' : 'Expand'}
+                                                            >
+                                                                {expandedRows.has(catName) ? '▼' : '▶'}
+                                                            </button>
+                                                            <span>{catName}</span>
+                                                            {!expandedRows.has(catName) && (
+                                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>+ {variants.length} gauges</span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
-                                                {/* Explicit sub-rows for every gauge with ↳ */}
-                                                {variants.map(gauge => {
+                                                {/* Explicit sub-rows for every gauge with ↳ (only when expanded) */}
+                                                {expandedRows.has(catName) && variants.map(gauge => {
                                                     const variantKey = `${catName}:${gauge}`;
                                                     return (
                                                         <tr key={variantKey} style={{ backgroundColor: '#ffffff' }}>

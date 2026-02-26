@@ -112,6 +112,17 @@ export const api = {
         }
     },
 
+    async saveCustomerAlias(aliasName, canonicalName) {
+        const res = await fetch(`${API_URL}/customer-aliases`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ aliasName, canonicalName })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || 'Failed to save customer alias');
+        return json;
+    },
+
     async saveMarginRules(rules) {
         const res = await fetch(`${API_URL}/margin-rules`, {
             method: 'POST',

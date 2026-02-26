@@ -587,6 +587,36 @@ app.post('/api/margin-rules', authenticateToken, requireCanEdit, async (req, res
     }
 });
 
+// Customer alias: link transaction name (alias) to canonical customer - upsert for persistence
+app.post('/api/customer-aliases', authenticateToken, requireCanEdit, async (req, res) => {
+    try {
+        const { aliasName, alias_name, canonicalId, canonical_id, canonicalName, canonical_name } = req.body;
+        const alias = (aliasName || alias_name || '').trim();
+        let custId = canonicalId || canonical_id;
+        const canonical = (canonicalName || canonical_name || '').trim();
+
+        if (!alias) return res.status(400).json({ error: 'aliasName is required' });
+
+        if (!custId && canonical) {
+            const cRes = await query('SELECT id FROM customers WHERE name = $1', [canonical]);
+            if (cRes.rows.length === 0) return res.status(404).json({ error: 'Canonical customer not found' });
+            custId = cRes.rows[0].id;
+        }
+        if (!custId) return res.status(400).json({ error: 'canonicalId or canonicalName is required' });
+
+        await query(`
+            INSERT INTO customer_aliases (alias_name, customer_id)
+            VALUES ($1, $2)
+            ON CONFLICT (alias_name) DO UPDATE SET customer_id = EXCLUDED.customer_id
+        `, [alias, custId]);
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Customer Alias Error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Admin-only: Update per-product margin bounds (and optionally price) with server-side validation
 app.put('/api/admin/products/:id', authenticateToken, requireCanEdit, async (req, res) => {
     try {

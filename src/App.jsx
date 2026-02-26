@@ -458,12 +458,15 @@ function App() {
     }
   }
 
-  // [NEW] Info: Update Alias
-  const handleUpdateAlias = (variant, canonical) => {
-    setCustomerAliases(prev => ({
-      ...prev,
-      [variant]: canonical
-    }))
+  // [NEW] Link unmatched customer: persist to DB immediately, then update state for instant UI refresh
+  const handleUpdateAlias = async (variant, canonical) => {
+    try {
+      await api.saveCustomerAlias(variant, canonical);
+      setCustomerAliases(prev => ({ ...prev, [variant]: canonical }));
+    } catch (e) {
+      console.error(e);
+      alert('Failed to save link: ' + (e.message || 'Unknown error'));
+    }
   }
 
   // [NEW] Update Global Setting

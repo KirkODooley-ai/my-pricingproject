@@ -58,7 +58,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 0 0.75rem 1rem 0.75rem; /* Removed top padding to let the margin-bottom do the work */
+  padding: 0 0.75rem 0 0.75rem; /* Removed bottom padding */
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -66,7 +66,8 @@
 .nav-admin-section {
   border-top: 1px solid var(--border-color);
   padding-top: 0.5rem;
-  margin-top: 0.25rem;
+  margin-top: auto; /* This forces it to the bottom of the container */
+  margin-bottom: 0.5rem; /* Add a tiny bit of breathing room before the user info block */
 }
 
 .nav-section::-webkit-scrollbar {

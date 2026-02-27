@@ -4,8 +4,8 @@
 .app-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
-  height: 100vh;
-  width: 100vw;
+  height: 100%; /* Changed from 100vh */
+  width: 100%;  /* Changed from 100vw to prevent horizontal scrollbar push */
   overflow: hidden;
   font-family: var(--font-base);
   color: var(--text-primary);

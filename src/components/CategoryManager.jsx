@@ -98,23 +98,23 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
         headerText: { fontSize: '1.75rem', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.02em', margin: '0 0 0.5rem 0' },
         subText: { color: '#64748b', fontSize: '1rem', margin: 0 },
         headerActions: { display: 'flex', gap: '1rem', alignItems: 'center' },
-        
+
         primaryBtn: { padding: '0.6rem 1.25rem', backgroundColor: '#2563EB', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 2px 4px rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' },
         outlineBtn: { padding: '0.5rem 1rem', border: '1px solid #cbd5e1', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontWeight: '500', color: '#475569' },
         dangerBtn: { padding: '0.5rem 1rem', backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontWeight: '600', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s' },
-        
+
         dangerTextBtn: { background: 'none', border: 'none', color: '#dc2626', fontWeight: '600', cursor: 'pointer', padding: '0.25rem 0.5rem' },
         actionTextBtn: { background: 'none', border: 'none', color: '#2563EB', fontWeight: '600', cursor: 'pointer', padding: '0.25rem 0.5rem' },
 
         card: { backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.03)', border: '1px solid rgba(15, 23, 42, 0.08)', overflow: 'hidden' },
-        
+
         inputField: { padding: '0.6rem 1rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', color: '#0f172a', transition: 'all 0.2s', outline: 'none', width: '100%' },
         inputLabel: { display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#475569', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
 
         table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
         th: { padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', borderBottom: '1px solid rgba(15, 23, 42, 0.08)' },
         td: { padding: '1rem 1.5rem', fontSize: '0.95rem', color: '#0f172a', borderBottom: '1px solid rgba(15, 23, 42, 0.04)', verticalAlign: 'middle' },
-        
+
         badgeGreen: { backgroundColor: '#ecfdf5', color: '#059669', padding: '0.25rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: '600' },
         badgeRed: { backgroundColor: '#fef2f2', color: '#dc2626', padding: '0.25rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: '600' },
         badgeBlue: { backgroundColor: '#EFF6FF', color: '#2563EB', padding: '0.25rem 0.6rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: '600' },
@@ -140,7 +140,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                             </button>
                         )}
                         {canEdit && (
-                            <button 
+                            <button
                                 onClick={() => setShowAddForm(!showAddForm)}
                                 style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
                             >
@@ -173,19 +173,17 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                         <table style={styles.table}>
                             <thead>
                                 <tr style={{ backgroundColor: '#ffffff' }}>
-                                    <th style={{...styles.th, width: '20%'}}>Category Name</th>
-                                    <th style={{...styles.th, width: '12%', textAlign: 'right'}}>Revenue</th>
-                                    <th style={{...styles.th, width: '10%', textAlign: 'center'}}>Sales Mix</th>
-                                    <th style={{...styles.th, width: '12%', textAlign: 'right'}}>Material Cost</th>
-                                    <th style={{...styles.th, width: '10%', textAlign: 'center'}}>Labor %</th>
-                                    <th style={{...styles.th, width: '10%', textAlign: 'right'}}>Total Ft</th>
-                                    <th style={{...styles.th, width: '8%', textAlign: 'center'}}>Qty</th>
-                                    <th style={{...styles.th, width: '12%', textAlign: 'right'}}>Labor Cost</th>
-                                    <th style={{...styles.th, width: '12%', textAlign: 'center'}}>Total Margin</th>
-                                    <th style={{...styles.th, width: '12%', textAlign: 'center'}}>Actions</th>
+                                    <th style={{ ...styles.th, width: '20%' }}>Category Name</th>
+                                    <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Revenue</th>
+                                    <th style={{ ...styles.th, width: '10%', textAlign: 'center' }}>Sales Mix</th>
+                                    <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Material Cost</th>
+                                    <th style={{ ...styles.th, width: '10%', textAlign: 'center' }}>Labor %</th>
+                                    <th style={{ ...styles.th, width: '12%', textAlign: 'right' }}>Labor Cost</th>
+                                    <th style={{ ...styles.th, width: '12%', textAlign: 'center' }}>Total Margin</th>
+                                    <th style={{ ...styles.th, width: '12%', textAlign: 'center' }}>Actions</th>
                                 </tr>
                             </thead>
-                            
+
                             {/* Render Groups */}
                             {['Large Rolled Panel', 'Small Rolled Panels', 'Cladding Series', 'Parts'].map(groupName => {
                                 const groupCats = categories.filter(cat => getCategoryGroup(cat.name) === groupName);
@@ -194,7 +192,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                 return (
                                     <tbody key={groupName}>
                                         <tr style={styles.groupRow}>
-                                            <td colSpan={10} style={styles.groupText}>{groupName}</td>
+                                            <td colSpan={8} style={styles.groupText}>{groupName}</td>
                                         </tr>
 
                                         {groupCats.map((cat, index) => {
@@ -214,7 +212,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                     {isEditing ? (
                                                         <>
                                                             <td style={styles.td}><input type="text" name="name" value={editFormData.name} onChange={handleEditChange} style={styles.inputField} autoFocus /></td>
-                                                            <td style={styles.td}><input type="number" name="revenue" value={editFormData.revenue} onChange={handleEditChange} style={{...styles.inputField, textAlign: 'right'}} /></td>
+                                                            <td style={styles.td}><input type="number" name="revenue" value={editFormData.revenue} onChange={handleEditChange} style={{ ...styles.inputField, textAlign: 'right' }} /></td>
                                                             <td style={styles.td}>-</td>
                                                             <td style={styles.td}>
                                                                 <input
@@ -226,10 +224,8 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                                     style={{ ...styles.inputField, backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#94a3b8', textAlign: 'right' }}
                                                                 />
                                                             </td>
-                                                            <td style={styles.td}><input type="number" step="0.5" name="laborPercentage" value={editFormData.laborPercentage || 0} onChange={handleEditChange} style={{...styles.inputField, textAlign: 'center'}} /></td>
-                                                            <td style={styles.td}><input type="number" name="totalFootage" value={editFormData.totalFootage ?? editFormData.total_footage ?? ''} onChange={handleEditChange} placeholder="0" style={{...styles.inputField, textAlign: 'right'}} /></td>
-                                                            <td style={styles.td}><input type="number" name="quantity" value={editFormData.quantity ?? ''} onChange={handleEditChange} placeholder="0" style={{...styles.inputField, textAlign: 'center'}} /></td>
-                                                            <td style={{...styles.td, textAlign: 'right', color: '#94a3b8'}}>
+                                                            <td style={styles.td}><input type="number" step="0.5" name="laborPercentage" value={editFormData.laborPercentage || 0} onChange={handleEditChange} style={{ ...styles.inputField, textAlign: 'center' }} /></td>
+                                                            <td style={{ ...styles.td, textAlign: 'right', color: '#94a3b8' }}>
                                                                 {(() => {
                                                                     const tf = parseFloat(editFormData.totalFootage ?? editFormData.total_footage) || 0;
                                                                     const q = parseFloat(editFormData.quantity) || 0;
@@ -239,27 +235,25 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                                 })()}
                                                             </td>
                                                             <td style={styles.td}>-</td>
-                                                            <td style={{...styles.td, textAlign: 'center'}}>
+                                                            <td style={{ ...styles.td, textAlign: 'center' }}>
                                                                 <button style={styles.actionTextBtn} onClick={() => handleSaveClick(cat.id)}>Save</button>
                                                                 <button style={styles.dangerTextBtn} onClick={handleCancelEdit}>Cancel</button>
                                                             </td>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <td style={{...styles.td, fontWeight: '500'}}>{cat.name}</td>
-                                                            <td style={{...styles.td, textAlign: 'right', fontWeight: '500'}}>{formatCurrency(cat.revenue)}</td>
-                                                            <td style={{...styles.td, textAlign: 'center'}}><span style={styles.badgeBlue}>{formatPercent(salesMix)}</span></td>
-                                                            <td style={{...styles.td, textAlign: 'right'}}>{formatCurrency(cat.materialCost)}</td>
-                                                            <td style={{...styles.td, textAlign: 'center', color: cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500'}}>{cat.laborPercentage ? formatPercent(cat.laborPercentage) : '-'}</td>
-                                                            <td style={{...styles.td, textAlign: 'right', color: '#64748b'}}>{(cat.totalFootage ?? cat.total_footage ?? 0) ? Number(cat.totalFootage ?? cat.total_footage).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '-'}</td>
-                                                            <td style={{...styles.td, textAlign: 'center', color: '#64748b'}}>{(cat.quantity ?? 0) ? String(cat.quantity) : '-'}</td>
-                                                            <td style={{...styles.td, textAlign: 'right', color: '#64748b'}}>{formatCurrency(cat.laborCost ?? 0)}</td>
-                                                            <td style={{...styles.td, textAlign: 'center'}}>
+                                                            <td style={{ ...styles.td, fontWeight: '500' }}>{cat.name}</td>
+                                                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500' }}>{formatCurrency(cat.revenue)}</td>
+                                                            <td style={{ ...styles.td, textAlign: 'center' }}><span style={styles.badgeBlue}>{formatPercent(salesMix)}</span></td>
+                                                            <td style={{ ...styles.td, textAlign: 'right' }}>{formatCurrency(cat.materialCost)}</td>
+                                                            <td style={{ ...styles.td, textAlign: 'center', color: cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500' }}>{cat.laborPercentage ? formatPercent(cat.laborPercentage) : '-'}</td>
+                                                            <td style={{ ...styles.td, textAlign: 'right', color: '#64748b' }}>{formatCurrency(cat.laborCost ?? 0)}</td>
+                                                            <td style={{ ...styles.td, textAlign: 'center' }}>
                                                                 <span style={margin < 0.2 ? styles.badgeRed : styles.badgeGreen}>
                                                                     {formatPercent(margin)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{...styles.td, display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center'}}>
+                                                            <td style={{ ...styles.td, display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
                                                                 {canEdit && <button style={styles.actionTextBtn} onClick={() => handleEditClick(cat)}>Edit</button>}
                                                                 {canEdit && <button style={styles.dangerTextBtn} onClick={() => onDeleteCategory(cat.id)}>Delete</button>}
 

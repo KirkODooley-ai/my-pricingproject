@@ -531,17 +531,18 @@ function App() {
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <img src={logoSidebar} alt="Forma Steel" className="sidebar-logo" />
-          <h1 className="app-title">Pricing Strategy</h1>
-          <p className="app-subtitle">Creative Solutions in Steel</p>
-        </div>
+        <div className="sidebar-top">
+          <div className="sidebar-header">
+            <img src={logoSidebar} alt="Forma Steel" className="sidebar-logo" />
+            <h1 className="app-title">Pricing Strategy</h1>
+            <p className="app-subtitle">Creative Solutions in Steel</p>
+          </div>
 
-        <div className="sidebar-wordmark">
-          <img src="/Forma-Wordmark-RGB-Black.png" alt="Forma Steel" className="sidebar-wordmark-img" />
-        </div>
+          <div className="sidebar-wordmark">
+            <img src="/Forma-Wordmark-RGB-Black.png" alt="Forma Steel" className="sidebar-wordmark-img" />
+          </div>
 
-        <nav className="nav-section">
+          <nav className="nav-section">
           {/* Main Navigation */}
           <div
             className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -627,7 +628,7 @@ function App() {
           )}
 
           {/* Admin Section */}
-          <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+          <div className="nav-admin-section">
             {user.role === 'admin' && (
               <>
                 <div className="nav-group-label">Administration</div>
@@ -657,24 +658,25 @@ function App() {
             </div>
             )}
           </div>
-
-          {/* User Info & Logout */}
-          <div className="sidebar-user">
-            <div className="sidebar-user-info">
-              Logged in as
-              <span className="sidebar-user-name">{user.username}</span>
-              <span className="sidebar-user-role">{user.role} {user.region ? `· ${user.region}` : ''}</span>
-            </div>
-            <button
-              onClick={logout}
-              className="nav-link nav-link-logout"
-              style={{ marginTop: '0.75rem', width: '100%', justifyContent: 'flex-start' }}
-            >
-              <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              Logout
-            </button>
-          </div>
         </nav>
+        </div>
+
+        {/* User Info & Logout - pinned to bottom */}
+        <div className="sidebar-user">
+          <div className="sidebar-user-info">
+            Logged in as
+            <span className="sidebar-user-name">{user.username}</span>
+            <span className="sidebar-user-role">{user.role} {user.region ? `· ${user.region}` : ''}</span>
+          </div>
+          <button
+            onClick={logout}
+            className="nav-link nav-link-logout"
+            style={{ marginTop: '0.5rem', width: '100%', justifyContent: 'flex-start' }}
+          >
+            <svg className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            Logout
+          </button>
+        </div>
       </aside>
 
       <main className="main-content">

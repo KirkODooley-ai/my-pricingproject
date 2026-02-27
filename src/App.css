@@ -34,53 +34,22 @@
   overflow: hidden;
 }
 
-.sidebar-header {
-  padding: 0.5rem 1rem 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(135deg, var(--dark-blue) 0%, #0d2d5c 100%);
-  flex-shrink: 0;
-}
-
-.sidebar-logo {
-  height: 36px;
-  width: auto;
-  display: block;
-  margin-bottom: 0.35rem;
-  filter: brightness(1.05);
-}
-
-.app-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.app-subtitle {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 0.15rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.sidebar-wordmark {
-  padding: 8px 16px 10px;
+/* === Brand Logo Layout === */
+.sidebar-brand-container {
+  padding: 1.75rem 1.25rem 2rem 1.25rem; /* Generous padding: top, right, bottom, left */
   display: flex;
-  justify-content: center;
-  margin-bottom: 0;
-  background: #ffffff;
-  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  justify-content: flex-start; /* Aligns image strictly to the left */
   flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color); /* Optional: keeps a clean line above nav */
+  margin-bottom: 1rem; /* Pushes the nav section down */
 }
 
-.sidebar-wordmark-img {
-  width: 80%;
-  max-width: 160px;
+.sidebar-brand-logo {
+  max-width: 170px;
+  width: 100%;
   height: auto;
   display: block;
-  object-fit: contain;
 }
 
 /* === Navigation Section === */
@@ -89,7 +58,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 0.5rem 0.75rem;
+  padding: 0 0.75rem 1rem 0.75rem; /* Removed top padding to let the margin-bottom do the work */
   overflow-y: auto;
   scrollbar-width: none;
 }

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, isGaugeEnabledCategory } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
+import { PERMISSIONS, hasPermission } from '../constants/permissions';
 
 const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {}, marginRules = [] }) => {
     const { user } = useAuth();
     const isManager = user?.role === 'manager';
-    const canEdit = user?.role === 'admin' || user?.can_edit === true;
+    const canEdit = user?.role === 'admin' || user?.can_edit === true || hasPermission(user?.permissions, PERMISSIONS.EDIT_PRODUCTS);
     const [editingId, setEditingId] = useState(null);
     const [activeCategory, setActiveCategory] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -202,7 +203,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                             {canEdit && (
                                 <>
                                     <button onClick={() => handleEditClick(product)} style={styles.actionTextBtn}>Edit</button>
-                                    <button onClick={() => onDeleteProduct(product.id)} style={styles.dangerTextBtn}>Delete</button>
+                                    <button onClick={() => { if (window.confirm(`Delete "${product.name}"? This cannot be undone.`)) onDeleteProduct(product.id); }} style={styles.dangerTextBtn}>Delete</button>
                                 </>
                             )}
                         </td>

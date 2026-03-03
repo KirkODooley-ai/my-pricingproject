@@ -8,6 +8,7 @@
 /** All possible permission keys */
 export const PERMISSIONS = {
   VIEW_COSTS: 'view_costs',
+  EDIT_PRODUCTS: 'edit_products',
   EDIT_PRICING: 'edit_pricing',
   SUBMIT_PROPOSALS: 'submit_proposals',
   APPROVE_PROPOSALS: 'approve_proposals',
@@ -22,6 +23,7 @@ export const PERMISSIONS = {
 /** Human-readable labels for UI */
 export const PERMISSION_LABELS = {
   [PERMISSIONS.VIEW_COSTS]: 'View Costs',
+  [PERMISSIONS.EDIT_PRODUCTS]: 'Edit Products',
   [PERMISSIONS.EDIT_PRICING]: 'Edit Pricing Strategy',
   [PERMISSIONS.SUBMIT_PROPOSALS]: 'Submit Pricing Change',
   [PERMISSIONS.APPROVE_PROPOSALS]: 'Approve Pricing Change',

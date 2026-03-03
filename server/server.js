@@ -33,6 +33,10 @@ const requireCanEdit = (req, res, next) => {
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
     if (req.user?.role === 'admin') return next();
     if (req.user?.can_edit === true) return next();
+    // For product saves, allow users with edit_products permission
+    const perms = req.user?.permissions || [];
+    if (req.params?.type === 'products' && Array.isArray(perms) && perms.includes('edit_products')) return next();
+    if (req.originalUrl?.includes('/admin/products/') && Array.isArray(perms) && perms.includes('edit_products')) return next();
     return res.status(403).json({ error: 'You do not have permission to make changes.' });
 };
 // [NEW] Login Route

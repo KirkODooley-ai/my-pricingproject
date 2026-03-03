@@ -5,6 +5,7 @@ import { PERMISSIONS, PERMISSION_LABELS, hasPermission } from '../constants/perm
 
 const ROLES = [
     { value: 'admin', label: 'Admin' },
+    { value: 'product_manager', label: 'Product Manager' },
     { value: 'outside_sales', label: 'Outside Sales' },
     { value: 'sales_manager', label: 'Sales Manager' },
     { value: 'sales_support', label: 'Sales Support' },

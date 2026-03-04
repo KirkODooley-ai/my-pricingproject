@@ -236,7 +236,7 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
                                     onChange={e => { setSelectedProductId(e.target.value); setSelectedGauge(''); }}
                                 >
                                     <option value="">-- Select Product Profile --</option>
-                                    {products.filter(p => !p.isHidden).sort((a, b) => a.name.localeCompare(b.name)).map(p => (
+                                    {products.filter(p => !p.isHidden).sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => (
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
                                 </select>

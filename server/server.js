@@ -633,11 +633,24 @@ app.post('/api/customer-aliases', authenticateToken, requireCanEdit, async (req,
         }
         if (!custId) return res.status(400).json({ error: 'canonicalId or canonicalName is required' });
 
-        await query(`
-            INSERT INTO customer_aliases (alias_name, customer_id)
-            VALUES ($1, $2)
-            ON CONFLICT (alias_name) DO UPDATE SET customer_id = EXCLUDED.customer_id
-        `, [alias, custId]);
+        // Try upsert first (requires unique constraint on alias_name).
+        // If constraint missing, fall back to update-then-insert (works without migration).
+        try {
+            await query(`
+                INSERT INTO customer_aliases (alias_name, customer_id)
+                VALUES ($1, $2)
+                ON CONFLICT (alias_name) DO UPDATE SET customer_id = EXCLUDED.customer_id
+            `, [alias, custId]);
+        } catch (upsertErr) {
+            if (/no unique or exclusion constraint matching the ON CONFLICT specification/i.test(upsertErr.message)) {
+                const upRes = await query(`UPDATE customer_aliases SET customer_id = $2 WHERE alias_name = $1`, [alias, custId]);
+                if (upRes.rowCount === 0) {
+                    await query(`INSERT INTO customer_aliases (alias_name, customer_id) VALUES ($1, $2)`, [alias, custId]);
+                }
+            } else {
+                throw upsertErr;
+            }
+        }
 
         res.json({ success: true });
     } catch (e) {

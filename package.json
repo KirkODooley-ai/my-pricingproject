@@ -9,7 +9,8 @@
     "start": "node server/server.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "migrate:users": "node run_user_management_migration.js"
+    "migrate:users": "node run_user_management_migration.js",
+    "migrate:aliases": "node run_customer_aliases_migration.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

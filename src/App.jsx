@@ -351,6 +351,16 @@ function App() {
     }))
   }
 
+  // Delete entire product line (category): remove category, all products in it, variants, and sales data
+  const handleDeleteProductLine = (categoryName) => {
+    const cat = categories.find(c => c.name === categoryName)
+    if (cat) handleDeleteCategory(cat.id)
+    const productIdsToRemove = new Set(products.filter(p => p.category === categoryName).map(p => p.id))
+    setProducts(prev => prev.filter(p => p.category !== categoryName))
+    setProductVariants(prev => prev.filter(v => !productIdsToRemove.has(v.productId)))
+    handleDeleteCategoryData(categoryName)
+  }
+
   const handleAddCustomer = (item) => setCustomers(prev => [...prev, item])
   const handleUpdateCustomer = (id, updates) => setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
   const handleDeleteCustomer = (id) => setCustomers(prev => prev.filter(p => p.id !== id))
@@ -695,6 +705,7 @@ function App() {
               onUpdateProduct={handleUpdateProduct}
               onAddProduct={handleAddProduct}
               onDeleteProduct={handleDeleteProduct}
+              onDeleteProductLine={handleDeleteProductLine}
               pricingStrategy={pricingStrategy}
               salesTransactions={salesTransactions} // [NEW] For History Projections
               customers={customers} // [NEW] For Tier Lookup

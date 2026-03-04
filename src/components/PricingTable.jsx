@@ -3,7 +3,7 @@ import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, cal
 import { useAuth } from '../contexts/AuthContext';
 import { PERMISSIONS, hasPermission } from '../constants/permissions';
 
-const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {}, marginRules = [] }) => {
+const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct, onDeleteProduct, onDeleteProductLine, pricingStrategy, salesTransactions = [], customers = [], customerAliases = {}, productVariants = [], onUpdateVariants = () => {}, marginRules = [] }) => {
     const { user } = useAuth();
     const isManager = user?.role === 'manager';
     const canEdit = user?.role === 'admin' || user?.can_edit === true || hasPermission(user?.permissions, PERMISSIONS.EDIT_PRODUCTS);
@@ -311,17 +311,34 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 </div>
 
                 <div style={styles.layoutGrid}>
-                    {/* Sidebar: Categories */}
+                    {/* Sidebar: Product Lines */}
                     <div style={styles.card}>
                         <div style={styles.listHeader}>Product Lines</div>
                         <div style={styles.listContainer}>
                             {categorySidebarList.map(cat => (
                                 <div 
                                     key={cat} 
-                                    onClick={() => setActiveCategory(cat)} 
-                                    style={activeCategory === cat ? styles.listItemActive : styles.listItemInactive}
+                                    onClick={() => setActiveCategory(cat)}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', ...(activeCategory === cat ? styles.listItemActive : styles.listItemInactive) }}
                                 >
-                                    <div style={{...styles.listName, color: activeCategory === cat ? '#1e40af' : '#0f172a'}}>{cat}</div>
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                                        <div style={{...styles.listName, color: activeCategory === cat ? '#1e40af' : '#0f172a'}}>{cat}</div>
+                                    </div>
+                                    {cat !== 'All' && canEdit && onDeleteProductLine && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm(`Delete the entire "${cat}" product line? This will remove the category, all products in it, and related sales data. This cannot be undone.`)) {
+                                                    onDeleteProductLine(cat);
+                                                    if (activeCategory === cat) setActiveCategory('All');
+                                                }
+                                            }}
+                                            style={{ ...styles.dangerTextBtn, marginRight: '0.5rem', fontSize: '0.75rem' }}
+                                            title={`Delete ${cat} product line`}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>

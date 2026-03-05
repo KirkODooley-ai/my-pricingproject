@@ -627,7 +627,11 @@ app.post('/api/customer-aliases', authenticateToken, requireCanEdit, async (req,
         if (!alias) return res.status(400).json({ error: 'aliasName is required' });
 
         if (!custId && canonical) {
-            const cRes = await query('SELECT id FROM customers WHERE name = $1', [canonical]);
+            // Case-insensitive match; trim DB names to handle whitespace differences (fixes "some customers" not linking)
+            const cRes = await query(
+                'SELECT id FROM customers WHERE LOWER(TRIM(name)) = LOWER(TRIM($1)) LIMIT 1',
+                [canonical]
+            );
             if (cRes.rows.length === 0) return res.status(404).json({ error: 'Canonical customer not found' });
             custId = cRes.rows[0].id;
         }

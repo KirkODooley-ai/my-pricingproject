@@ -245,7 +245,13 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500' }}>{formatCurrency(cat.revenue)}</td>
                                                             <td style={{ ...styles.td, textAlign: 'center' }}><span style={styles.badgeBlue}>{formatPercent(salesMix)}</span></td>
                                                             <td style={{ ...styles.td, textAlign: 'right' }}>{formatCurrency(cat.materialCost)}</td>
-                                                            <td style={{ ...styles.td, textAlign: 'center', color: cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500' }}>{cat.laborPercentage ? formatPercent(cat.laborPercentage) : '-'}</td>
+                                                            <td style={{ ...styles.td, textAlign: 'center', color: (laborRates[getCategoryGroup(cat.name)] != null && laborRates[getCategoryGroup(cat.name)] !== '') || cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500' }}>
+                                                                {(() => {
+                                                                    const adminRate = laborRates[getCategoryGroup(cat.name)];
+                                                                    const pct = (adminRate != null && adminRate !== '') ? (parseFloat(adminRate) || 0) : (cat.laborPercentage ?? null);
+                                                                    return pct != null ? formatPercent(pct) : '-';
+                                                                })()}
+                                                            </td>
                                                             <td style={{ ...styles.td, textAlign: 'right', color: '#64748b' }}>{formatCurrency(cat.laborCost ?? 0)}</td>
                                                             <td style={{ ...styles.td, textAlign: 'center' }}>
                                                                 <span style={margin < 0.2 ? styles.badgeRed : styles.badgeGreen}>

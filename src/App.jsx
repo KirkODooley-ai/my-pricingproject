@@ -298,16 +298,14 @@ function App() {
           updates.materialCost = aggregatedCogs
         }
 
-        // 2c. Sync Labor Cost: (Total Footage / Quantity) * Category Labor Rate, else fallback to revenue * laborPercentage
+        // 2c. Sync Labor Cost: Revenue × Category Labor Rate % (percentage of revenue), else fallback to revenue * laborPercentage
         const laborRates = globalSettings?.labor_rates || {}
         const groupName = getCategoryGroup(cat.name)
         const laborRate = laborRates[groupName]
-        const totalFootage = parseFloat(cat.totalFootage ?? cat.total_footage) || 0
-        const quantity = parseFloat(cat.quantity) || 0
 
         let derivedLaborCost = 0
-        if (laborRate != null && laborRate !== '' && (totalFootage > 0 || quantity > 0)) {
-          derivedLaborCost = (totalFootage / Math.max(1, quantity)) * (parseFloat(laborRate) || 0)
+        if (laborRate != null && laborRate !== '') {
+          derivedLaborCost = salesRevenue * (parseFloat(laborRate) || 0)
         } else if (cat.laborPercentage !== undefined && cat.laborPercentage != null) {
           derivedLaborCost = salesRevenue * (parseFloat(cat.laborPercentage) || 0)
         }

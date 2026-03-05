@@ -1,6 +1,5 @@
--- Labor Rate Management: category group labor rates and category footage/quantity
--- Labor Cost = (Total Footage / Quantity) * Category Labor Rate
--- Equivalently: Labor Cost = Total Footage * Labor Rate (rate in $/foot)
+-- Labor Rate Management: category group labor rates as % of revenue
+-- Labor Cost = Revenue × Category Labor Rate (rate stored as decimal, e.g. 0.15 = 15%)
 
 -- Add columns to categories if they don't exist
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS total_footage NUMERIC DEFAULT 0;

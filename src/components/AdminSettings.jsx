@@ -42,7 +42,12 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     }, [allCategories]);
 
     useEffect(() => {
-        setLaborRateDraft(laborRates || {});
+        const draft = {};
+        LABOR_RATE_GROUPS.forEach(g => {
+            const v = laborRates?.[g];
+            draft[g] = (v != null && v !== '') ? (typeof v === 'number' ? v * 100 : parseFloat(v) * 100) : '';
+        });
+        setLaborRateDraft(draft);
     }, [laborRates]);
 
     useEffect(() => {
@@ -100,7 +105,8 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
             const rates = {};
             LABOR_RATE_GROUPS.forEach(g => {
                 const v = laborRateDraft[g];
-                rates[g] = (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(v) || 0);
+                const pct = (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(v) || 0);
+                rates[g] = pct / 100; // store as decimal (0-1)
             });
             await onSaveLaborRates(rates);
             alert('Labor rates saved.');
@@ -368,7 +374,7 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                         </div>
                         <div>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.25rem 0' }}>Labor Rate Management</h3>
-                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Set labor rates ($/foot) by Category Group for Labor Cost calculation</p>
+                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Set labor rates (% of revenue) by Category Group for Labor Cost calculation</p>
                         </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -376,24 +382,24 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                             <div key={groupName} style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                                 <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>{groupName}</div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>$</span>
                                     <input
                                         type="number"
-                                        step="0.001"
+                                        step="0.5"
                                         min="0"
-                                        placeholder="0.00"
+                                        max="100"
+                                        placeholder="0"
                                         value={laborRateDraft[groupName] ?? ''}
                                         onChange={e => setLaborRateDraft(prev => ({ ...prev, [groupName]: e.target.value === '' ? '' : parseFloat(e.target.value) || 0 }))}
                                         disabled={!canEdit}
                                         style={{...styles.inputField, width: '100px', fontSize: '0.95rem'}}
                                     />
-                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>/ft</span>
+                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>%</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem', padding: '0.75rem 1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                        <strong style={{ color: '#475569' }}>Formula:</strong> Labor Cost = (Total Footage / Quantity) × Category Labor Rate
+                        <strong style={{ color: '#475569' }}>Formula:</strong> Labor Cost = Revenue × Category Labor Rate %
                     </div>
                     {canEdit && onSaveLaborRates && (
                         <button

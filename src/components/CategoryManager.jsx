@@ -38,8 +38,8 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
         const rate = laborRates[groupName];
 
         let calculatedLaborCost = 0;
-        if (rate != null && rate !== '' && (totalFootage > 0 || quantity > 0)) {
-            calculatedLaborCost = (totalFootage / Math.max(1, quantity)) * (parseFloat(rate) || 0);
+        if (rate != null && rate !== '') {
+            calculatedLaborCost = rev * (parseFloat(rate) || 0);
         } else {
             calculatedLaborCost = rev * labPct;
         }
@@ -227,10 +227,9 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                             <td style={styles.td}><input type="number" step="0.5" name="laborPercentage" value={editFormData.laborPercentage || 0} onChange={handleEditChange} style={{ ...styles.inputField, textAlign: 'center' }} /></td>
                                                             <td style={{ ...styles.td, textAlign: 'right', color: '#94a3b8' }}>
                                                                 {(() => {
-                                                                    const tf = parseFloat(editFormData.totalFootage ?? editFormData.total_footage) || 0;
-                                                                    const q = parseFloat(editFormData.quantity) || 0;
+                                                                    const rev = parseFloat(editFormData.revenue) || 0;
                                                                     const r = laborRates[getCategoryGroup(editFormData.name || '')];
-                                                                    const labCost = (r != null && r !== '' && (tf > 0 || q > 0)) ? (tf / Math.max(1, q)) * (parseFloat(r) || 0) : (parseFloat(editFormData.revenue) || 0) * (parseFloat(editFormData.laborPercentage || 0) / 100 || 0);
+                                                                    const labCost = (r != null && r !== '') ? rev * (parseFloat(r) || 0) : rev * (parseFloat(editFormData.laborPercentage || 0) / 100 || 0);
                                                                     return formatCurrency(labCost ?? 0);
                                                                 })()}
                                                             </td>

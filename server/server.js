@@ -334,6 +334,18 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
         }
         else if (type === 'categories') {
             for (const item of data) {
+                const id = item.id || item.name;
+                const name = item.name || '';
+                const revenue = item.revenue ?? 0;
+                const materialCost = item.materialCost ?? item.material_cost ?? 0;
+                const totalFootage = item.totalFootage ?? item.total_footage ?? 0;
+                const quantity = item.quantity ?? 0;
+                const laborPct = item.laborPercentage ?? item.labor_percentage ?? 0;
+                const laborCost = item.laborCost ?? item.labor_cost ?? 0;
+                const groupVal = item.group || null;
+                let ok = false;
+                let lastErr = null;
+                // Try full upsert with group (requires category_group migration)
                 try {
                     await client.query(`
                         INSERT INTO categories (id, name, revenue, material_cost, total_footage, quantity, labor_percentage, labor_cost, "group")
@@ -348,28 +360,62 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
                             labor_cost = COALESCE(EXCLUDED.labor_cost, 0),
                             "group" = EXCLUDED."group",
                             updated_at = CURRENT_TIMESTAMP
-                    `, [
-                        item.id,
-                        item.name,
-                        item.revenue || 0,
-                        item.materialCost || item.material_cost || 0,
-                        item.totalFootage ?? item.total_footage ?? 0,
-                        item.quantity ?? 0,
-                        item.laborPercentage ?? item.labor_percentage ?? 0,
-                        item.laborCost ?? item.labor_cost ?? 0,
-                        item.group || null
-                    ]);
-                } catch (e) {
-                    await client.query(`
-                        INSERT INTO categories (id, name, revenue, material_cost)
-                        VALUES ($1, $2, $3, $4)
-                        ON CONFLICT (id) DO UPDATE SET
-                            name = EXCLUDED.name,
-                            revenue = EXCLUDED.revenue,
-                            material_cost = EXCLUDED.material_cost,
-                            updated_at = CURRENT_TIMESTAMP
-                    `, [item.id, item.name, item.revenue || 0, item.materialCost || item.material_cost || 0]);
+                    `, [id, name, revenue, materialCost, totalFootage, quantity, laborPct, laborCost, groupVal]);
+                    ok = true;
+                } catch (e1) {
+                    lastErr = e1;
+                    // Fallback: try without group, then minimal
+                    try {
+                        await client.query(`
+                            INSERT INTO categories (id, name, revenue, material_cost, total_footage, quantity, labor_percentage, labor_cost)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                            ON CONFLICT (id) DO UPDATE SET
+                                name = EXCLUDED.name,
+                                revenue = EXCLUDED.revenue,
+                                material_cost = EXCLUDED.material_cost,
+                                total_footage = COALESCE(EXCLUDED.total_footage, 0),
+                                quantity = COALESCE(EXCLUDED.quantity, 0),
+                                labor_percentage = COALESCE(EXCLUDED.labor_percentage, 0),
+                                labor_cost = COALESCE(EXCLUDED.labor_cost, 0),
+                                updated_at = CURRENT_TIMESTAMP
+                        `, [id, name, revenue, materialCost, totalFootage, quantity, laborPct, laborCost]);
+                        ok = true;
+                    } catch (e2) {
+                        lastErr = e2;
+                        try {
+                            await client.query(`
+                                INSERT INTO categories (id, name, revenue, material_cost)
+                                VALUES ($1, $2, $3, $4)
+                                ON CONFLICT (id) DO UPDATE SET
+                                    name = EXCLUDED.name,
+                                    revenue = EXCLUDED.revenue,
+                                    material_cost = EXCLUDED.material_cost,
+                                    updated_at = CURRENT_TIMESTAMP
+                            `, [id, name, revenue, materialCost]);
+                            ok = true;
+                        } catch (e3) {
+                            lastErr = e3;
+                            // Last resort: UPDATE or INSERT (no ON CONFLICT)
+                            try {
+                                const upd = await client.query(
+                                    'UPDATE categories SET name=$1, revenue=$2, material_cost=$3 WHERE id=$4',
+                                    [name, revenue, materialCost, id]
+                                );
+                                if (upd.rowCount === 0) {
+                                    await client.query(
+                                        'INSERT INTO categories (id, name, revenue, material_cost) VALUES ($1, $2, $3, $4)',
+                                        [id, name, revenue, materialCost]
+                                    );
+                                }
+                                ok = true;
+                            } catch (e4) {
+                                lastErr = e4;
+                                console.error('Categories save error:', e4.message);
+                            }
+                        }
+                    }
                 }
+                if (!ok) throw new Error(`Failed to save category "${name}": ${lastErr?.message || 'Unknown error'}`);
             }
         }
         else if (type === 'salesTransactions') {
@@ -465,7 +511,7 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
     } catch (error) {
         await client.query('ROLLBACK');
         console.error(`Save Error (${type}):`, error);
-        res.status(500).json({ error: 'Failed to save data' });
+        res.status(500).json({ error: error.message || 'Failed to save data' });
     } finally {
         client.release();
     }

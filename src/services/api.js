@@ -45,7 +45,10 @@ export const api = {
                 throw new Error(err.error);
             }
 
-            if (!res.ok) throw new Error(`Failed to save ${type}`);
+            if (!res.ok) {
+                const errBody = await res.json().catch(() => ({}));
+                throw new Error(errBody.error || `Failed to save ${type}`);
+            }
             return true;
         } catch (e) {
             if (e.message === 'PROPOSAL_REQUIRED') {

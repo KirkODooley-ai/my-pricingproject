@@ -942,4 +942,10 @@ app.listen(PORT, HOST, async () => {
     } else {
         console.log(`Connected to Local PostgreSQL on port ${process.env.PGPORT || 3006}`);
     }
+    // Ensure category group column exists (for user-selectable headers)
+    try {
+        await query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS "group" VARCHAR(100)');
+    } catch (e) {
+        console.warn("⚠ Category group migration:", e.message);
+    }
 });

@@ -114,7 +114,7 @@ app.get('/api/data', authenticateToken, async (req, res) => {
             : `id, name, revenue, material_cost as "materialCost"`;
         let catRes;
         try {
-            catRes = await query(`SELECT ${catFields}, COALESCE(total_footage, 0) as "totalFootage", COALESCE(quantity, 0) as "quantity", COALESCE(labor_percentage, 0) as "laborPercentage", COALESCE(labor_cost, 0) as "laborCost" FROM categories ORDER BY id`);
+            catRes = await query(`SELECT ${catFields}, COALESCE(total_footage, 0) as "totalFootage", COALESCE(quantity, 0) as "quantity", COALESCE(labor_percentage, 0) as "laborPercentage", COALESCE(labor_cost, 0) as "laborCost", "group" FROM categories ORDER BY id`);
         } catch (e) {
             catRes = await query(`SELECT ${catFields} FROM categories ORDER BY id`);
         }
@@ -336,8 +336,8 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
             for (const item of data) {
                 try {
                     await client.query(`
-                        INSERT INTO categories (id, name, revenue, material_cost, total_footage, quantity, labor_percentage, labor_cost)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        INSERT INTO categories (id, name, revenue, material_cost, total_footage, quantity, labor_percentage, labor_cost, "group")
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                         ON CONFLICT (id) DO UPDATE SET
                             name = EXCLUDED.name,
                             revenue = EXCLUDED.revenue,
@@ -346,6 +346,7 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
                             quantity = COALESCE(EXCLUDED.quantity, 0),
                             labor_percentage = COALESCE(EXCLUDED.labor_percentage, 0),
                             labor_cost = COALESCE(EXCLUDED.labor_cost, 0),
+                            "group" = EXCLUDED."group",
                             updated_at = CURRENT_TIMESTAMP
                     `, [
                         item.id,
@@ -355,7 +356,8 @@ app.post('/api/save/:type', authenticateToken, requireCanEdit, async (req, res) 
                         item.totalFootage ?? item.total_footage ?? 0,
                         item.quantity ?? 0,
                         item.laborPercentage ?? item.labor_percentage ?? 0,
-                        item.laborCost ?? item.labor_cost ?? 0
+                        item.laborCost ?? item.labor_cost ?? 0,
+                        item.group || null
                     ]);
                 } catch (e) {
                     await client.query(`

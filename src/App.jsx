@@ -18,7 +18,7 @@ import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
 
-import { DEFAULT_CATEGORIES, getCategoryGroup } from './utils/pricingEngine'
+import { DEFAULT_CATEGORIES, getCategoryGroup, getEffectiveCategoryGroup } from './utils/pricingEngine'
 import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
@@ -300,7 +300,7 @@ function App() {
 
         // 2c. Sync Labor Cost: Revenue × Category Labor Rate % (percentage of revenue), else fallback to revenue * laborPercentage
         const laborRates = globalSettings?.labor_rates || {}
-        const groupName = getCategoryGroup(cat.name)
+        const groupName = getEffectiveCategoryGroup(cat)
         const laborRate = laborRates[groupName]
 
         let derivedLaborCost = 0

@@ -50,6 +50,15 @@ export const getCategoryGroup = (catName) => {
     return 'Parts'
 }
 
+/** Category group options for user selection (headers in Category Analysis). */
+export const CATEGORY_GROUP_OPTIONS = ['Large Rolled Panel', 'Small Rolled Panels', 'Cladding Series', 'Parts']
+
+/** Returns the effective group for a category: stored group if set, else lookup by name. */
+export const getEffectiveCategoryGroup = (cat) => {
+    if (cat && cat.group) return cat.group
+    return getCategoryGroup(cat?.name || '')
+}
+
 export const TIER_RULES = {
     [CUSTOMER_GROUPS.DEALER]: [
         { name: 'Authorized Obsidian', minSpend: 2000000 },

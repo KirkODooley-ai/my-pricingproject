@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier, MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
+import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getEffectiveCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier, MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransactions, customers, products = [], productVariants = [], onSave }) => {
@@ -83,7 +83,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
     };
 
     const groupedCategories = categories.reduce((acc, cat) => {
-        const group = getCategoryGroup(cat.name);
+        const group = getEffectiveCategoryGroup(cat);
         if (!acc[group]) acc[group] = [];
         acc[group].push(cat.name);
         return acc;

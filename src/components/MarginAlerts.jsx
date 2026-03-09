@@ -3,6 +3,7 @@ import {
     CUSTOMER_GROUPS,
     TIER_RULES,
     getCategoryGroup,
+    getEffectiveCategoryGroup,
     getMarginFloor,
     getListMultiplier,
     formatPercent
@@ -54,7 +55,7 @@ const MarginAlerts = ({ strategy, setStrategy, categories }) => {
                 const discountMap = strategy.tierMultipliers[gType]?.[tier.name] || {};
 
                 categories.forEach(cat => {
-                    const group = getCategoryGroup(cat.name);
+                    const group = getEffectiveCategoryGroup(cat);
                     const floor = getMarginFloor(group, tIdx, tiers.length);
 
                     const listMult = getListMultiplier(strategy, cat.name);

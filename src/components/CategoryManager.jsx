@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { calculateCategoryMargin, formatCurrency, formatPercent, getCategoryGroup } from '../utils/pricingEngine';
+import { calculateCategoryMargin, formatCurrency, formatPercent, getCategoryGroup, getEffectiveCategoryGroup, CATEGORY_GROUP_OPTIONS } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDeleteCategory, onRestoreDefaults, onSwapCategories, laborRates = {} }) => {
@@ -11,6 +11,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
 
     const [newCategory, setNewCategory] = useState({
         name: '',
+        group: 'Parts',
         revenue: 0,
         materialCost: 0,
         laborPercentage: 0
@@ -20,6 +21,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
         setEditingId(category.id);
         setEditFormData({
             ...category,
+            group: category.group || getCategoryGroup(category.name || ''),
             laborPercentage: (category.laborPercentage || 0) * 100
         });
     };
@@ -34,7 +36,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
         const labPct = (parseFloat(editFormData.laborPercentage) || 0) / 100;
         const totalFootage = parseFloat(editFormData.totalFootage ?? editFormData.total_footage) || 0;
         const quantity = parseFloat(editFormData.quantity) || 0;
-        const groupName = getCategoryGroup(editFormData.name || '');
+        const groupName = editFormData.group || getCategoryGroup(editFormData.name || '');
         const rate = laborRates[groupName];
 
         let calculatedLaborCost = 0;
@@ -46,6 +48,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
 
         onUpdateCategory(id, {
             ...editFormData,
+            group: groupName,
             revenue: rev,
             materialCost: parseFloat(editFormData.materialCost) || 0,
             laborPercentage: labPct,
@@ -68,7 +71,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
         const { name, value } = e.target;
         setNewCategory(prev => ({
             ...prev,
-            [name]: name === 'name' ? value : parseFloat(value) || 0
+            [name]: (name === 'name' || name === 'group') ? value : (parseFloat(value) || 0)
         }));
     };
 
@@ -78,15 +81,18 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
 
         const rev = newCategory.revenue || 0;
         const labPct = (newCategory.laborPercentage || 0) / 100;
-        const calculatedLaborCost = rev * labPct;
+        const groupName = newCategory.group || 'Parts';
+        const rate = laborRates[groupName];
+        const calculatedLaborCost = (rate != null && rate !== '') ? rev * (parseFloat(rate) || 0) : rev * labPct;
 
         onAddCategory({
             ...newCategory,
+            group: groupName,
             laborPercentage: labPct,
             laborCost: calculatedLaborCost,
             id: Date.now().toString()
         });
-        setNewCategory({ name: '', revenue: 0, materialCost: 0, laborPercentage: 0 });
+        setNewCategory({ name: '', group: 'Parts', revenue: 0, materialCost: 0, laborPercentage: 0 });
         setShowAddForm(false);
     };
 
@@ -156,6 +162,12 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                         <div style={{ padding: '2rem', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', backgroundColor: '#f8fafc' }}>
                             <form onSubmit={handleAdd} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
                                 <div><label style={styles.inputLabel}>Category Name</label><input type="text" name="name" style={styles.inputField} value={newCategory.name} onChange={handleChange} autoFocus required /></div>
+                                <div>
+                                    <label style={styles.inputLabel}>Group / Header</label>
+                                    <select name="group" style={styles.inputField} value={newCategory.group || 'Parts'} onChange={handleChange}>
+                                        {CATEGORY_GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                </div>
                                 <div><label style={styles.inputLabel}>Revenue ($)</label><input type="number" name="revenue" style={styles.inputField} value={newCategory.revenue || ''} onChange={handleChange} /></div>
                                 <div><label style={styles.inputLabel}>Material Cost ($)</label><input type="number" name="materialCost" style={styles.inputField} value={newCategory.materialCost || ''} onChange={handleChange} /></div>
                                 <div style={{ position: 'relative' }}>
@@ -186,7 +198,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
 
                             {/* Render Groups */}
                             {['Large Rolled Panel', 'Small Rolled Panels', 'Cladding Series', 'Parts'].map(groupName => {
-                                const groupCats = categories.filter(cat => getCategoryGroup(cat.name) === groupName);
+                                const groupCats = categories.filter(cat => getEffectiveCategoryGroup(cat) === groupName);
                                 if (groupCats.length === 0) return null;
 
                                 return (
@@ -228,7 +240,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                             <td style={{ ...styles.td, textAlign: 'right', color: '#94a3b8' }}>
                                                                 {(() => {
                                                                     const rev = parseFloat(editFormData.revenue) || 0;
-                                                                    const r = laborRates[getCategoryGroup(editFormData.name || '')];
+                                                                    const r = laborRates[editFormData.group || getCategoryGroup(editFormData.name || '')];
                                                                     const labCost = (r != null && r !== '') ? rev * (parseFloat(r) || 0) : rev * (parseFloat(editFormData.laborPercentage || 0) / 100 || 0);
                                                                     return formatCurrency(labCost ?? 0);
                                                                 })()}
@@ -245,9 +257,9 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '500' }}>{formatCurrency(cat.revenue)}</td>
                                                             <td style={{ ...styles.td, textAlign: 'center' }}><span style={styles.badgeBlue}>{formatPercent(salesMix)}</span></td>
                                                             <td style={{ ...styles.td, textAlign: 'right' }}>{formatCurrency(cat.materialCost)}</td>
-                                                            <td style={{ ...styles.td, textAlign: 'center', color: (laborRates[getCategoryGroup(cat.name)] != null && laborRates[getCategoryGroup(cat.name)] !== '') || cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500' }}>
+                                                            <td style={{ ...styles.td, textAlign: 'center', color: (laborRates[getEffectiveCategoryGroup(cat)] != null && laborRates[getEffectiveCategoryGroup(cat)] !== '') || cat.laborPercentage ? '#0f172a' : '#cbd5e1', fontWeight: '500' }}>
                                                                 {(() => {
-                                                                    const adminRate = laborRates[getCategoryGroup(cat.name)];
+                                                                    const adminRate = laborRates[getEffectiveCategoryGroup(cat)];
                                                                     const pct = (adminRate != null && adminRate !== '') ? (parseFloat(adminRate) || 0) : (cat.laborPercentage ?? null);
                                                                     return pct != null ? formatPercent(pct) : '-';
                                                                 })()}

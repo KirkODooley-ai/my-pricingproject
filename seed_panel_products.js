@@ -57,6 +57,11 @@ async function seedPanelProducts() {
       );
 
       if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`Panel seed: updated ${productName} — cost $${cost}/lft, list $${price}/lft`);
         skipped++;
         continue;
       }

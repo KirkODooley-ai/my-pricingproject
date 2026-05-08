@@ -9,6 +9,22 @@ export const CUSTOMER_GROUPS = {
     COMMERCIAL: 'Commercial'
 }
 
+export const REBATE_TIERS = [
+    { minSpend: 1250000, rate: 0.05 },
+    { minSpend: 500000,  rate: 0.03 },
+    { minSpend: 300000,  rate: 0.02 },
+    { minSpend: 100000,  rate: 0.01 },
+    { minSpend: 0,       rate: 0.00 },
+]
+
+export const calculateRebateRate = (annualSpend) => {
+    const spend = parseFloat(annualSpend) || 0
+    for (const tier of REBATE_TIERS) {
+        if (spend >= tier.minSpend) return tier.rate
+    }
+    return 0
+}
+
 // [NEW] Category Groups Definition
 export const CATEGORY_GROUPS = {
     'Large Rolled Panel': [

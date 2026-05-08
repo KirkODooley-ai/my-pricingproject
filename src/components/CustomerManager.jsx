@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { calculateTier, formatCurrency, CUSTOMER_GROUPS } from '../utils/pricingEngine';
+import { calculateTier, formatCurrency, CUSTOMER_GROUPS, calculateRebateRate } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const getTierBadgeStyles = (tierName) => {
@@ -199,16 +199,19 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                             <table style={styles.table}>
                                 <thead>
                                     <tr style={{ backgroundColor: '#fafbfc' }}>
-                                        <th style={{...styles.th, width: '35%'}}>Customer Name</th>
-                                        <th style={{...styles.th, width: '15%', textAlign: 'center'}}>Territory</th>
+                                        <th style={{...styles.th, width: '28%'}}>Customer Name</th>
+                                        <th style={{...styles.th, width: '12%', textAlign: 'center'}}>Territory</th>
                                         <th style={{...styles.th, width: '15%', textAlign: 'right'}}>Annual Spend</th>
-                                        <th style={{...styles.th, width: '20%'}}>Pricing Tier</th>
-                                        <th style={{...styles.th, width: '15%', textAlign: 'center'}}>Actions</th>
+                                        <th style={{...styles.th, width: '18%'}}>Pricing Tier</th>
+                                        {activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER && (
+                                            <th style={{...styles.th, width: '18%', textAlign: 'center'}}>Rebate Program</th>
+                                        )}
+                                        <th style={{...styles.th, width: '9%', textAlign: 'center'}}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {sortedCustomers.length === 0 ? (
-                                        <tr><td colSpan="5" style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>No customers found in this segment.</td></tr>
+                                        <tr><td colSpan={activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER ? 6 : 5} style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>No customers found in this segment.</td></tr>
                                     ) : (
                                         sortedCustomers.map(customer => {
                                             const tierName = calculateTier(customer.group, customer.annualSpend);
@@ -222,10 +225,10 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                                         <select
                                                             value={customer.territory || 'Other'}
                                                             onChange={(e) => onUpdateCustomer(customer.id, { territory: e.target.value })}
-                                                            style={{ 
-                                                                padding: '0.4rem 0.5rem', 
-                                                                border: '1px solid #cbd5e1', 
-                                                                borderRadius: '6px', 
+                                                            style={{
+                                                                padding: '0.4rem 0.5rem',
+                                                                border: '1px solid #cbd5e1',
+                                                                borderRadius: '6px',
                                                                 fontSize: '0.85rem',
                                                                 color: '#475569',
                                                                 fontWeight: '500',
@@ -251,9 +254,56 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                                             {tierName.replace('Authorized ', '').replace(' Partner', '')}
                                                         </span>
                                                     </td>
+                                                    {activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER && (() => {
+                                                        const rebateRate = calculateRebateRate(customer.annualSpend)
+                                                        const enrolled = !!customer.rebateEligible
+                                                        return (
+                                                            <td style={{...styles.td, textAlign: 'center'}}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                                                                    {canEdit ? (
+                                                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                                            <div
+                                                                                onClick={() => onUpdateCustomer(customer.id, { rebateEligible: !enrolled })}
+                                                                                style={{
+                                                                                    width: '40px', height: '22px', borderRadius: '11px',
+                                                                                    backgroundColor: enrolled ? '#2563EB' : '#cbd5e1',
+                                                                                    position: 'relative', cursor: 'pointer',
+                                                                                    transition: 'background-color 0.2s',
+                                                                                    flexShrink: 0
+                                                                                }}
+                                                                            >
+                                                                                <div style={{
+                                                                                    position: 'absolute', top: '3px',
+                                                                                    left: enrolled ? '21px' : '3px',
+                                                                                    width: '16px', height: '16px', borderRadius: '50%',
+                                                                                    backgroundColor: '#ffffff',
+                                                                                    transition: 'left 0.2s',
+                                                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                                                                }} />
+                                                                            </div>
+                                                                        </label>
+                                                                    ) : (
+                                                                        <span style={{ fontSize: '0.8rem', color: enrolled ? '#2563EB' : '#94a3b8', fontWeight: '600' }}>
+                                                                            {enrolled ? 'Enrolled' : 'Not enrolled'}
+                                                                        </span>
+                                                                    )}
+                                                                    {enrolled && (
+                                                                        <span style={{
+                                                                            padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700',
+                                                                            backgroundColor: rebateRate > 0 ? '#dcfce7' : '#f1f5f9',
+                                                                            color: rebateRate > 0 ? '#15803d' : '#94a3b8',
+                                                                            border: `1px solid ${rebateRate > 0 ? '#bbf7d0' : '#e2e8f0'}`
+                                                                        }}>
+                                                                            {rebateRate > 0 ? `${(rebateRate * 100).toFixed(2)}% rebate` : '0% — below threshold'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        )
+                                                    })()}
                                                     <td style={{...styles.td, textAlign: 'center'}}>
                                                         {canEdit && (
-                                                            <button 
+                                                            <button
                                                                 style={styles.dangerTextBtn}
                                                                 onClick={() => onDeleteCustomer(customer.id)}
                                                             >
@@ -275,7 +325,7 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                             <td style={{...styles.td, textAlign: 'right', color: '#0f172a', fontSize: '1.05rem'}}>
                                                 {formatCurrency(sortedCustomers.reduce((sum, c) => sum + (c.annualSpend || 0), 0))}
                                             </td>
-                                            <td colSpan="2" style={styles.td}></td>
+                                            <td colSpan={activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER ? 3 : 2} style={styles.td}></td>
                                         </tr>
                                     )}
                                 </tbody>

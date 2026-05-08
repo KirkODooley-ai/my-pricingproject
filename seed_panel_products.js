@@ -2,17 +2,18 @@ import { query } from './server/db.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Current retail prices per linear foot. New list price = retail x 2.
-// Actual material costs are not yet known and will be entered separately.
+// Current retail prices per linear foot at 40% margin.
+// cost = retail x 0.60 (backing out the 40% margin)
+// New list price = retail x 2
 const VARIANTS = [
-  { name: 'AZ50 (Algalume) 29ga gr80',    currentRetail: 3.42 },
-  { name: 'G90 (Galvanized) 29ga gr80',    currentRetail: 3.42 },
-  { name: 'Bright White Liner 29ga gr80',  currentRetail: 3.72 },
-  { name: 'Colour 40yr 29ga gr80',         currentRetail: 3.89 },
-  { name: 'AZ50 (Algalume) 26ga gr80',    currentRetail: 4.27 },
-  { name: 'G90 (Galvanized) 26ga gr80',   currentRetail: 4.43 },
-  { name: 'WhWh or BrWh Liner 26ga gr80', currentRetail: 4.43 },
-  { name: 'Colour 40yr 26ga gr80',         currentRetail: 4.91 },
+  { name: 'AZ50 (Algalume) 29ga gr80',    retail: 3.42 },
+  { name: 'G90 (Galvanized) 29ga gr80',    retail: 3.42 },
+  { name: 'Bright White Liner 29ga gr80',  retail: 3.72 },
+  { name: 'Colour 40yr 29ga gr80',         retail: 3.89 },
+  { name: 'AZ50 (Algalume) 26ga gr80',    retail: 4.27 },
+  { name: 'G90 (Galvanized) 26ga gr80',   retail: 4.43 },
+  { name: 'WhWh or BrWh Liner 26ga gr80', retail: 4.43 },
+  { name: 'Colour 40yr 26ga gr80',         retail: 4.91 },
 ];
 
 // Try multiple spellings in case the category was entered differently
@@ -47,7 +48,8 @@ async function seedPanelProducts() {
 
     for (const v of VARIANTS) {
       const productName = `${foundName} ${v.name}`;
-      const price = +(v.currentRetail * 2).toFixed(2);
+      const cost  = +(v.retail * 0.60).toFixed(2);
+      const price = +(v.retail * 2).toFixed(2);
 
       const existing = await query(
         'SELECT id FROM products WHERE name = $1 AND category_id = $2',
@@ -61,11 +63,11 @@ async function seedPanelProducts() {
 
       await query(
         `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
-         VALUES (gen_random_uuid(), $1, 0, $2, $3, $4)`,
-        [productName, price, categoryId, 'lft']
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
       );
 
-      console.log(`Panel seed: added ${productName} — list $${price}/lft (cost TBD)`);
+      console.log(`Panel seed: added ${productName} — cost $${cost}/lft, list $${price}/lft`);
       inserted++;
     }
   }

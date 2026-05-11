@@ -38,7 +38,7 @@ export const CATEGORY_GROUPS = {
         '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"', '1" Nail Strip 18"',
         '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',
         // Inter Loc — small to large
-        '7 1/5" Inter Loc', '8" Inter Loc', '12" Interloc',
+        '7 1/2" Inter Loc', '8" Inter Loc', '12" Interloc',
         // Forma Loc — small to large
         '12" Forma Loc', '16" Forma Loc', '17" Forma Loc',
         // Forma Batten — small to large

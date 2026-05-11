@@ -418,8 +418,8 @@ async function seedPanelProducts() {
   // Board & Batten — each width has its own prices
   const BOARD_BATTEN_CATEGORIES = [
     {
-      display: '9 3/4" Board & Batten',
-      lookups: ['9 3/4" Board & Batten'],
+      display: '9 1/2" Board & Batten',
+      lookups: ['9 1/2" Board & Batten', '9 3/4" Board & Batten'],
       variants: [
         { name: 'AZ50 (Algalume) 24ga',   retail: 2.61 },
         { name: 'Colour/Textured 24ga',    retail: 2.82 },

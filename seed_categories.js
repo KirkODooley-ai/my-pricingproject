@@ -20,7 +20,7 @@ const ALL_CATEGORIES = [
     // Rolled Product — Forma Batten
     '10" Forma Batten', '12 3/8" Forma Batten',
     // Cladding
-    '13 1/2" Board & Batten', '9 3/4" Board & Batten', 'Expand Modular', 'ShipLap',
+    '13 1/2" Board & Batten', '9 1/2" Board & Batten', 'Expand Modular', 'ShipLap',
     '5.2" Box Rib', '6" Box Rib', '6" Box Rib Reverse', '7.2 " Box Rib',
     '6 1/4" Forma Plank', '8 1/2" Forma Plank', '5.625" Slimline', '7.125" Slimline Wide', '6" Shiplap',
     // Accessories
@@ -33,6 +33,9 @@ const ALL_CATEGORIES = [
 async function seedCategories() {
     let inserted = 0;
     let skipped = 0;
+
+    // One-time rename: 9 3/4" was always meant to be 9 1/2"
+    await query(`UPDATE categories SET name = '9 1/2" Board & Batten' WHERE name = '9 3/4" Board & Batten'`);
 
     for (let i = 0; i < ALL_CATEGORIES.length; i++) {
         const name = ALL_CATEGORIES[i];

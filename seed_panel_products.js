@@ -679,6 +679,67 @@ async function seedPanelProducts() {
     }
   }
 
+  // Expand Modular Panel — priced per panel
+  const EXPAND_MODULAR_CATEGORIES = [
+    {
+      display: 'Expand Modular',
+      lookups: ['Expand Modular'],
+      variants: [
+        { name: 'Colour / Textured 24ga', retail: 83.25 },
+        { name: 'Image Series 24ga',       retail: 94.35 },
+      ],
+      unit: 'panel'
+    },
+  ];
+
+  for (const cat of EXPAND_MODULAR_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Expand Modular seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of cat.variants) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, cat.unit, existing.rows[0].id]
+        );
+        console.log(`Expand Modular seed: updated ${productName} — cost $${cost}/${cat.unit}, retail list $${price}/${cat.unit}`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, cat.unit]
+      );
+      console.log(`Expand Modular seed: added ${productName} — cost $${cost}/${cat.unit}, retail list $${price}/${cat.unit}`);
+      inserted++;
+    }
+  }
+
   console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 

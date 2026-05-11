@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { formatCurrency, formatPercent, getCategoryGroup } from '../utils/pricingEngine';
+import { formatCurrency, formatPercent, getCategoryGroup, CATEGORY_GROUPS } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const SalesDataManager = ({ customers, salesTransactions = [], categories, onDeleteCustomer, onDeleteCategory, onBatchDeleteSales, onUpdateSale, onAddSale, onDeleteSale }) => {
@@ -195,7 +195,16 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                                 });
 
                                 return DISPLAY_GROUPS.map(groupName => {
-                                    const cats = grouped[groupName];
+                                    // Sort items to match the order defined in CATEGORY_GROUPS
+                                    const groupOrder = CATEGORY_GROUPS[groupName] || [];
+                                    const cats = (grouped[groupName] || []).sort((a, b) => {
+                                        const iA = groupOrder.indexOf(a);
+                                        const iB = groupOrder.indexOf(b);
+                                        if (iA === -1 && iB === -1) return a.localeCompare(b);
+                                        if (iA === -1) return 1;
+                                        if (iB === -1) return -1;
+                                        return iA - iB;
+                                    });
                                     if (cats.length === 0) return null;
                                     const isOpen = openSections[groupName];
                                     return (

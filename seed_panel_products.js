@@ -801,6 +801,67 @@ async function seedPanelProducts() {
     }
   }
 
+  // 1 1/2" Clip Loc
+  const CLIPLOC_CATEGORIES = [
+    {
+      display: '1 1/2" Clip Loc',
+      lookups: ['1 1/2" Clip Loc'],
+      variants: [
+        { name: 'AZ50 (Algalume) 24ga',      retail: 2.17 },
+        { name: 'SMP Colour / Textured 24ga', retail: 2.34 },
+        { name: 'Image Series 24ga',           retail: 3.04 },
+      ]
+    },
+  ];
+
+  for (const cat of CLIPLOC_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Clip Loc seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of cat.variants) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`Clip Loc seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`Clip Loc seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
+  }
+
   console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 

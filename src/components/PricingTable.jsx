@@ -21,7 +21,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
     const [showAddForm, setShowAddForm] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', unitCost: '', cost: '', price: '', vendor: '', itemCode: '', category: '' });
 
-    const [openSections, setOpenSections] = useState({ 'Rolled Product': true, 'Cladding': true, 'Accessories': true });
+    const [openSections, setOpenSections] = useState({ 'Rolled Product': false, 'Cladding': false, 'Accessories': false });
     const toggleSection = (name) => setOpenSections(prev => ({ ...prev, [name]: !prev[name] }));
 
     const filteredProducts = products.filter(p => {

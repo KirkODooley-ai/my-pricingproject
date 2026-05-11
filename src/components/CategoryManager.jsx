@@ -11,7 +11,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
 
     const [newCategory, setNewCategory] = useState({
         name: '',
-        group: 'Parts',
+        group: 'Accessories',
         revenue: 0,
         materialCost: 0,
         laborPercentage: 0
@@ -81,7 +81,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
 
         const rev = newCategory.revenue || 0;
         const labPct = (newCategory.laborPercentage || 0) / 100;
-        const groupName = newCategory.group || 'Parts';
+        const groupName = newCategory.group || 'Accessories';
         const rate = laborRates[groupName];
         const calculatedLaborCost = (rate != null && rate !== '') ? rev * (parseFloat(rate) || 0) : rev * labPct;
 
@@ -92,7 +92,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
             laborCost: calculatedLaborCost,
             id: Date.now().toString()
         });
-        setNewCategory({ name: '', group: 'Parts', revenue: 0, materialCost: 0, laborPercentage: 0 });
+        setNewCategory({ name: '', group: 'Accessories', revenue: 0, materialCost: 0, laborPercentage: 0 });
         setShowAddForm(false);
     };
 
@@ -164,7 +164,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                                 <div><label style={styles.inputLabel}>Category Name</label><input type="text" name="name" style={styles.inputField} value={newCategory.name} onChange={handleChange} autoFocus required /></div>
                                 <div>
                                     <label style={styles.inputLabel}>Group / Header</label>
-                                    <select name="group" style={styles.inputField} value={newCategory.group || 'Parts'} onChange={handleChange}>
+                                    <select name="group" style={styles.inputField} value={newCategory.group || 'Accessories'} onChange={handleChange}>
                                         {CATEGORY_GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
                                     </select>
                                 </div>
@@ -197,7 +197,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                             </thead>
 
                             {/* Render Groups */}
-                            {['Large Rolled Panel', 'Small Rolled Panels', 'Cladding Series', 'Parts'].map(groupName => {
+                            {CATEGORY_GROUP_OPTIONS.map(groupName => {
                                 const groupCats = categories.filter(cat => getEffectiveCategoryGroup(cat) === groupName);
                                 if (groupCats.length === 0) return null;
 

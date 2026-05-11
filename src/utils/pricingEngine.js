@@ -77,9 +77,19 @@ export const getCategoryGroup = (catName) => {
 /** Category group options for user selection (headers in Category Analysis). */
 export const CATEGORY_GROUP_OPTIONS = ['Rolled Product', 'Cladding', 'Accessories']
 
+// Map old group names to new ones so DB records saved before the rename still work
+const LEGACY_GROUP_MAP = {
+    'Large Rolled Panel': 'Rolled Product',
+    'Small Rolled Panels': 'Rolled Product',
+    'Cladding Series': 'Cladding',
+    'Parts': 'Accessories'
+}
+
 /** Returns the effective group for a category: stored group if set, else lookup by name. */
 export const getEffectiveCategoryGroup = (cat) => {
-    if (cat && cat.group) return cat.group
+    if (cat && cat.group) {
+        return LEGACY_GROUP_MAP[cat.group] || cat.group
+    }
     return getCategoryGroup(cat?.name || '')
 }
 

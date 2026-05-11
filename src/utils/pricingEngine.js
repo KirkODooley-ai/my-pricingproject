@@ -45,7 +45,7 @@ export const CATEGORY_GROUPS = {
         '10" Forma Batten', '12 3/8" Forma Batten',
     ],
     'Cladding': [
-        '13 1/2" Board & Batten', '9 3/4" Board & Batten', 'Expand Modular', 'ShipLap',
+        '13 1/2" Board & Batten', '9 1/2" Board & Batten', 'Expand Modular', 'ShipLap',
         '5.2" Box Rib', '6" Box Rib', '6" Box Rib Reverse', '7.2 " Box Rib',
         '6 1/4" Forma Plank', '8 1/2" Forma Plank', '5.625" Slimline', '7.125" Slimline Wide', '6" Shiplap'
     ]

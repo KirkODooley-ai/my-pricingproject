@@ -415,6 +415,77 @@ async function seedPanelProducts() {
     }
   }
 
+  // Board & Batten — each width has its own prices
+  const BOARD_BATTEN_CATEGORIES = [
+    {
+      display: '9 1/2" Board & Batten',
+      lookups: ['9 1/2" Board & Batten', '9 3/4" Board & Batten'],
+      variants: [
+        { name: 'AZ50 (Algalume) 24ga',   retail: 2.61 },
+        { name: 'Colour/Textured 24ga',    retail: 2.82 },
+        { name: 'Image Series 24ga',        retail: 3.47 },
+        { name: 'Weathering Steel 22ga',    retail: 3.37 },
+      ]
+    },
+    {
+      display: '13 1/2" Board & Batten',
+      lookups: ['13 1/2" Board & Batten'],
+      variants: [
+        { name: 'Textured 24ga',           retail: 3.87 },
+        { name: 'Image Series 24ga',        retail: 4.72 },
+        { name: 'Weathering Steel 22ga',    retail: 4.62 },
+      ]
+    },
+  ];
+
+  for (const cat of BOARD_BATTEN_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Board & Batten seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of cat.variants) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`B&B seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`B&B seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
+  }
+
   console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 

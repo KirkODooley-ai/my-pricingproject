@@ -486,6 +486,74 @@ async function seedPanelProducts() {
     }
   }
 
+  // Forma Batten — each width has its own prices
+  const FORMA_BATTEN_CATEGORIES = [
+    {
+      display: '10" Forma Batten',
+      lookups: ['10" Forma Batten'],
+      variants: [
+        { name: 'Colour 26ga', retail: 2.49 },
+      ]
+    },
+    {
+      display: '12 3/8" Forma Batten',
+      lookups: ['12 3/8" Forma Batten'],
+      variants: [
+        { name: 'Colour 24ga',       retail: 3.28 },
+        { name: 'Textured 24ga',     retail: 3.28 },
+        { name: 'Image Series 24ga', retail: 4.18 },
+      ]
+    },
+  ];
+
+  for (const cat of FORMA_BATTEN_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Forma Batten seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of cat.variants) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`Forma Batten seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`Forma Batten seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
+  }
+
   console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { calculateMargin, formatCurrency, formatPercent, isGaugeEnabledCategory } from '../utils/pricingEngine';
+import { calculateMargin, formatCurrency, formatPercent, isGaugeEnabledCategory, getCategoryGroup, CATEGORY_GROUPS, CATEGORY_GROUP_OPTIONS } from '../utils/pricingEngine';
 
 const PricingCalculator = ({ products, productVariants = [] }) => {
     // --- Mode State ---
@@ -146,8 +146,8 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
             <div style={styles.container}>
                 <div style={{...styles.headerRow, alignItems: 'center'}}>
                     <div>
-                        <h2 style={styles.headerText}>Pricing Simulator</h2>
-                        <p style={styles.subText}>Model global portfolio impacts or analyze specific product variants</p>
+                        <h2 style={styles.headerText}>Price Lookup</h2>
+                        <p style={styles.subText}>Look up cost, price, and margin for any product — or model a portfolio scenario</p>
                     </div>
 
                     <div style={styles.tabContainer}>
@@ -235,10 +235,43 @@ const PricingCalculator = ({ products, productVariants = [] }) => {
                                     value={selectedProductId}
                                     onChange={e => { setSelectedProductId(e.target.value); setSelectedGauge(''); }}
                                 >
-                                    <option value="">-- Select Product Profile --</option>
-                                    {products.filter(p => !p.isHidden).sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                    ))}
+                                    <option value="">— Select a product —</option>
+                                    {(() => {
+                                        const visible = products.filter(p => !p.isHidden);
+                                        // Group by category group, sorted by CATEGORY_GROUPS order within each group
+                                        const grouped = {};
+                                        CATEGORY_GROUP_OPTIONS.forEach(g => { grouped[g] = []; });
+                                        visible.forEach(p => {
+                                            const g = getCategoryGroup(p.category || '');
+                                            const key = CATEGORY_GROUP_OPTIONS.includes(g) ? g : 'Accessories';
+                                            grouped[key].push(p);
+                                        });
+                                        // Sort within each group: by CATEGORY_GROUPS category order, then name
+                                        CATEGORY_GROUP_OPTIONS.forEach(groupName => {
+                                            const catOrder = CATEGORY_GROUPS[groupName] || [];
+                                            grouped[groupName].sort((a, b) => {
+                                                const iA = catOrder.indexOf(a.category);
+                                                const iB = catOrder.indexOf(b.category);
+                                                if (iA !== iB) {
+                                                    if (iA === -1) return 1;
+                                                    if (iB === -1) return -1;
+                                                    return iA - iB;
+                                                }
+                                                return (a.name || '').localeCompare(b.name || '');
+                                            });
+                                        });
+                                        return CATEGORY_GROUP_OPTIONS.map(groupName => {
+                                            const items = grouped[groupName];
+                                            if (!items || items.length === 0) return null;
+                                            return (
+                                                <optgroup key={groupName} label={`── ${groupName} ──`}>
+                                                    {items.map(p => (
+                                                        <option key={p.id} value={p.id}>{p.category ? `${p.category} — ` : ''}{p.name}</option>
+                                                    ))}
+                                                </optgroup>
+                                            );
+                                        });
+                                    })()}
                                 </select>
                             </div>
 

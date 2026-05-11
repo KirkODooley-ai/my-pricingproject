@@ -8,6 +8,8 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
     const [editingId, setEditingId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
     const [showAddForm, setShowAddForm] = useState(false);
+    const [openSections, setOpenSections] = useState({ 'Rolled Product': true, 'Cladding': true, 'Accessories': true });
+    const toggleSection = (name) => setOpenSections(prev => ({ ...prev, [name]: !prev[name] }));
 
     const [newCategory, setNewCategory] = useState({
         name: '',
@@ -200,14 +202,21 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
                             {CATEGORY_GROUP_OPTIONS.map(groupName => {
                                 const groupCats = categories.filter(cat => getEffectiveCategoryGroup(cat) === groupName);
                                 if (groupCats.length === 0) return null;
+                                const isOpen = openSections[groupName] !== false;
 
                                 return (
                                     <tbody key={groupName}>
-                                        <tr style={styles.groupRow}>
-                                            <td colSpan={8} style={styles.groupText}>{groupName}</td>
+                                        <tr
+                                            style={{ ...styles.groupRow, cursor: 'pointer', userSelect: 'none' }}
+                                            onClick={() => toggleSection(groupName)}
+                                        >
+                                            <td colSpan={8} style={{ ...styles.groupText, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <span>{groupName}</span>
+                                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', marginRight: '0.5rem', transform: isOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
+                                            </td>
                                         </tr>
 
-                                        {groupCats.map((cat, index) => {
+                                        {isOpen && groupCats.map((cat, index) => {
                                             const margin = calculateCategoryMargin(cat);
                                             const totalRevenue = categories.reduce((sum, c) => sum + (c.revenue || 0), 0);
                                             const salesMix = totalRevenue > 0 ? (cat.revenue || 0) / totalRevenue : 0;

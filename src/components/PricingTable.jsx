@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, isGaugeEnabledCategory } from '../utils/pricingEngine';
+import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, CATEGORY_GROUP_OPTIONS, isGaugeEnabledCategory } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 import { PERMISSIONS, hasPermission } from '../constants/permissions';
 
@@ -20,6 +20,9 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', unitCost: '', cost: '', price: '', vendor: '', itemCode: '', category: '' });
+
+    const [openSections, setOpenSections] = useState({ 'Rolled Product': true, 'Cladding': true, 'Accessories': true });
+    const toggleSection = (name) => setOpenSections(prev => ({ ...prev, [name]: !prev[name] }));
 
     const filteredProducts = products.filter(p => {
         const catMatch = activeCategory === 'All' || p.category === activeCategory;
@@ -286,7 +289,31 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
         );
     };
 
-    const categorySidebarList = getGroupedOptions();
+    // Build grouped sidebar: relevant categories sorted by CATEGORY_GROUPS order
+    const buildGroupedSidebar = () => {
+        const relevantCats = new Set([...categories.map(c => c.name), ...products.map(p => p.category)].filter(Boolean));
+        const grouped = { 'Rolled Product': [], 'Cladding': [], 'Accessories': [] };
+        relevantCats.forEach(catName => {
+            let g = 'Accessories';
+            for (const [groupName, items] of Object.entries(CATEGORY_GROUPS)) {
+                if (items.includes(catName)) { g = groupName; break; }
+            }
+            grouped[g].push(catName);
+        });
+        // Sort each group by CATEGORY_GROUPS definition order
+        ['Rolled Product', 'Cladding'].forEach(groupName => {
+            const order = CATEGORY_GROUPS[groupName] || [];
+            grouped[groupName].sort((a, b) => {
+                const iA = order.indexOf(a); const iB = order.indexOf(b);
+                if (iA === -1 && iB === -1) return a.localeCompare(b);
+                if (iA === -1) return 1; if (iB === -1) return -1;
+                return iA - iB;
+            });
+        });
+        grouped['Accessories'].sort((a, b) => a.localeCompare(b));
+        return grouped;
+    };
+    const groupedSidebar = buildGroupedSidebar();
 
     return (
         <div style={styles.pageWrapper}>
@@ -300,7 +327,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
                     <div style={styles.headerActions}>
                         {!isManager && canEdit && (
-                            <button 
+                            <button
                                 onClick={() => setShowAddForm(!showAddForm)}
                                 style={showAddForm ? styles.outlineBtn : styles.primaryBtn}
                             >
@@ -315,32 +342,60 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     <div style={styles.card}>
                         <div style={styles.listHeader}>Product Lines</div>
                         <div style={styles.listContainer}>
-                            {categorySidebarList.map(cat => (
-                                <div 
-                                    key={cat} 
-                                    onClick={() => setActiveCategory(cat)}
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', ...(activeCategory === cat ? styles.listItemActive : styles.listItemInactive) }}
-                                >
-                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                                        <div style={{...styles.listName, color: activeCategory === cat ? '#1e40af' : '#0f172a'}}>{cat}</div>
-                                    </div>
-                                    {cat !== 'All' && canEdit && onDeleteProductLine && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (window.confirm(`Delete the entire "${cat}" product line? This will remove the category, all products in it, and related sales data. This cannot be undone.`)) {
-                                                    onDeleteProductLine(cat);
-                                                    if (activeCategory === cat) setActiveCategory('All');
-                                                }
-                                            }}
-                                            style={{ ...styles.dangerTextBtn, marginRight: '0.5rem', fontSize: '0.75rem' }}
-                                            title={`Delete ${cat} product line`}
+                            {/* All option at top */}
+                            <div
+                                onClick={() => setActiveCategory('All')}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', ...(activeCategory === 'All' ? styles.listItemActive : styles.listItemInactive) }}
+                            >
+                                <div style={{...styles.listName, color: activeCategory === 'All' ? '#1e40af' : '#0f172a'}}>All</div>
+                            </div>
+
+                            {/* Accordion groups */}
+                            {CATEGORY_GROUP_OPTIONS.map(groupName => {
+                                const cats = groupedSidebar[groupName] || [];
+                                if (cats.length === 0) return null;
+                                const isOpen = openSections[groupName] !== false;
+                                return (
+                                    <React.Fragment key={groupName}>
+                                        {/* Group header */}
+                                        <div
+                                            onClick={() => toggleSection(groupName)}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 1.5rem', backgroundColor: '#f1f5f9', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0', userSelect: 'none' }}
                                         >
-                                            Delete
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
+                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{groupName}</span>
+                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', transform: isOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>▲</span>
+                                        </div>
+
+                                        {/* Category items */}
+                                        {isOpen && cats.map(cat => (
+                                            <div
+                                                key={cat}
+                                                onClick={() => setActiveCategory(cat)}
+                                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', ...(activeCategory === cat ? styles.listItemActive : styles.listItemInactive), paddingLeft: '2rem' }}
+                                            >
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{...styles.listName, fontSize: '0.9rem', color: activeCategory === cat ? '#1e40af' : '#334155'}}>{cat}</div>
+                                                </div>
+                                                {canEdit && onDeleteProductLine && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (window.confirm(`Delete the entire "${cat}" product line? This will remove the category, all products in it, and related sales data. This cannot be undone.`)) {
+                                                                onDeleteProductLine(cat);
+                                                                if (activeCategory === cat) setActiveCategory('All');
+                                                            }
+                                                        }}
+                                                        style={{ ...styles.dangerTextBtn, marginRight: '0.25rem', fontSize: '0.7rem' }}
+                                                        title={`Delete ${cat} product line`}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </React.Fragment>
+                                );
+                            })}
                         </div>
                     </div>
 

@@ -2,9 +2,9 @@ import { query } from './server/db.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Current retail prices per linear foot at 40% margin.
-// cost = retail x 0.60 (backing out the 40% margin)
-// New list price = retail x 2
+// Retail list prices per linear foot — already include 40% margin.
+// price = retail (as given)
+// cost  = retail x 0.60 (backing out the 40% margin)
 const VARIANTS = [
   { name: 'AZ50 (Algalume) 29ga gr80',    retail: 3.42 },
   { name: 'G90 (Galvanized) 29ga gr80',    retail: 3.42 },
@@ -48,8 +48,8 @@ async function seedPanelProducts() {
 
     for (const v of VARIANTS) {
       const productName = `${foundName} ${v.name}`;
-      const cost  = +(v.retail * 0.60).toFixed(2);
-      const price = +(v.retail * 2).toFixed(2);
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
 
       const existing = await query(
         'SELECT id FROM products WHERE name = $1 AND category_id = $2',
@@ -61,7 +61,7 @@ async function seedPanelProducts() {
           `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
           [cost, price, 'lft', existing.rows[0].id]
         );
-        console.log(`Panel seed: updated ${productName} — cost $${cost}/lft, list $${price}/lft`);
+        console.log(`Panel seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
         skipped++;
         continue;
       }
@@ -72,7 +72,7 @@ async function seedPanelProducts() {
         [productName, cost, price, categoryId, 'lft']
       );
 
-      console.log(`Panel seed: added ${productName} — cost $${cost}/lft, list $${price}/lft`);
+      console.log(`Panel seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
       inserted++;
     }
   }

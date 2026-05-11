@@ -29,7 +29,7 @@ export const calculateRebateRate = (annualSpend) => {
 export const CATEGORY_GROUPS = {
     'Rolled Product': [
         // Main profiles — pinned to top
-        'FC36', 'FR', 'II6', 'FA', 'I9',
+        'FC36', 'FR', 'FR Reverse', 'II6', 'FA', 'I9',
         // Corrugated — small to large
         '32 7/8" Corrugated', '37 7/8 Corrugated',
         // Mechanical / Clip Loc

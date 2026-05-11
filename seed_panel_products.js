@@ -21,7 +21,23 @@ const PANEL_CATEGORIES = [
   { display: 'FC36',          lookups: ['FC36'] },
   { display: 'II6',           lookups: ['II6', 'II/6'] },
   { display: 'I9',            lookups: ['I9', 'I/9'] },
-  { display: 'II6 Reverse',   lookups: ['FR', 'II6 Reverse', 'II/6 Reverse'] },
+  { display: 'II6 Reverse',   lookups: ['II6 Reverse', 'II/6 Reverse'] },
+];
+
+// Roll-formed panels: FR, FR Reverse, FA — 26ga and 24ga only
+const VARIANTS_ROLL = [
+  { name: 'AZ50 (Algalume) 26ga gr80',    retail: 4.27 },
+  { name: 'G90 (Galvanized) 26ga gr80',   retail: 4.43 },
+  { name: 'WhWh or BrWh Liner 26ga gr80', retail: 4.43 },
+  { name: 'Colour 40yr 26ga gr80',         retail: 4.91 },
+  { name: 'AZ50 (Algalume) 24ga gr33',    retail: 6.10 },
+  { name: 'Colour 40yr 24ga gr33',         retail: 7.62 },
+];
+
+const ROLL_PANEL_CATEGORIES = [
+  { display: 'FR',         lookups: ['FR'] },
+  { display: 'FR Reverse', lookups: ['FR Reverse'] },
+  { display: 'FA',         lookups: ['FA'] },
 ];
 
 async function seedPanelProducts() {
@@ -77,9 +93,56 @@ async function seedPanelProducts() {
     }
   }
 
-  if (inserted > 0 || skipped === 0) {
-    console.log(`Panel seed complete: ${inserted} added, ${skipped} already existed.`);
+  // Roll-formed panels (FR, FR Reverse, FA) — 26ga and 24ga variants
+  for (const cat of ROLL_PANEL_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Roll panel seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of VARIANTS_ROLL) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`Roll panel seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`Roll panel seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
   }
+
+  console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 
 seedPanelProducts().catch(e => {

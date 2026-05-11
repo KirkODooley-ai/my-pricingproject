@@ -28,13 +28,21 @@ export const calculateRebateRate = (annualSpend) => {
 // Category Groups Definition
 export const CATEGORY_GROUPS = {
     'Rolled Product': [
-        // Large rolled panels
-        'FC36', 'FR', 'I9', 'II6', '32 7/8" Corrugated', '37 7/8 Corrugated', 'FA',
-        // Small rolled panels
-        '1 1/2" Mechanical Loc', '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"',
-        '1" Nail Strip 18"', '1 1/2" Clip Loc', '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',
-        '8" Inter Loc', '12" Interloc', '12" Forma Loc', '16" Forma Loc', '17" Forma Loc',
-        '10" Forma Batten', '12 3/8" Forma Batten', '7 1/5" Inter Loc'
+        // Main profiles — pinned to top
+        'FC36', 'FR', 'II6', 'FA', 'I9',
+        // Corrugated — small to large
+        '32 7/8" Corrugated', '37 7/8 Corrugated',
+        // Mechanical / Clip Loc
+        '1 1/2" Mechanical Loc', '1 1/2" Clip Loc',
+        // Nail Strip — 1" profile small to large, then 1½" small to large
+        '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"', '1" Nail Strip 18"',
+        '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',
+        // Inter Loc — small to large
+        '7 1/5" Inter Loc', '8" Inter Loc', '12" Interloc',
+        // Forma Loc — small to large
+        '12" Forma Loc', '16" Forma Loc', '17" Forma Loc',
+        // Forma Batten — small to large
+        '10" Forma Batten', '12 3/8" Forma Batten',
     ],
     'Cladding': [
         '13 1/2" Board & Batten', '9 3/4" Board & Batten', 'Expand Modular', 'ShipLap',

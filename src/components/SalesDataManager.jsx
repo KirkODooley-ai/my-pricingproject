@@ -14,6 +14,8 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
     const [isAdding, setIsAdding] = useState(false);
     const [newSale, setNewSale] = useState({ customerName: '', category: '', amount: 0, cogs: 0 });
     const [expandedGroup, setExpandedGroup] = useState(null);
+    const [openSections, setOpenSections] = useState({ 'Rolled Product': true, 'Cladding': true, 'Accessories': true });
+    const toggleSection = (name) => setOpenSections(prev => ({ ...prev, [name]: !prev[name] }));
 
     const validSales = useMemo(() => Array.isArray(salesTransactions) ? salesTransactions : [], [salesTransactions]);
     const categoryNames = useMemo(() => categories.map(c => c.name), [categories]);
@@ -195,25 +197,33 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                                 return DISPLAY_GROUPS.map(groupName => {
                                     const cats = grouped[groupName];
                                     if (cats.length === 0) return null;
+                                    const isOpen = openSections[groupName];
                                     return (
                                         <React.Fragment key={groupName}>
-                                            <div style={{
-                                                padding: '0.5rem 1.5rem',
-                                                fontSize: '0.7rem',
-                                                fontWeight: '700',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.08em',
-                                                color: '#94a3b8',
-                                                backgroundColor: '#f8fafc',
-                                                borderBottom: '1px solid #f1f5f9',
-                                                borderTop: '1px solid #f1f5f9',
-                                                marginTop: '0.25rem'
-                                            }}>
-                                                {groupName}
+                                            {/* Accordion Header */}
+                                            <div
+                                                onClick={() => toggleSection(groupName)}
+                                                style={{
+                                                    padding: '0.65rem 1.25rem',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: '#f1f5f9',
+                                                    borderBottom: '1px solid #e2e8f0',
+                                                    borderTop: '1px solid #e2e8f0',
+                                                    userSelect: 'none'
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#475569' }}>
+                                                    {groupName}
+                                                </span>
+                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
                                             </div>
-                                            {cats.map(cat => (
+                                            {/* Accordion Items */}
+                                            {isOpen && cats.map(cat => (
                                                 <div key={cat} onClick={() => setSelectedId(cat)} style={selectedId === cat ? styles.listItemActive : styles.listItemInactive}>
-                                                    <div style={{...styles.listName, color: selectedId === cat ? '#1e40af' : '#0f172a', paddingLeft: '0.5rem'}}>{cat}</div>
+                                                    <div style={{...styles.listName, color: selectedId === cat ? '#1e40af' : '#0f172a', paddingLeft: '1rem'}}>{cat}</div>
                                                 </div>
                                             ))}
                                         </React.Fragment>

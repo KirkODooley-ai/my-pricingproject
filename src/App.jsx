@@ -741,16 +741,10 @@ function App() {
         )}
 
         {activeTab === 'product-pricing' && (
-          <>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Product Pricing</h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem', fontSize: '0.9rem' }}>Calculate tier-specific pricing and margins</p>
-            </div>
-            <PricingCalculator
-              products={products}
-              productVariants={productVariants} // [NEW]
-            />
-          </>
+          <PricingCalculator
+            products={products}
+            productVariants={productVariants}
+          />
         )}
 
         {activeTab === 'import' && (user.role === 'admin' || hasPermission(user?.permissions, PERMISSIONS.IMPORT_DATA)) && (

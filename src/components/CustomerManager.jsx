@@ -203,7 +203,7 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                         <th style={{...styles.th, width: '12%', textAlign: 'center'}}>Territory</th>
                                         <th style={{...styles.th, width: '15%', textAlign: 'right'}}>Annual Spend</th>
                                         <th style={{...styles.th, width: '18%'}}>Pricing Tier</th>
-                                        {activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER && (
+                                        {(activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER) && (
                                             <th style={{...styles.th, width: '18%', textAlign: 'center'}}>Rebate Program</th>
                                         )}
                                         <th style={{...styles.th, width: '9%', textAlign: 'center'}}>Actions</th>
@@ -254,7 +254,7 @@ const CustomerManager = ({ customers, onAddCustomer, onUpdateCustomer, onDeleteC
                                                             {tierName.replace('Authorized ', '').replace(' Partner', '')}
                                                         </span>
                                                     </td>
-                                                    {activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER && (() => {
+                                                    {(activeTab === CUSTOMER_GROUPS.COMMERCIAL || activeTab === CUSTOMER_GROUPS.DEALER) && (() => {
                                                         const rebateRate = calculateRebateRate(customer.annualSpend)
                                                         const enrolled = !!customer.rebateEligible
                                                         return (

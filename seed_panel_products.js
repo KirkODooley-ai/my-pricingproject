@@ -203,6 +203,74 @@ async function seedPanelProducts() {
     }
   }
 
+  // 32 7/8" Corrugated — 26ga variants
+  const VARIANTS_CORR_32 = [
+    { name: 'Algalume / Galvanized 26ga gr80', retail: 4.70 },
+    { name: 'Colour 26ga gr80',                retail: 5.18 },
+  ];
+
+  // 37 7/8 Corrugated — 24ga and 22ga variants
+  const VARIANTS_CORR_37 = [
+    { name: 'AZ50 (Algalume) 24ga gr33',       retail: 6.10 },
+    { name: 'G90 (Galvanized) 24ga gr33',      retail: 6.88 },
+    { name: 'Colour/Textured 24ga gr33',        retail: 7.62 },
+    { name: 'Image Series PVDF 24ga gr33',      retail: 11.30 },
+    { name: 'Weathering Steel 22ga gr33',       retail: 10.15 },
+  ];
+
+  const CORRUGATED_CATEGORIES = [
+    { display: '32 7/8" Corrugated', lookups: ['32 7/8" Corrugated'], variants: VARIANTS_CORR_32 },
+    { display: '37 7/8 Corrugated',  lookups: ['37 7/8 Corrugated'],  variants: VARIANTS_CORR_37 },
+  ];
+
+  for (const cat of CORRUGATED_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Corrugated seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of cat.variants) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`Corrugated seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`Corrugated seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
+  }
+
   console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 

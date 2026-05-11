@@ -14,7 +14,7 @@ const ALL_CATEGORIES = [
     '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"', '1" Nail Strip 18"',
     '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',
     // Rolled Product — Inter Loc
-    '7 1/5" Inter Loc', '8" Inter Loc', '12" Interloc',
+    '7 1/2" Inter Loc', '8" Inter Loc', '12" Interloc',
     // Rolled Product — Forma Loc
     '12" Forma Loc', '16" Forma Loc', '17" Forma Loc',
     // Rolled Product — Forma Batten
@@ -36,6 +36,8 @@ async function seedCategories() {
 
     // One-time rename: 9 3/4" was always meant to be 9 1/2"
     await query(`UPDATE categories SET name = '9 1/2" Board & Batten' WHERE name = '9 3/4" Board & Batten'`);
+    // One-time rename: 7 1/5" was incorrectly entered, correct is 7 1/2"
+    await query(`UPDATE categories SET name = '7 1/2" Inter Loc' WHERE name = '7 1/5" Inter Loc'`);
 
     for (let i = 0; i < ALL_CATEGORIES.length; i++) {
         const name = ALL_CATEGORIES[i];

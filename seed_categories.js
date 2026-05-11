@@ -5,7 +5,7 @@ dotenv.config();
 // Full category list in display order
 const ALL_CATEGORIES = [
     // Rolled Product — main profiles
-    'FC36', 'FR', 'II6', 'FA', 'I9',
+    'FC36', 'FR', 'FR Reverse', 'II6', 'FA', 'I9',
     // Rolled Product — Corrugated
     '32 7/8" Corrugated', '37 7/8 Corrugated',
     // Rolled Product — Mechanical / Clip Loc

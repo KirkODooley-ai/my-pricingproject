@@ -25,29 +25,29 @@ export const calculateRebateRate = (annualSpend) => {
     return 0
 }
 
-// [NEW] Category Groups Definition
+// Category Groups Definition
 export const CATEGORY_GROUPS = {
-    'Large Rolled Panel': [
-        'FC36', 'FR', 'I9', 'II6', '32 7/8" Corrugated', '37 7/8 Corrugated', 'FA'
-    ],
-    'Small Rolled Panels': [
+    'Rolled Product': [
+        // Large rolled panels
+        'FC36', 'FR', 'I9', 'II6', '32 7/8" Corrugated', '37 7/8 Corrugated', 'FA',
+        // Small rolled panels
         '1 1/2" Mechanical Loc', '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"',
         '1" Nail Strip 18"', '1 1/2" Clip Loc', '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',
         '8" Inter Loc', '12" Interloc', '12" Forma Loc', '16" Forma Loc', '17" Forma Loc',
         '10" Forma Batten', '12 3/8" Forma Batten', '7 1/5" Inter Loc'
     ],
-    'Cladding Series': [
+    'Cladding': [
         '13 1/2" Board & Batten', '9 3/4" Board & Batten', 'Expand Modular', 'ShipLap',
         '5.2" Box Rib', '6" Box Rib', '6" Box Rib Reverse', '7.2 " Box Rib',
         '6 1/4" Forma Plank', '8 1/2" Forma Plank', '5.625" Slimline', '7.125" Slimline Wide', '6" Shiplap'
     ]
+    // Everything else falls under 'Accessories'
 }
 
-// Flatten groups plus 'Parts' defaults for the main list
+// Flatten groups for the default category list
 const GROUPED_CATS = [
-    ...CATEGORY_GROUPS['Large Rolled Panel'],
-    ...CATEGORY_GROUPS['Small Rolled Panels'],
-    ...CATEGORY_GROUPS['Cladding Series']
+    ...CATEGORY_GROUPS['Rolled Product'],
+    ...CATEGORY_GROUPS['Cladding']
 ]
 
 export const DEFAULT_CATEGORIES = [
@@ -63,11 +63,11 @@ export const getCategoryGroup = (catName) => {
     for (const [group, items] of Object.entries(CATEGORY_GROUPS)) {
         if (items.includes(catName)) return group
     }
-    return 'Parts'
+    return 'Accessories'
 }
 
 /** Category group options for user selection (headers in Category Analysis). */
-export const CATEGORY_GROUP_OPTIONS = ['Large Rolled Panel', 'Small Rolled Panels', 'Cladding Series', 'Parts']
+export const CATEGORY_GROUP_OPTIONS = ['Rolled Product', 'Cladding', 'Accessories']
 
 /** Returns the effective group for a category: stored group if set, else lookup by name. */
 export const getEffectiveCategoryGroup = (cat) => {

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { formatCurrency, formatPercent } from '../utils/pricingEngine';
+import { formatCurrency, formatPercent, getCategoryGroup } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const SalesDataManager = ({ customers, salesTransactions = [], categories, onDeleteCustomer, onDeleteCategory, onBatchDeleteSales, onUpdateSale, onAddSale, onDeleteSale }) => {
@@ -179,13 +179,47 @@ const SalesDataManager = ({ customers, salesTransactions = [], categories, onDel
                             {viewMode === 'category' ? 'Product Lines' : 'Accounts'}
                         </div>
                         <div style={styles.listContainer}>
-                            {viewMode === 'category' ? (
-                                categoryNames.map(cat => (
-                                    <div key={cat} onClick={() => setSelectedId(cat)} style={selectedId === cat ? styles.listItemActive : styles.listItemInactive}>
-                                        <div style={{...styles.listName, color: selectedId === cat ? '#1e40af' : '#0f172a'}}>{cat}</div>
-                                    </div>
-                                ))
-                            ) : (
+                            {viewMode === 'category' ? (() => {
+                                const DISPLAY_GROUPS = ['Rolled Product', 'Cladding', 'Accessories'];
+                                const grouped = { 'Rolled Product': [], 'Cladding': [], 'Accessories': [] };
+
+                                categoryNames.forEach(cat => {
+                                    const g = getCategoryGroup(cat);
+                                    // Map old group names for categories stored before the rename
+                                    const mapped =
+                                        (g === 'Large Rolled Panel' || g === 'Small Rolled Panels' || g === 'Rolled Product') ? 'Rolled Product' :
+                                        (g === 'Cladding Series' || g === 'Cladding') ? 'Cladding' : 'Accessories';
+                                    grouped[mapped].push(cat);
+                                });
+
+                                return DISPLAY_GROUPS.map(groupName => {
+                                    const cats = grouped[groupName];
+                                    if (cats.length === 0) return null;
+                                    return (
+                                        <React.Fragment key={groupName}>
+                                            <div style={{
+                                                padding: '0.5rem 1.5rem',
+                                                fontSize: '0.7rem',
+                                                fontWeight: '700',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.08em',
+                                                color: '#94a3b8',
+                                                backgroundColor: '#f8fafc',
+                                                borderBottom: '1px solid #f1f5f9',
+                                                borderTop: '1px solid #f1f5f9',
+                                                marginTop: '0.25rem'
+                                            }}>
+                                                {groupName}
+                                            </div>
+                                            {cats.map(cat => (
+                                                <div key={cat} onClick={() => setSelectedId(cat)} style={selectedId === cat ? styles.listItemActive : styles.listItemInactive}>
+                                                    <div style={{...styles.listName, color: selectedId === cat ? '#1e40af' : '#0f172a', paddingLeft: '0.5rem'}}>{cat}</div>
+                                                </div>
+                                            ))}
+                                        </React.Fragment>
+                                    );
+                                });
+                            })() : (
                                 salesCustomers.map(name => (
                                     <div key={name} onClick={() => setSelectedId(name)} style={selectedId === name ? styles.listItemActive : styles.listItemInactive}>
                                         <div style={{...styles.listName, color: selectedId === name ? '#1e40af' : '#0f172a'}}>{name}</div>

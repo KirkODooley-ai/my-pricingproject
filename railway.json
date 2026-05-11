@@ -4,7 +4,7 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "node seed_panel_products.js && npm start",
+        "startCommand": "node seed_categories.js && node seed_panel_products.js && npm start",
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 10
     }

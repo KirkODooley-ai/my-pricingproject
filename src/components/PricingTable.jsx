@@ -321,8 +321,8 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                 {/* Header Row */}
                 <div style={styles.headerRow}>
                     <div>
-                        <h2 style={styles.headerText}>Product Management</h2>
-                        <p style={styles.subText}>Create, review, and manage inventory and pricing</p>
+                        <h2 style={styles.headerText}>Products</h2>
+                        <p style={styles.subText}>Manage inventory, costs, and list pricing</p>
                     </div>
 
                     <div style={styles.headerActions}>
@@ -416,21 +416,31 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                             </div>
 
                             <div>
-                                <label style={{...styles.inputLabel, color: '#2563EB'}}>Strategy Projection</label>
-                                <select 
-                                    style={{...styles.inputField, backgroundColor: '#EFF6FF', borderColor: '#bfdbfe', fontWeight: '600', color: '#1e40af', width: '220px'}} 
-                                    value={`${previewTier.group}|${previewTier.tier}`} 
+                                <label style={{...styles.inputLabel, color: '#2563EB'}}>Price Simulator</label>
+                                <select
+                                    style={{...styles.inputField, backgroundColor: '#EFF6FF', borderColor: '#bfdbfe', fontWeight: '600', color: '#1e40af', width: '260px'}}
+                                    value={`${previewTier.group}|${previewTier.tier}`}
                                     onChange={(e) => {
-                                        const [g, t] = e.target.value.split('|'); 
+                                        const [g, t] = e.target.value.split('|');
                                         setPreviewTier({ group: g, tier: t });
                                     }}
                                 >
-                                    <option value="|">-- Active Core Data --</option>
-                                    <optgroup label="Dealer Tiers">
-                                        {TIER_RULES[CUSTOMER_GROUPS.DEALER].map(t => <option key={t.name} value={`${CUSTOMER_GROUPS.DEALER}|${t.name}`}>{t.name}</option>)}
+                                    <option value="|">— No simulation —</option>
+                                    <optgroup label="── Dealer ──────────────">
+                                        {TIER_RULES[CUSTOMER_GROUPS.DEALER].map(t => {
+                                            const spend = t.minSpend >= 1000000
+                                                ? `$${(t.minSpend / 1000000).toFixed(t.minSpend % 1000000 === 0 ? 0 : 1)}M+`
+                                                : t.minSpend > 0 ? `$${(t.minSpend / 1000).toFixed(0)}k+` : 'Entry';
+                                            return <option key={t.name} value={`${CUSTOMER_GROUPS.DEALER}|${t.name}`}>{t.name}  ({spend})</option>;
+                                        })}
                                     </optgroup>
-                                    <optgroup label="Commercial Partners">
-                                        {TIER_RULES[CUSTOMER_GROUPS.COMMERCIAL].map(t => <option key={t.name} value={`${CUSTOMER_GROUPS.COMMERCIAL}|${t.name}`}>{t.name}</option>)}
+                                    <optgroup label="── Commercial ──────────">
+                                        {TIER_RULES[CUSTOMER_GROUPS.COMMERCIAL].map(t => {
+                                            const spend = t.minSpend >= 1000000
+                                                ? `$${(t.minSpend / 1000000).toFixed(t.minSpend % 1000000 === 0 ? 0 : 1)}M+`
+                                                : t.minSpend > 0 ? `$${(t.minSpend / 1000).toFixed(0)}k+` : 'Entry';
+                                            return <option key={t.name} value={`${CUSTOMER_GROUPS.COMMERCIAL}|${t.name}`}>{t.name}  ({spend})</option>;
+                                        })}
                                     </optgroup>
                                 </select>
                             </div>

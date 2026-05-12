@@ -769,6 +769,7 @@ function App() {
           <PricingCalculator
             products={products}
             productVariants={productVariants}
+            pricingStrategy={pricingStrategy}
           />
         )}
 

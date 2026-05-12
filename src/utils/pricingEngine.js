@@ -33,7 +33,7 @@ export const CATEGORY_GROUPS = {
         // Corrugated — small to large
         '32 7/8" Corrugated', '37 7/8 Corrugated',
         // Mechanical / Clip Loc
-        '1 1/2" Mechanical Loc', '1 1/2" Clip Loc',
+        '1" Mechanical Loc', '1 1/2" Mechanical Loc', '1 1/2" Clip Loc 7.375"', '1 1/2" Clip Loc 11.375"',
         // Nail Strip — 1" profile small to large, then 1½" small to large
         '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"', '1" Nail Strip 18"',
         '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',

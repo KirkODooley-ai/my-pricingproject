@@ -43,6 +43,15 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
         }));
     };
 
+    const handleClearMultiplierOverride = (catName) => {
+        if (isManager) return;
+        setStrategy(prev => {
+            const next = { ...prev.listMultipliers };
+            delete next[catName];
+            return { ...prev, listMultipliers: next };
+        });
+    };
+
     const handleTierDiscountChange = (groupType, tierName, productGroup, value) => {
         if (isManager) return;
         const val = parseFloat(value);
@@ -192,13 +201,26 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                         const cats = groupedCategories[groupName];
                                         if (!cats) return null;
                                         const groupMult = getGroupMult(groupName);
-                                        const sysDefault = strategy.listMultipliers['Default'] || 1.5;
+                                        const sysDefault = strategy.listMultipliers['Default'] || 1.667;
+                                        // Count how many categories in this group have a stale direct override
+                                        const overriddenCats = (cats || []).filter(c => !!strategy.listMultipliers[c]);
 
                                         return (
                                             <tbody key={groupName}>
                                                 <tr style={styles.groupRow}>
                                                     <td style={styles.groupText}>{groupName}</td>
-                                                    <td colSpan="2" style={{ ...styles.groupText, textAlign: 'right' }}>
+                                                    <td colSpan="2" style={{ ...styles.groupText, textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                                                        {overriddenCats.length > 0 && canEdit && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    overriddenCats.forEach(c => handleClearMultiplierOverride(c));
+                                                                }}
+                                                                style={{ fontSize: '0.75rem', color: '#dc2626', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.15rem 0.6rem', cursor: 'pointer', fontWeight: '600' }}
+                                                                title="Remove all per-category overrides in this group so they inherit the group/default multiplier"
+                                                            >
+                                                                ✕ Clear {overriddenCats.length} override{overriddenCats.length > 1 ? 's' : ''}
+                                                            </button>
+                                                        )}
                                                         {groupMult
                                                             ? <span style={{ fontSize: '0.8rem', color: '#2563EB', fontWeight: '700', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.15rem 0.6rem' }}>
                                                                 Group ×{groupMult.toFixed(2)}
@@ -280,7 +302,16 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                                                     </button>
                                                                                 )}
                                                                                 {hasCatOverride && (
-                                                                                    <span style={{ fontSize: '0.72rem', color: '#d97706', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '999px', padding: '0.1rem 0.45rem', fontWeight: '600' }}>Override</span>
+                                                                                    <>
+                                                                                        <span style={{ fontSize: '0.72rem', color: '#d97706', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '999px', padding: '0.1rem 0.45rem', fontWeight: '600' }}>Override</span>
+                                                                                        {canEdit && (
+                                                                                            <button
+                                                                                                onClick={() => handleClearMultiplierOverride(catName)}
+                                                                                                style={{ fontSize: '0.72rem', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', padding: '0', fontWeight: '600' }}
+                                                                                                title="Remove override — inherit group/default multiplier"
+                                                                                            >✕</button>
+                                                                                        )}
+                                                                                    </>
                                                                                 )}
                                                                             </div>
                                                                         </td>

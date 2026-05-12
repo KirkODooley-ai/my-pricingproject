@@ -86,15 +86,20 @@ const PricingCalculator = ({ products, productVariants = [], pricingStrategy }) 
         const listPrice   = cost * listMult;
         const storedPrice = productMetrics.price;
 
-        // Tier price (only when a tier is selected)
-        let tierDiscount = 0, tierPrice = null, tierMargin = null;
+        // Tier price (only when a tier is selected).
+        // Stored values are MULTIPLIERS (e.g. 0.90 = 90% of list = 10% off),
+        // matching calculateNetPrice in pricingEngine. Apply directly, not (1 - value).
+        let tierMultiplier = null, tierPrice = null, tierMargin = null;
         if (selectedTier) {
-            tierDiscount = getTierDiscount(pricingStrategy, selectedGroup, selectedTier, catName);
-            tierPrice  = listPrice * (1 - tierDiscount);
+            tierMultiplier = getTierDiscount(pricingStrategy, selectedGroup, selectedTier, catName);
+            tierPrice  = listPrice * tierMultiplier;
             tierMargin = calculateMargin(tierPrice, cost);
         }
 
-        return { cost, listMult, listPrice, storedPrice, tierDiscount, tierPrice, tierMargin };
+        // Discount % for display: how much off list (e.g. multiplier 0.90 → 10% off)
+        const tierDiscountPct = tierMultiplier != null ? (1 - tierMultiplier) : 0;
+
+        return { cost, listMult, listPrice, storedPrice, tierMultiplier, tierDiscountPct, tierPrice, tierMargin };
     }, [productMetrics, pricingStrategy, selectedProduct, selectedGroup, selectedTier]);
 
     // Portfolio metrics
@@ -321,8 +326,8 @@ const PricingCalculator = ({ products, productVariants = [], pricingStrategy }) 
                                     {pricingChain.tierPrice != null && (
                                         <>
                                             <div style={styles.arrowBox}>
-                                                {pricingChain.tierDiscount > 0
-                                                    ? `−${formatPercent(pricingChain.tierDiscount)}`
+                                                {pricingChain.tierDiscountPct > 0
+                                                    ? `−${formatPercent(pricingChain.tierDiscountPct)}`
                                                     : '→'}
                                             </div>
                                             <div style={{...styles.statCard, borderTop: '4px solid #059669', flex: 1}}>
@@ -331,8 +336,8 @@ const PricingCalculator = ({ products, productVariants = [], pricingStrategy }) 
                                                 </span>
                                                 <span style={{...styles.metricValue, color: '#059669'}}>{formatCurrency(pricingChain.tierPrice)}</span>
                                                 <span style={styles.metricSub}>
-                                                    {pricingChain.tierDiscount > 0
-                                                        ? `${formatPercent(pricingChain.tierDiscount)} off list`
+                                                    {pricingChain.tierDiscountPct > 0
+                                                        ? `${formatPercent(pricingChain.tierDiscountPct)} off list`
                                                         : 'No discount applied'}
                                                     &nbsp;·&nbsp; Margin: {formatPercent(pricingChain.tierMargin)}
                                                 </span>

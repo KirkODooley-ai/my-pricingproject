@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getEffectiveCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier, MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
+import { CUSTOMER_GROUPS, TIER_RULES, FASTENER_TYPES, getCategoryGroup, getEffectiveCategoryGroup, getMarginFloor, enforceTierHierarchy, getListMultiplier, MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY, CATEGORY_GROUPS, CATEGORY_GROUP_OPTIONS } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 
 const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransactions, customers, products = [], productVariants = [], onSave }) => {
@@ -91,35 +91,38 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
         });
     };
 
-    const groupedCategories = categories.reduce((acc, cat) => {
-        const group = getEffectiveCategoryGroup(cat);
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(cat.name);
-        return acc;
-    }, {});
+    // Build grouped + ordered category list using the canonical group names
+    const groupedCategories = React.useMemo(() => {
+        const result = {};
+        CATEGORY_GROUP_OPTIONS.forEach(g => { result[g] = []; });
 
-    const groupOrder = ['Large Rolled Panel', 'Small Rolled Panels', 'Cladding Series', 'Parts'];
-    Object.keys(groupedCategories).forEach(g => {
-        if (!groupOrder.includes(g)) groupOrder.push(g);
-    });
+        categories.forEach(cat => {
+            // getEffectiveCategoryGroup already normalises legacy names ('Large Rolled Panel' → 'Rolled Product')
+            const g = getEffectiveCategoryGroup(cat);
+            const target = CATEGORY_GROUP_OPTIONS.includes(g) ? g : 'Accessories';
+            result[target].push(cat.name);
+        });
 
-    // Map display group names (incl. legacy) to the group:* key used in listMultipliers
-    const DISPLAY_GROUP_TO_KEY = {
-        'Rolled Product':   'group:Rolled Product',
-        'Large Rolled Panel':   'group:Rolled Product',
-        'Small Rolled Panels':  'group:Rolled Product',
-        'Cladding':         'group:Cladding',
-        'Cladding Series':  'group:Cladding',
-        'Shingle Roofing':  'group:Shingle Roofing',
-        'Accessories':      'group:Accessories',
-        'Parts':            'group:Accessories',
-    };
+        // Sort each group by CATEGORY_GROUPS definition order, then alpha for anything not listed
+        CATEGORY_GROUP_OPTIONS.forEach(g => {
+            const order = CATEGORY_GROUPS[g] || [];
+            result[g].sort((a, b) => {
+                const iA = order.indexOf(a), iB = order.indexOf(b);
+                if (iA === -1 && iB === -1) return a.localeCompare(b);
+                if (iA === -1) return 1;
+                if (iB === -1) return -1;
+                return iA - iB;
+            });
+        });
+
+        return result;
+    }, [categories]);
+
+    // groupOrder is now just CATEGORY_GROUP_OPTIONS (canonical, no legacy names)
+    const groupOrder = CATEGORY_GROUP_OPTIONS;
 
     /** Resolved multiplier for a group header (null = using system default) */
-    const getGroupMult = (groupName) => {
-        const key = DISPLAY_GROUP_TO_KEY[groupName];
-        return key ? (strategy.listMultipliers[key] || null) : null;
-    };
+    const getGroupMult = (groupName) => strategy.listMultipliers[`group:${groupName}`] || null;
 
     // Premium SaaS UI Variables
     const styles = {
@@ -202,37 +205,36 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                         if (!cats) return null;
                                         const groupMult = getGroupMult(groupName);
                                         const sysDefault = strategy.listMultipliers['Default'] || 1.667;
-                                        // Count how many categories in this group have a stale direct override
+                                        const effectiveMult = groupMult ?? sysDefault;
                                         const overriddenCats = (cats || []).filter(c => !!strategy.listMultipliers[c]);
 
                                         return (
                                             <tbody key={groupName}>
-                                                <tr style={styles.groupRow}>
-                                                    <td style={styles.groupText}>{groupName}</td>
-                                                    <td colSpan="2" style={{ ...styles.groupText, textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                                                <tr style={{ backgroundColor: '#f1f5f9' }}>
+                                                    <td style={{ ...styles.groupText, width: '40%' }}>{groupName}</td>
+                                                    <td style={{ ...styles.groupText, textAlign: 'right', width: '30%' }}>
+                                                        <span style={{
+                                                            fontSize: '0.8rem', fontWeight: '700',
+                                                            color: groupMult ? '#2563EB' : '#94a3b8',
+                                                            backgroundColor: groupMult ? '#eff6ff' : 'transparent',
+                                                            border: groupMult ? '1px solid #bfdbfe' : 'none',
+                                                            borderRadius: '6px', padding: groupMult ? '0.15rem 0.6rem' : '0'
+                                                        }}>
+                                                            ×{effectiveMult.toFixed(3)}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ ...styles.groupText, textAlign: 'right', width: '30%' }}>
                                                         {overriddenCats.length > 0 && canEdit && (
                                                             <button
-                                                                onClick={() => {
-                                                                    overriddenCats.forEach(c => handleClearMultiplierOverride(c));
-                                                                }}
-                                                                style={{ fontSize: '0.75rem', color: '#dc2626', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.15rem 0.6rem', cursor: 'pointer', fontWeight: '600' }}
-                                                                title="Remove all per-category overrides in this group so they inherit the group/default multiplier"
-                                                            >
-                                                                ✕ Clear {overriddenCats.length} override{overriddenCats.length > 1 ? 's' : ''}
-                                                            </button>
+                                                                onClick={() => overriddenCats.forEach(c => handleClearMultiplierOverride(c))}
+                                                                style={{ fontSize: '0.72rem', color: '#dc2626', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.15rem 0.55rem', cursor: 'pointer', fontWeight: '600' }}
+                                                                title="Clear per-category overrides — rows will inherit this group's multiplier"
+                                                            >✕ Clear {overriddenCats.length} override{overriddenCats.length > 1 ? 's' : ''}</button>
                                                         )}
-                                                        {groupMult
-                                                            ? <span style={{ fontSize: '0.8rem', color: '#2563EB', fontWeight: '700', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.15rem 0.6rem' }}>
-                                                                Group ×{groupMult.toFixed(2)}
-                                                              </span>
-                                                            : <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>
-                                                                System default ×{sysDefault.toFixed(2)}
-                                                              </span>
-                                                        }
                                                     </td>
                                                 </tr>
 
-                                                {cats.sort().map(catName => {
+                                                {cats.map(catName => {
                                                     const variants = categoryVariantsMap[catName] || [];
                                                     const hasVariants = variants.length > 0;
                                                     // Resolved multiplier: category override → group override → system default
@@ -443,12 +445,12 @@ const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, 
 
                     return (
                         <tbody key={groupName}>
-                            <tr style={styles.groupRow}>
-                                <td style={{...styles.groupText, position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f8fafc', borderRight: '1px solid #e2e8f0'}}>{groupName}</td>
-                                {tiers.map(t => <td key={t.name} style={{ borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}></td>)}
+                            <tr style={{ backgroundColor: '#f1f5f9' }}>
+                                <td style={{...styles.groupText, position: 'sticky', left: 0, zIndex: 5, backgroundColor: '#f1f5f9', borderRight: '1px solid #e2e8f0'}}>{groupName}</td>
+                                {tiers.map(t => <td key={t.name} style={{ borderBottom: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0', backgroundColor: '#f1f5f9' }}></td>)}
                             </tr>
 
-                            {cats.sort().map(catName => {
+                            {cats.map(catName => {
                                 const variants = categoryVariantsMap[catName] || [];
                                 const hasVariants = variants.length > 0;
 

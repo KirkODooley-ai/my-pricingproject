@@ -10,9 +10,14 @@ import {
 // Returns a value between 0 and 1 where 0.90 = 10% off list.
 // Defaults to 1.0 (no discount) when the tier has no data for this category —
 // consistent with calculateNetPrice in pricingEngine.js.
-const getTierDiscount = (strategy, customerGroup, tierName, categoryName) => {
+// 3-level hierarchy: gauge-specific ('FC36:29') > category ('FC36') > tier default ('Default')
+const getTierDiscount = (strategy, customerGroup, tierName, categoryName, gauge = null) => {
     const groupTiers = strategy?.tierMultipliers?.[customerGroup] || {};
     const tierConfig = groupTiers[tierName] || {};
+    if (gauge != null) {
+        const gaugeKey = `${categoryName}:${gauge}`;
+        if (tierConfig[gaugeKey] !== undefined) return tierConfig[gaugeKey];
+    }
     return tierConfig[categoryName] ?? tierConfig['Default'] ?? 1.0;
 };
 
@@ -94,7 +99,7 @@ const PricingCalculator = ({ products, productVariants = [], pricingStrategy }) 
         // matching calculateNetPrice in pricingEngine. Apply directly, not (1 - value).
         let tierMultiplier = null, tierPrice = null, tierMargin = null;
         if (selectedTier) {
-            tierMultiplier = getTierDiscount(pricingStrategy, selectedGroup, selectedTier, catName);
+            tierMultiplier = getTierDiscount(pricingStrategy, selectedGroup, selectedTier, catName, productMetrics?.gauge);
             tierPrice  = listPrice * tierMultiplier;
             tierMargin = calculateMargin(tierPrice, cost);
         }

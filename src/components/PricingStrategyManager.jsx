@@ -94,6 +94,24 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
         if (!groupOrder.includes(g)) groupOrder.push(g);
     });
 
+    // Map display group names (incl. legacy) to the group:* key used in listMultipliers
+    const DISPLAY_GROUP_TO_KEY = {
+        'Rolled Product':   'group:Rolled Product',
+        'Large Rolled Panel':   'group:Rolled Product',
+        'Small Rolled Panels':  'group:Rolled Product',
+        'Cladding':         'group:Cladding',
+        'Cladding Series':  'group:Cladding',
+        'Shingle Roofing':  'group:Shingle Roofing',
+        'Accessories':      'group:Accessories',
+        'Parts':            'group:Accessories',
+    };
+
+    /** Resolved multiplier for a group header (null = using system default) */
+    const getGroupMult = (groupName) => {
+        const key = DISPLAY_GROUP_TO_KEY[groupName];
+        return key ? (strategy.listMultipliers[key] || null) : null;
+    };
+
     // Premium SaaS UI Variables
     const styles = {
         pageWrapper: { width: '100%', minHeight: '100%' },
@@ -173,14 +191,31 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                     {groupOrder.map(groupName => {
                                         const cats = groupedCategories[groupName];
                                         if (!cats) return null;
+                                        const groupMult = getGroupMult(groupName);
+                                        const sysDefault = strategy.listMultipliers['Default'] || 1.5;
 
                                         return (
                                             <tbody key={groupName}>
-                                                <tr style={styles.groupRow}><td colSpan="3" style={styles.groupText}>{groupName}</td></tr>
-                                                
+                                                <tr style={styles.groupRow}>
+                                                    <td style={styles.groupText}>{groupName}</td>
+                                                    <td colSpan="2" style={{ ...styles.groupText, textAlign: 'right' }}>
+                                                        {groupMult
+                                                            ? <span style={{ fontSize: '0.8rem', color: '#2563EB', fontWeight: '700', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '0.15rem 0.6rem' }}>
+                                                                Group ×{groupMult.toFixed(2)}
+                                                              </span>
+                                                            : <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>
+                                                                System default ×{sysDefault.toFixed(2)}
+                                                              </span>
+                                                        }
+                                                    </td>
+                                                </tr>
+
                                                 {cats.sort().map(catName => {
                                                     const variants = categoryVariantsMap[catName] || [];
                                                     const hasVariants = variants.length > 0;
+                                                    // Resolved multiplier: category override → group override → system default
+                                                    const resolvedMult = getListMultiplier(strategy, catName);
+                                                    const hasCatOverride = !!strategy.listMultipliers[catName];
 
                                                     return (
                                                         <React.Fragment key={catName}>
@@ -208,7 +243,7 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                                     {expandedMarkupRows.has(catName) && variants.map(gauge => {
                                                                         const variantKey = `${catName}:${gauge}`;
                                                                         const explicitVal = strategy.listMultipliers[variantKey];
-                                                                        const fallbackVal = strategy.listMultipliers[catName] || 1.5;
+                                                                        const fallbackVal = getListMultiplier(strategy, catName);
                                                                         const currentVal = explicitVal !== undefined ? explicitVal : fallbackVal;
                                                                         const isOverridden = explicitVal !== undefined;
 
@@ -244,19 +279,25 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                                                         {expandedFasteners ? 'Hide Spec' : 'Expand Spec'}
                                                                                     </button>
                                                                                 )}
+                                                                                {hasCatOverride && (
+                                                                                    <span style={{ fontSize: '0.72rem', color: '#d97706', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '999px', padding: '0.1rem 0.45rem', fontWeight: '600' }}>Override</span>
+                                                                                )}
                                                                             </div>
                                                                         </td>
                                                                         <td style={{...styles.td, textAlign: 'right'}}>
                                                                             <input
                                                                                 type="number" step="0.05"
-                                                                                style={{...styles.inputField, width: '100px', textAlign: 'right', fontWeight: '500'}}
-                                                                                value={strategy.listMultipliers[catName] || 1.5}
+                                                                                style={{...styles.inputField, width: '100px', textAlign: 'right', fontWeight: '500',
+                                                                                    backgroundColor: hasCatOverride ? '#fffbeb' : '#ffffff',
+                                                                                    borderColor: hasCatOverride ? '#fcd34d' : '#cbd5e1'
+                                                                                }}
+                                                                                value={resolvedMult}
                                                                                 onChange={(e) => handleListMultiplierChange(catName, e.target.value)}
                                                                                 disabled={isManager}
                                                                             />
                                                                         </td>
-                                                                        <td style={{...styles.td, textAlign: 'right', color: '#2563EB', fontWeight: '600'}}>
-                                                                            ${(100 * (strategy.listMultipliers[catName] || 1.5)).toFixed(2)}
+                                                                        <td style={{...styles.td, textAlign: 'right', color: hasCatOverride ? '#d97706' : '#2563EB', fontWeight: '600'}}>
+                                                                            ${(100 * resolvedMult).toFixed(2)}
                                                                         </td>
                                                                     </tr>
                                                                 </>

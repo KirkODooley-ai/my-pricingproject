@@ -804,8 +804,8 @@ async function seedPanelProducts() {
   // 1 1/2" Clip Loc
   const CLIPLOC_CATEGORIES = [
     {
-      display: '1 1/2" Clip Loc',
-      lookups: ['1 1/2" Clip Loc'],
+      display: '1 1/2" Clip Loc 7.375"',
+      lookups: ['1 1/2" Clip Loc 7.375"', '1 1/2" Clip Loc'],
       variants: [
         { name: 'AZ50 (Algalume) 24ga',      retail: 2.17 },
         { name: 'SMP Colour / Textured 24ga', retail: 2.34 },
@@ -858,6 +858,72 @@ async function seedPanelProducts() {
         [productName, cost, price, categoryId, 'lft']
       );
       console.log(`Clip Loc seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
+  }
+
+  // Shared variants for: 12" Interloc, 1" Mechloc, 1.5" Mechloc, 1.5" Cliploc 11.375", 1" Nailstrip 11 3/4", 1.5" Nailstrip 12 1/8"
+  const VARIANTS_MECH = [
+    { name: 'AZ50 (Algalume) 24ga',       retail: 2.91 },
+    { name: 'Textured 24ga',               retail: 3.17 },
+    { name: 'SMP Colour 24ga',             retail: 3.17 },
+    { name: 'Image Series 24ga',            retail: 4.02 },
+    { name: 'A606 Weathering Steel 22ga',   retail: 4.00 },
+  ];
+
+  const MECH_CATEGORIES = [
+    { display: '12" Interloc',              lookups: ['12" Interloc'] },
+    { display: '1" Mechanical Loc',         lookups: ['1" Mechanical Loc'] },
+    { display: '1 1/2" Mechanical Loc',     lookups: ['1 1/2" Mechanical Loc'] },
+    { display: '1 1/2" Clip Loc 11.375"',   lookups: ['1 1/2" Clip Loc 11.375"'] },
+    { display: '1" Nail Strip 11 3/4"',     lookups: ['1" Nail Strip 11 3/4"'] },
+    { display: '1 1/2" Nail Strip 12 1/8"', lookups: ['1 1/2" Nail Strip 12 1/8"'] },
+  ];
+
+  for (const cat of MECH_CATEGORIES) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`Mech/Clip/Nail seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of VARIANTS_MECH) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`Mech/Clip/Nail seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`Mech/Clip/Nail seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
       inserted++;
     }
   }

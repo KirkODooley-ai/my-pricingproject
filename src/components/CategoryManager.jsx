@@ -8,7 +8,7 @@ const CategoryManager = ({ categories, onAddCategory, onUpdateCategory, onDelete
     const [editingId, setEditingId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
     const [showAddForm, setShowAddForm] = useState(false);
-    const [openSections, setOpenSections] = useState({ 'Rolled Product': false, 'Cladding': false, 'Accessories': false });
+    const [openSections, setOpenSections] = useState({ 'Rolled Product': false, 'Cladding': false, 'Shingle Roofing': false, 'Accessories': false });
     const toggleSection = (name) => setOpenSections(prev => ({ ...prev, [name]: !prev[name] }));
 
     const [newCategory, setNewCategory] = useState({

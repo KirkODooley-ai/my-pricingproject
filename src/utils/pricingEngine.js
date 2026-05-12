@@ -51,6 +51,9 @@ export const CATEGORY_GROUPS = {
         '13 1/2" Board & Batten', '9 1/2" Board & Batten', 'Expand Modular', 'ShipLap',
         '5.2" Box Rib', '6" Box Rib', '6" Box Rib Reverse', '7.2 " Box Rib',
         '6 1/4" Forma Plank', '8 1/2" Forma Plank', '5.625" Slimline', '7.125" Slimline Wide', '6" Shiplap'
+    ],
+    'Shingle Roofing': [
+        'Steel Shingles',
     ]
     // Everything else falls under 'Accessories'
 }
@@ -58,7 +61,8 @@ export const CATEGORY_GROUPS = {
 // Flatten groups for the default category list
 const GROUPED_CATS = [
     ...CATEGORY_GROUPS['Rolled Product'],
-    ...CATEGORY_GROUPS['Cladding']
+    ...CATEGORY_GROUPS['Cladding'],
+    ...CATEGORY_GROUPS['Shingle Roofing'],
 ]
 
 export const DEFAULT_CATEGORIES = [
@@ -66,7 +70,7 @@ export const DEFAULT_CATEGORIES = [
     // Parts / Legacy
     'Clips', 'Closures', 'Coils', 'Cupolas', 'Fasteners', 'Flats', 'Gutters',
     'Hand Tools', 'Misc', 'Packaging', 'Paint', 'Plumbing Flashing', 'Polycarbonate',
-    'Sealants', 'Sliding Doors', 'Snow Guards', 'Steel Shingles', 'Structural',
+    'Sealants', 'Sliding Doors', 'Snow Guards', 'Structural',
     'Underlay', 'Walk Door'
 ]
 
@@ -78,7 +82,7 @@ export const getCategoryGroup = (catName) => {
 }
 
 /** Category group options for user selection (headers in Category Analysis). */
-export const CATEGORY_GROUP_OPTIONS = ['Rolled Product', 'Cladding', 'Accessories']
+export const CATEGORY_GROUP_OPTIONS = ['Rolled Product', 'Cladding', 'Shingle Roofing', 'Accessories']
 
 // Map old group names to new ones so DB records saved before the rename still work
 const LEGACY_GROUP_MAP = {

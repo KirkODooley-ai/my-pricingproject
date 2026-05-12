@@ -21,7 +21,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
     const [showAddForm, setShowAddForm] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', unitCost: '', cost: '', price: '', vendor: '', itemCode: '', category: '' });
 
-    const [openSections, setOpenSections] = useState({ 'Rolled Product': false, 'Cladding': false, 'Accessories': false });
+    const [openSections, setOpenSections] = useState({ 'Rolled Product': false, 'Cladding': false, 'Shingle Roofing': false, 'Accessories': false });
     const toggleSection = (name) => setOpenSections(prev => ({ ...prev, [name]: !prev[name] }));
 
     const filteredProducts = products.filter(p => {
@@ -292,7 +292,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
     // Build grouped sidebar: relevant categories sorted by CATEGORY_GROUPS order
     const buildGroupedSidebar = () => {
         const relevantCats = new Set([...categories.map(c => c.name), ...products.map(p => p.category)].filter(Boolean));
-        const grouped = { 'Rolled Product': [], 'Cladding': [], 'Accessories': [] };
+        const grouped = { 'Rolled Product': [], 'Cladding': [], 'Shingle Roofing': [], 'Accessories': [] };
         relevantCats.forEach(catName => {
             let g = 'Accessories';
             for (const [groupName, items] of Object.entries(CATEGORY_GROUPS)) {
@@ -301,7 +301,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
             grouped[g].push(catName);
         });
         // Sort each group by CATEGORY_GROUPS definition order
-        ['Rolled Product', 'Cladding'].forEach(groupName => {
+        ['Rolled Product', 'Cladding', 'Shingle Roofing'].forEach(groupName => {
             const order = CATEGORY_GROUPS[groupName] || [];
             grouped[groupName].sort((a, b) => {
                 const iA = order.indexOf(a); const iB = order.indexOf(b);

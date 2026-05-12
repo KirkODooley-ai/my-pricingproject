@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY } from '../utils/pricingEngine';
+import { MARGIN_GAUGE_SPECIFIC_CATEGORIES, GAUGES_PER_MARGIN_CATEGORY, CATEGORY_GROUP_OPTIONS } from '../utils/pricingEngine';
 
 const LABOR_RATE_GROUPS = [
     'Large Rolled Panel',
@@ -14,6 +14,7 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
     const canEdit = user?.role === 'admin' || user?.can_edit === true;
     const [guardrailDraft, setGuardrailDraft] = useState({});
     const [laborRateDraft, setLaborRateDraft] = useState({});
+    const [groupMultDraft, setGroupMultDraft] = useState({});
     const [activeTab, setActiveTab] = useState('pricing');
 
     // Dynamic: all unique categories from products table + categories table
@@ -49,6 +50,28 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
         });
         setLaborRateDraft(draft);
     }, [laborRates]);
+
+    useEffect(() => {
+        const stored = globalSettings?.group_multipliers || {};
+        const draft = {};
+        CATEGORY_GROUP_OPTIONS.forEach(g => {
+            const v = stored[g];
+            draft[g] = (v != null && v !== '') ? v : '';
+        });
+        setGroupMultDraft(draft);
+    }, [globalSettings?.group_multipliers]);
+
+    const saveGroupMultipliers = () => {
+        const result = {};
+        CATEGORY_GROUP_OPTIONS.forEach(g => {
+            const v = groupMultDraft[g];
+            if (v !== '' && v != null) {
+                const num = parseFloat(v);
+                if (!isNaN(num) && num > 0) result[g] = num;
+            }
+        });
+        onUpdateSetting('group_multipliers', result);
+    };
 
     useEffect(() => {
         const map = {};
@@ -242,11 +265,11 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                             </div>
                         </div>
                         
-                        <div style={{ 
-                            marginTop: '1.5rem', 
-                            padding: '1.25rem 1.5rem', 
-                            backgroundColor: '#fffbeb', 
-                            border: '1px solid #fde68a', 
+                        <div style={{
+                            marginTop: '1.5rem',
+                            padding: '1.25rem 1.5rem',
+                            backgroundColor: '#fffbeb',
+                            border: '1px solid #fde68a',
                             borderRadius: '10px',
                             display: 'flex',
                             gap: '1.25rem',
@@ -260,6 +283,73 @@ const AdminSettings = ({ globalSettings, onUpdateSetting, marginRules = [], onSa
                                 </span>
                             </div>
                         </div>
+                    </div>
+
+                    {/* ── Group Markup Multipliers ── */}
+                    <div style={{ marginTop: '2.5rem', paddingTop: '2rem', borderTop: '1px solid #f1f5f9' }}>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.35rem 0' }}>Group Markup Multipliers</h4>
+                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
+                                Override the system default for a specific product group. Leave blank to inherit the system default above.
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                            {CATEGORY_GROUP_OPTIONS.map(groupName => {
+                                const val = groupMultDraft[groupName];
+                                const numVal = val !== '' && val != null ? parseFloat(val) : null;
+                                const sysDefault = globalSettings.global_multiplier || 1.5;
+                                const isDefault = numVal == null || numVal === sysDefault;
+                                const displayMult = numVal ?? sysDefault;
+
+                                // Accent colour per group
+                                const accent = {
+                                    'Rolled Product':  { bg: '#eff6ff', border: '#bfdbfe', badge: '#2563EB', label: '#1e40af' },
+                                    'Cladding':        { bg: '#f0fdf4', border: '#bbf7d0', badge: '#16a34a', label: '#15803d' },
+                                    'Shingle Roofing': { bg: '#fdf4ff', border: '#e9d5ff', badge: '#9333ea', label: '#7e22ce' },
+                                    'Accessories':     { bg: '#fff7ed', border: '#fed7aa', badge: '#ea580c', label: '#c2410c' },
+                                }[groupName] || { bg: '#f8fafc', border: '#e2e8f0', badge: '#475569', label: '#334155' };
+
+                                return (
+                                    <div key={groupName} style={{ padding: '1.25rem', backgroundColor: accent.bg, borderRadius: '10px', border: `1px solid ${accent.border}` }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: accent.label, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{groupName}</span>
+                                            {isDefault
+                                                ? <span style={{ fontSize: '0.72rem', color: '#94a3b8', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '999px', padding: '0.15rem 0.5rem', fontWeight: '500' }}>System Default</span>
+                                                : <span style={{ fontSize: '0.72rem', color: accent.label, backgroundColor: '#ffffff', border: `1px solid ${accent.border}`, borderRadius: '999px', padding: '0.15rem 0.5rem', fontWeight: '700' }}>Custom</span>
+                                            }
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="1.0"
+                                                placeholder={String(sysDefault)}
+                                                value={val ?? ''}
+                                                onChange={e => setGroupMultDraft(prev => ({ ...prev, [groupName]: e.target.value }))}
+                                                disabled={!canEdit}
+                                                style={{ ...styles.inputField, width: '100px', fontSize: '1rem' }}
+                                            />
+                                            <span style={{ fontSize: '1.1rem', fontWeight: '700', color: '#94a3b8' }}>x</span>
+                                        </div>
+
+                                        <div style={{ fontSize: '0.8rem', color: accent.label, backgroundColor: '#ffffff80', padding: '0.4rem 0.6rem', borderRadius: '6px', fontFamily: 'monospace' }}>
+                                            Cost × {displayMult.toFixed(2)} = List Price
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {canEdit && (
+                            <button
+                                onClick={saveGroupMultipliers}
+                                style={{ padding: '0.6rem 1.25rem', backgroundColor: '#3363AF', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '0.95rem' }}
+                            >
+                                Save Group Multipliers
+                            </button>
+                        )}
                     </div>
                 </div>
                 )}

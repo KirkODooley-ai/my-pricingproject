@@ -18,7 +18,7 @@ import { useAuth } from './contexts/AuthContext' // [NEW]
 import { calculateImpact } from './utils/analysisEngine'
 import { api } from './services/api'
 
-import { DEFAULT_CATEGORIES, getCategoryGroup, getEffectiveCategoryGroup } from './utils/pricingEngine'
+import { DEFAULT_CATEGORIES, getCategoryGroup, getEffectiveCategoryGroup, CATEGORY_GROUP_OPTIONS } from './utils/pricingEngine'
 import { PERMISSIONS, hasPermission } from './constants/permissions'
 import './App.css'
 
@@ -80,7 +80,8 @@ function App() {
 
   // [NEW] Global Settings Store
   const [globalSettings, setGlobalSettings] = useState({
-    global_multiplier: 1.5 // Default Fallback
+    global_multiplier: 1.5, // Default Fallback
+    group_multipliers: {}   // Per-group overrides, e.g. { 'Cladding': 1.6 }
   })
 
   // ... (Customer Aliases state stays same)
@@ -248,6 +249,30 @@ function App() {
       }));
     }
   }, [globalSettings.global_multiplier, isHydrated]); // Depend on the setting change
+
+  // Sync per-group multipliers into pricingStrategy.listMultipliers as "group:<Name>" keys
+  useEffect(() => {
+    if (!isHydrated) return;
+    const groupMults = globalSettings.group_multipliers || {};
+    const updates = {};
+    CATEGORY_GROUP_OPTIONS.forEach(g => {
+      const v = groupMults[g];
+      const key = `group:${g}`;
+      if (v != null && v !== '' && parseFloat(v) > 0) {
+        updates[key] = parseFloat(v);
+      } else {
+        updates[key] = null; // will be cleaned below
+      }
+    });
+    setPricingStrategy(prev => {
+      const merged = { ...prev.listMultipliers };
+      Object.entries(updates).forEach(([k, v]) => {
+        if (v == null) delete merged[k];
+        else merged[k] = v;
+      });
+      return { ...prev, listMultipliers: merged };
+    });
+  }, [globalSettings.group_multipliers, isHydrated]);
 
   // --- Sync Category Revenue (Updated Source) ---
   // Now sums from `salesTransactions` instead of `customers[].categorySpend`

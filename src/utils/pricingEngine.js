@@ -290,7 +290,14 @@ export const getListMultiplier = (strategy, categoryName, gauge = null) => {
         return strategy.listMultipliers[cat]
     }
 
-    // 1b. Try Fasteners:Prefix (Shared logic with UI)
+    // 1b. Group-level override (stored as "group:Rolled Product" etc.)
+    const catGroup = getCategoryGroup(cat)
+    const groupKey = `group:${catGroup}`
+    if (strategy.listMultipliers[groupKey]) {
+        return strategy.listMultipliers[groupKey]
+    }
+
+    // 1c. Try Fasteners:Prefix (Shared logic with UI)
     // The UI saves specific fastener types as "Fasteners:Type S"
     const fastKey = `Fasteners:${cat}`
     if (strategy.listMultipliers[fastKey]) {

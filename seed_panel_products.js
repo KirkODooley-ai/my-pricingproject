@@ -873,8 +873,8 @@ async function seedPanelProducts() {
 
   const MECH_CATEGORIES = [
     { display: '12" Interloc',              lookups: ['12" Interloc'] },
-    { display: '1" Mechanical Loc',         lookups: ['1" Mechanical Loc'] },
-    { display: '1 1/2" Mechanical Loc',     lookups: ['1 1/2" Mechanical Loc'] },
+    { display: '1" Mechanical Loc 13.125"',   lookups: ['1" Mechanical Loc 13.125"', '1" Mechanical Loc'] },
+    { display: '1 1/2" Mechanical Loc 12.125"', lookups: ['1 1/2" Mechanical Loc 12.125"', '1 1/2" Mechanical Loc'] },
     { display: '1 1/2" Clip Loc 11.375"',   lookups: ['1 1/2" Clip Loc 11.375"'] },
     { display: '1" Nail Strip 11 3/4"',     lookups: ['1" Nail Strip 11 3/4"'] },
     { display: '1 1/2" Nail Strip 12 1/8"', lookups: ['1 1/2" Nail Strip 12 1/8"'] },
@@ -924,6 +924,72 @@ async function seedPanelProducts() {
         [productName, cost, price, categoryId, 'lft']
       );
       console.log(`Mech/Clip/Nail seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+      inserted++;
+    }
+  }
+
+  // 16" coverage: 1" Mechloc, 1.5" Mechloc, 2" Mechloc, 1.5" Cliploc 16", 1" Nailstrip 16", 1.5" Nailstrip 16"
+  const VARIANTS_16 = [
+    { name: 'AZ50 (Algalume) 24ga',       retail: 4.07 },
+    { name: 'Textured 24ga',               retail: 4.46 },
+    { name: 'SMP Colour 24ga',             retail: 4.46 },
+    { name: 'Image Series 24ga',            retail: 5.12 },
+    { name: 'A606 Weathering Steel 22ga',   retail: 5.61 },
+  ];
+
+  const CATEGORIES_16 = [
+    { display: '1" Mechanical Loc 16"',      lookups: ['1" Mechanical Loc 16"'] },
+    { display: '1 1/2" Mechanical Loc 16"',  lookups: ['1 1/2" Mechanical Loc 16"'] },
+    { display: '2" Mechanical Loc',          lookups: ['2" Mechanical Loc'] },
+    { display: '1 1/2" Clip Loc 16"',        lookups: ['1 1/2" Clip Loc 16"'] },
+    { display: '1" Nail Strip 16"',          lookups: ['1" Nail Strip 16"'] },
+    { display: '1 1/2" Nail Strip 16"',      lookups: ['1 1/2" Nail Strip 16"'] },
+  ];
+
+  for (const cat of CATEGORIES_16) {
+    let categoryId = null;
+    let foundName = null;
+
+    for (const name of cat.lookups) {
+      const res = await query('SELECT id, name FROM categories WHERE name = $1', [name]);
+      if (res.rows.length > 0) {
+        categoryId = res.rows[0].id;
+        foundName = res.rows[0].name;
+        break;
+      }
+    }
+
+    if (!categoryId) {
+      console.warn(`16" coverage seed: category "${cat.display}" not found — skipping`);
+      continue;
+    }
+
+    for (const v of VARIANTS_16) {
+      const productName = `${foundName} ${v.name}`;
+      const cost  = +(v.retail * 0.60).toFixed(4);
+      const price = +v.retail.toFixed(4);
+
+      const existing = await query(
+        'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+        [productName, categoryId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query(
+          `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+          [cost, price, 'lft', existing.rows[0].id]
+        );
+        console.log(`16" seed: updated ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
+        skipped++;
+        continue;
+      }
+
+      await query(
+        `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+        [productName, cost, price, categoryId, 'lft']
+      );
+      console.log(`16" seed: added ${productName} — cost $${cost}/lft, retail list $${price}/lft`);
       inserted++;
     }
   }

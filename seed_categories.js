@@ -9,7 +9,10 @@ const ALL_CATEGORIES = [
     // Rolled Product — Corrugated
     '32 7/8" Corrugated', '37 7/8 Corrugated',
     // Rolled Product — Mechanical / Clip Loc
-    '1" Mechanical Loc', '1 1/2" Mechanical Loc', '1 1/2" Clip Loc 7.375"', '1 1/2" Clip Loc 11.375"',
+    '1" Mechanical Loc 13.125"', '1" Mechanical Loc 16"',
+    '1 1/2" Mechanical Loc 12.125"', '1 1/2" Mechanical Loc 16"',
+    '2" Mechanical Loc',
+    '1 1/2" Clip Loc 7.375"', '1 1/2" Clip Loc 11.375"', '1 1/2" Clip Loc 16"',
     // Rolled Product — Nail Strip
     '1" Nail Strip 11 3/4"', '1" Nail Strip 16"', '1" Nail Strip 17 1/2"', '1" Nail Strip 18"',
     '1 1/2" Nail Strip 12 1/8"', '1 1/2" Nail Strip 16"',
@@ -40,6 +43,9 @@ async function seedCategories() {
     await query(`UPDATE categories SET name = '7 1/2" Inter Loc' WHERE name = '7 1/5" Inter Loc'`);
     // Disambiguate Clip Loc by coverage — existing one is the 7.375" coverage
     await query(`UPDATE categories SET name = '1 1/2" Clip Loc 7.375"' WHERE name = '1 1/2" Clip Loc'`);
+    // Disambiguate Mechanical Loc by coverage
+    await query(`UPDATE categories SET name = '1" Mechanical Loc 13.125"' WHERE name = '1" Mechanical Loc'`);
+    await query(`UPDATE categories SET name = '1 1/2" Mechanical Loc 12.125"' WHERE name = '1 1/2" Mechanical Loc'`);
 
     for (let i = 0; i < ALL_CATEGORIES.length; i++) {
         const name = ALL_CATEGORIES[i];

@@ -385,12 +385,23 @@ export const calculateNetPrice = (listPrice, customerGroup, tierName, productGro
     // 2. Determine Discount Multiplier (Default to 1.0/No Discount if missing)
     let discountMultiplier = 1.0
     if (tierConfig) {
-        if (tierConfig[productGroup] !== undefined) {
+        // 3-level hierarchy: gauge-specific > category > default
+        const gauge = options?.gauge
+        const gaugeKey = (gauge != null && productGroup && !productGroup.includes(':'))
+            ? `${productGroup}:${gauge}` : null
+
+        if (gaugeKey && tierConfig[gaugeKey] !== undefined) {
+            // Most surgical: e.g. 'FC36:29' — gauge-specific override
+            discountMultiplier = tierConfig[gaugeKey]
+        } else if (tierConfig[productGroup] !== undefined) {
+            // Category-level: e.g. 'FC36' — applies to all gauges unless overridden above
             discountMultiplier = tierConfig[productGroup]
         } else if (productGroup && productGroup.includes(':')) {
+            // productGroup was already a gauge key (e.g. 'FC36:29') — fall back to bare category
             const [cat] = productGroup.split(':')
             discountMultiplier = tierConfig[cat] ?? tierConfig['Default'] ?? 1.0
         } else {
+            // Broadest fallback: tier-wide default
             discountMultiplier = tierConfig['Default'] ?? 1.0
         }
     }

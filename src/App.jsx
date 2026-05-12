@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import PricingTable from './components/PricingTable'
 import PricingCalculator from './components/PricingCalculator'
 import CategoryManager from './components/CategoryManager'
@@ -96,6 +96,10 @@ function App() {
     listMultipliers: { 'Default': 1.667, 'Fasteners': 1.667 },
     tierMultipliers: { 'Dealer': {}, 'Commercial': {} }
   })
+
+  // Ref that always points to the latest pricingStrategy, avoiding stale-closure bugs in callbacks
+  const pricingStrategyRef = useRef(pricingStrategy)
+  useEffect(() => { pricingStrategyRef.current = pricingStrategy }, [pricingStrategy])
 
   // [REMOVED] localStorage persistence for pricingStrategy.
   // Now relies on initial hydration and API calls via persistence helper.
@@ -206,7 +210,9 @@ function App() {
     // Safety: Don't overwrite with empty if we expect data
     if (Array.isArray(data) && data.length === 0) return
 
-    api.save(key, data)
+    api.save(key, data).then(ok => {
+      if (!ok) console.warn(`[AutoSave] Failed to persist "${key}" to server. Changes are still active locally.`)
+    })
   }
 
   useEffect(() => saveData('products', products), [products, isHydrated])
@@ -214,17 +220,18 @@ function App() {
   useEffect(() => saveData('customers', customers), [customers, isHydrated])
   useEffect(() => saveData('salesTransactions', salesTransactions), [salesTransactions, isHydrated])
 
-  // [FIX] Missing Auto-Save for Pricing Strategy
-  // Only save if we have meaningful data (not just the default state)
+  // [FIX] Auto-Save for Pricing Strategy on every change
+  // Guard: skip only if it's literally the empty initial state (both tier groups empty AND default multiplier is the fallback)
   useEffect(() => {
     if (!isHydrated) return;
 
-    // Check if it's just the default
-    const isDefault = Object.keys(pricingStrategy.tierMultipliers['Dealer']).length === 0 &&
-      Object.keys(pricingStrategy.tierMultipliers['Commercial']).length === 0 &&
-      pricingStrategy.listMultipliers['Default'] === 1.5;
+    // Only skip the truly empty/un-configured default — once any tier data exists, always persist
+    const dealerKeys = Object.keys(pricingStrategy.tierMultipliers?.['Dealer'] || {});
+    const commKeys   = Object.keys(pricingStrategy.tierMultipliers?.['Commercial'] || {});
+    const isEmptyDefault = dealerKeys.length === 0 && commKeys.length === 0 &&
+      pricingStrategy.listMultipliers['Default'] === 1.667;
 
-    if (!isDefault) {
+    if (!isEmptyDefault) {
       saveData('pricingStrategy', pricingStrategy)
     }
   }, [pricingStrategy, isHydrated])
@@ -821,10 +828,15 @@ function App() {
             // [NEW] Phase 18: Variants
             products={products}
             productVariants={productVariants}
-            // [NEW] Manual Save Hook
-            onSave={() => {
-              api.save('pricingStrategy', pricingStrategy);
-              alert("Pricing Strategy Saved Successfully!");
+            // [FIX] Manual Save — async with real feedback; uses ref so closure is never stale
+            onSave={async () => {
+              const latest = pricingStrategyRef.current;
+              const ok = await api.save('pricingStrategy', latest);
+              if (ok) {
+                alert("✅ Pricing Strategy Saved Successfully!");
+              } else {
+                alert("❌ Save failed. Your session may have expired — please refresh the page and try again. Your changes are still active for this session.");
+              }
             }}
           />
         )}

@@ -458,9 +458,9 @@ const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, 
                                     <React.Fragment key={catName}>
                                         {hasVariants ? (
                                             <>
-                                                {/* Gauged category: parent row with expand toggle */}
+                                                {/* Gauged category: parent row with expand toggle + per-tier inputs for category-level discount */}
                                                 <tr style={{ backgroundColor: expandedRows.has(catName) ? '#fafbfc' : '#f8fafc' }}>
-                                                    <td colSpan={tiers.length + 1} style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 5, backgroundColor: expandedRows.has(catName) ? '#fafbfc' : '#f8fafc', borderRight: '1px solid #e2e8f0'}}>
+                                                    <td style={{...styles.td, fontWeight: '600', color: '#475569', fontSize: '0.9rem', borderBottom: '1px solid #e2e8f0', position: 'sticky', left: 0, zIndex: 5, backgroundColor: expandedRows.has(catName) ? '#fafbfc' : '#f8fafc', borderRight: '1px solid #e2e8f0'}}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                             <button
                                                                 onClick={() => toggleExpand(catName)}
@@ -475,6 +475,30 @@ const TransposedTierTable = ({ groupType, tiers, groupedCategories, groupOrder, 
                                                             )}
                                                         </div>
                                                     </td>
+                                                    {tiers.map(tier => {
+                                                        const explicitCatVal = strategy.tierMultipliers[groupType]?.[tier.name]?.[catName];
+                                                        const defaultVal = strategy.tierMultipliers[groupType]?.[tier.name]?.['Default'] ?? 0.0;
+                                                        const displayVal = explicitCatVal !== undefined ? explicitCatVal : defaultVal;
+                                                        const hasCatOverride = explicitCatVal !== undefined;
+
+                                                        return (
+                                                            <td key={tier.name} style={{...styles.td, textAlign: 'center'}}>
+                                                                <input
+                                                                    type="number" step="0.01" max="1.0" min="0.0"
+                                                                    style={{
+                                                                        ...styles.inputField, width: '80px', textAlign: 'center', padding: '0.4rem',
+                                                                        backgroundColor: hasCatOverride ? '#ecfdf5' : '#f8fafc',
+                                                                        borderColor: hasCatOverride ? '#34d399' : '#cbd5e1',
+                                                                        color: hasCatOverride ? '#065f46' : '#94a3b8'
+                                                                    }}
+                                                                    value={displayVal}
+                                                                    onChange={(e) => onChange(groupType, tier.name, catName, e.target.value)}
+                                                                    disabled={isManager}
+                                                                    title={hasCatOverride ? `${catName} category override` : `Inheriting from Default (${defaultVal})`}
+                                                                />
+                                                            </td>
+                                                        );
+                                                    })}
                                                 </tr>
                                                 {/* Explicit sub-rows for every gauge with ↳ (only when expanded) */}
                                                 {expandedRows.has(catName) && variants.map(gauge => {

@@ -994,6 +994,62 @@ async function seedPanelProducts() {
     }
   }
 
+  // ── Wakefield Bridge Shingles ──────────────────────────────────────────────
+  // Costs = 0.00 pending confirmation from Kirk. Unit = ea.
+  const WAKEFIELD_PRODUCTS = [
+    { name: 'Wakefield 905 Type 1 Wall Flashing',                                              price: 36.93 },
+    { name: 'Wakefield 905 Type 2 Transition Flashing',                                        price: 36.93 },
+    { name: 'Wakefield 905 Type 3 Hip Flashing',                                               price: 36.93 },
+    { name: 'Wakefield 906 Wall Flashing',                                                     price: 35.14 },
+    { name: 'Wakefield 908 Valley',                                                            price: 73.84 },
+    { name: 'Wakefield 910 Cottage Roof Cap',                                                  price: 58.56 },
+    { name: 'Wakefield 912 Peak Cap',                                                          price: 27.69 },
+    { name: 'Wakefield 916 Special J Trim',                                                    price: 15.38 },
+    { name: 'Wakefield 802 Clip',                                                              price:  5.85 },
+    { name: 'Wakefield 214 Ridge Cap',                                                         price: 31.74 },
+    { name: 'Wakefield 804 Cleat',                                                             price:  7.35 },
+    { name: 'Wakefield 408 Starter Shingle',                                                   price: 11.87 },
+    { name: 'Wakefield 815 Locking Eave',                                                      price: 19.24 },
+    { name: 'Wakefield 206 Ridge Vent',                                                        price: 91.54 },
+    { name: 'Wakefield End Cap for Ridge Vent',                                                price:  8.08 },
+    { name: 'Wakefield Caps - 30/BOX',                                                         price: 314.86 },
+    { name: '0.5oz Paint Bottle for Steel Shingles',                                           price: 17.63 },
+    { name: 'Folding Tool',                                                                    price: 63.71 },
+    { name: '18" x 3/8" Opening Steel Shingle Screws #12 x 1" (Galvanized)',                  price: 62.45 },
+    { name: '0.017" x 12" x 38.875" Wakefield Bridge Steel Shingles -15/Box',                 price: 183.67 },
+  ];
+
+  {
+    const catResult = await query(`SELECT id FROM categories WHERE name = 'Steel Shingles'`);
+    if (!catResult.rows.length) {
+      console.warn('Wakefield seed: "Steel Shingles" category not found — skipping');
+    } else {
+      const categoryId = catResult.rows[0].id;
+      for (const p of WAKEFIELD_PRODUCTS) {
+        const existing = await query(
+          'SELECT id FROM products WHERE name = $1 AND category_id = $2',
+          [p.name, categoryId]
+        );
+        if (existing.rows.length > 0) {
+          await query(
+            `UPDATE products SET cost = $1, price = $2, sell_unit = $3 WHERE id = $4`,
+            [0, p.price, 'ea', existing.rows[0].id]
+          );
+          console.log(`Wakefield seed: updated "${p.name}" — price $${p.price}/ea`);
+          skipped++;
+        } else {
+          await query(
+            `INSERT INTO products (id, name, cost, price, category_id, sell_unit)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+            [p.name, 0, p.price, categoryId, 'ea']
+          );
+          console.log(`Wakefield seed: added "${p.name}" — price $${p.price}/ea`);
+          inserted++;
+        }
+      }
+    }
+  }
+
   console.log(`Panel seed complete: ${inserted} added, ${skipped} updated.`);
 }
 

@@ -6,11 +6,14 @@ import {
     getListMultiplier, TIER_RULES, CUSTOMER_GROUPS
 } from '../utils/pricingEngine';
 
-// Resolve the tier discount for a given category + tier
+// Resolve the tier multiplier for a given category + tier.
+// Returns a value between 0 and 1 where 0.90 = 10% off list.
+// Defaults to 1.0 (no discount) when the tier has no data for this category —
+// consistent with calculateNetPrice in pricingEngine.js.
 const getTierDiscount = (strategy, customerGroup, tierName, categoryName) => {
     const groupTiers = strategy?.tierMultipliers?.[customerGroup] || {};
     const tierConfig = groupTiers[tierName] || {};
-    return tierConfig[categoryName] ?? tierConfig['Default'] ?? 0;
+    return tierConfig[categoryName] ?? tierConfig['Default'] ?? 1.0;
 };
 
 const PricingCalculator = ({ products, productVariants = [], pricingStrategy }) => {

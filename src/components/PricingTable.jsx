@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, CATEGORY_GROUP_OPTIONS, isGaugeEnabledCategory } from '../utils/pricingEngine';
+import { calculateMargin, formatCurrency, formatPercent, calculateListPrice, calculateNetPrice, getListMultiplier, getCategoryGroup, getEffectiveMarginFloor, CUSTOMER_GROUPS, TIER_RULES, calculateTier, getFastenerType, FASTENER_TYPES, CATEGORY_GROUPS, CATEGORY_GROUP_OPTIONS, isGaugeEnabledCategory } from '../utils/pricingEngine';
 import { useAuth } from '../contexts/AuthContext';
 import { PERMISSIONS, hasPermission } from '../constants/permissions';
 
@@ -147,7 +147,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
 
         if (previewTier.tier && pricingStrategy) {
             let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
-            stratList = calculateListPrice(product.cost, groupName, pricingStrategy.listMultipliers);
+            stratList = product.cost * getListMultiplier(pricingStrategy, product.category);
             stratNet = calculateNetPrice(stratList, previewTier.group, previewTier.tier, groupName, pricingStrategy, {
                 cost: product.cost, product, categoryGroup: catGroup, marginRules
             });
@@ -234,7 +234,7 @@ const PricingTable = ({ products, categories = [], onUpdateProduct, onAddProduct
                     const varFloor = getEffectiveMarginFloor(product, getCategoryGroup(product.category || ''), marginRules);
                     if (previewTier.tier && pricingStrategy) {
                         let groupName = product.category === 'Fasteners' ? `Fasteners:${getFastenerType(product.name)}` : (product.category || 'Default');
-                        varStratList = calculateListPrice(finalCost, groupName, pricingStrategy.listMultipliers);
+                        varStratList = finalCost * getListMultiplier(pricingStrategy, product.category);
                         varStratNet = calculateNetPrice(varStratList, previewTier.group, previewTier.tier, groupName, pricingStrategy, {
                             cost: finalCost, product, categoryGroup: getCategoryGroup(product.category || ''), marginRules, gauge: variant.gauge
                         });

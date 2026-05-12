@@ -32,7 +32,7 @@ export const calculateImpact = (customers, pricingStrategy, mix) => {
 
         if (activeCategories.length === 0) {
             // [Fallback] If no categories, apply 'Default' multiplier if exists, else 1.5
-            const defaultMarkup = listMultipliers['Default'] || 1.5
+            const defaultMarkup = listMultipliers['Default'] || 1.667
             // Discounts
             const groupDiscounts = tierMultipliers[customer.group] || {}
             const tierConfig = groupDiscounts[tierName] || {}
@@ -61,7 +61,7 @@ export const calculateImpact = (customers, pricingStrategy, mix) => {
 
                 // 1. Get List Price Markup
                 // Try specific category, then Default, then 1.5
-                const markup = listMultipliers[cat] || listMultipliers['Default'] || 1.5
+                const markup = listMultipliers[cat] || listMultipliers['Default'] || 1.667
 
                 // 2. Get Tier Discount
                 // Look up: TierRules -> CustomerGroup -> TierName -> Category

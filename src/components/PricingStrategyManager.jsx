@@ -313,13 +313,13 @@ const PricingStrategyManager = ({ strategy, setStrategy, categories, salesTransa
                                                                             <input
                                                                                 type="number" step="0.05"
                                                                                 style={{...styles.inputField, width: '100px', textAlign: 'right'}}
-                                                                                value={strategy.listMultipliers[subKey] || strategy.listMultipliers['Fasteners'] || 1.5}
+                                                                                value={strategy.listMultipliers[subKey] || strategy.listMultipliers['Fasteners'] || 1.667}
                                                                                 onChange={(e) => handleListMultiplierChange(subKey, e.target.value)}
                                                                                 disabled={isManager}
                                                                             />
                                                                         </td>
                                                                         <td style={{...styles.td, textAlign: 'right', color: '#2563EB', fontWeight: '500'}}>
-                                                                            ${(100 * (strategy.listMultipliers[subKey] || strategy.listMultipliers['Fasteners'] || 1.5)).toFixed(2)}
+                                                                            ${(100 * (strategy.listMultipliers[subKey] || strategy.listMultipliers['Fasteners'] || 1.667)).toFixed(2)}
                                                                         </td>
                                                                     </tr>
                                                                 );

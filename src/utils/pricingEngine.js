@@ -316,7 +316,7 @@ export const getListMultiplier = (strategy, categoryName, gauge = null) => {
     }
 
     // 4. Default
-    return strategy.listMultipliers['Default'] || 1.5
+    return strategy.listMultipliers['Default'] || 1.667
 }
 
 /**

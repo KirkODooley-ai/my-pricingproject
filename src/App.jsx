@@ -80,8 +80,8 @@ function App() {
 
   // [NEW] Global Settings Store
   const [globalSettings, setGlobalSettings] = useState({
-    global_multiplier: 1.5, // Default Fallback
-    group_multipliers: {}   // Per-group overrides, e.g. { 'Cladding': 1.6 }
+    global_multiplier: 1.667, // cost × 1.667 ≈ retail (cost = retail × 0.60, so 1/0.60 = 1.6667)
+    group_multipliers: {}     // Per-group overrides
   })
 
   // ... (Customer Aliases state stays same)
@@ -93,7 +93,7 @@ function App() {
   // ... (Sales CRUD handled via upsert logic below)
 
   const [pricingStrategy, setPricingStrategy] = useState({
-    listMultipliers: { 'Default': 1.5, 'Fasteners': 1.65 },
+    listMultipliers: { 'Default': 1.667, 'Fasteners': 1.667 },
     tierMultipliers: { 'Dealer': {}, 'Commercial': {} }
   })
 
